@@ -95,9 +95,14 @@ ui <- dashboardPage(
                       )
                     ),
                     box(
-                      title = "Load Test Data",
+                      title = "Load Clustered Expression Data",
                       width = NULL,
-                      actionButton("btnLoadTestData", "Load Test Data")
+                      actionButton("btnLoadTestData", "Load")
+                    ),
+                    box(
+                      title = "Load Annotated Data",
+                      width = NULL,
+                      actionButton("btnLoadAnnoData", "Load")
                     )
                   ),
                   tabPanel(
