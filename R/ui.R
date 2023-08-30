@@ -95,12 +95,12 @@ ui <- dashboardPage(
                       )
                     ),
                     box(
-                      title = "Load Clustered Expression Data",
+                      title = "Load Cluster Expression Demo Data",
                       width = NULL,
-                      actionButton("btnLoadTestData", "Load")
+                      actionButton("btnLoadDemoData", "Load")
                     ),
                     box(
-                      title = "Load Annotated Data",
+                      title = "Load Annotated Demo Data",
                       width = NULL,
                       actionButton("btnLoadAnnoData", "Load")
                     )

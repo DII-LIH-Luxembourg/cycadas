@@ -1189,9 +1189,8 @@ cycadas <- function() {
 
     # children <- graph$edges$from[graph$edges$to == myNode$selected]
 
-    ## -------------------------------------------------------------------
-    # Upload Test Data ----
-    observeEvent(input$btnLoadTestData, {
+    observeEvent(input$btnLoadDemoData, {
+
 
       # Create a Progress object
       progress <- shiny::Progress$new()
@@ -1295,8 +1294,115 @@ cycadas <- function() {
       reactVals$th <- kmeansTH(df01)
 
 
+    })
+    ## -------------------------------------------------------------------
+    # Upload All Annotation Demo Data ----
+    observeEvent(input$btnLoadAnnoData, {
+
+      # Create a Progress object
+      progress <- shiny::Progress$new()
+      # Make sure it closes when we exit this reactive, even if there's an error
+      on.exit(progress$close())
+
+      progress$set(message = "loading Data...", value = 0)
+
+      # browser()
+
+      ## Load median expression and cell frequencies
+      df <- read.csv("./McCarthy_expr_median_400.csv")
+      df_global <<- df
+
+      # create initial master node of all Unassigned clusters
+      nodes <- tibble(id = 1,
+                      label = "Unassigned",
+                      pm = list(""),
+                      nm = list(""),
+                      color = "blue"
+      )
+
+      edges <- data.frame(from = numeric(), to = numeric())
+      reactVals$graph <- list(nodes = nodes, edges = edges)
+
+      annotationlist <<- list("Unassigned")
+
+      cell_freq <<- read.csv("./McCarthy_cluster_freq_400.csv") %>%
+        mutate(total = sum(column_name)) %>%
+        mutate(frequency = round(column_name / total * 100, 2))
+
+      labels_row <-
+        paste0(rownames(df), " (", cell_freq$frequency , "%)")
+
+      marker_names <- rownames(df)
+
+      set.seed(1234)
+
+      my_umap <- umap(df)
+      dr_umap <<- data.frame(
+        u1 = my_umap$layout[, 1],
+        u2 = my_umap$layout[, 2],
+        my_umap$data,
+        cluster_number = 1:length(my_umap$layout[, 1]),
+        check.names = FALSE
+      )
+
+      df01 <<- df %>% normalize01()
+      myDF <<- df %>% normalize01()
+
+      df01Tree <<- df %>% normalize01()
+      allMarkers <<- colnames(df)
+      df01Tree$cell <<- "Unassigned"
+
+      selectedMarkers <<- colnames(df)
+      posPickerList <<- colnames(df)
+
+      ## load only at start to fill the picker list
+      updatePickerInput(
+        session,
+        inputId = "myPickerPos",
+        label = "Select Positive Markers",
+        choices = colnames(df01),
+        # choices = NULL,
+        options = list(
+          `actions-box` = TRUE,
+          size = 10,
+          `selected-text-format` = "count > 3"
+        )
+      )
+      updatePickerInput(
+        session,
+        inputId = "myPickerNeg",
+        label = "Select Negative Markers",
+        choices = colnames(df01),
+        options = list(
+          `actions-box` = TRUE,
+          size = 10,
+          `selected-text-format` = "count > 3"
+        )
+      )
+      updateSelectInput(session, "markerSelect", "Select:", colnames(df01))
+
+      updateCheckboxGroupButtons(
+        session,
+        inputId = "treePickerPos",
+        choices = colnames(df01),
+        selected = NULL
+      )
+      updateCheckboxGroupButtons(
+        session,
+        inputId = "treePickerNeg",
+        choices = colnames(df01),
+        selected = NULL
+      )
+
+      annotaionDF <<- data.frame("cell" = "unassigned",
+                                 clusterSize = cell_freq$frequency)
+      at <<- reactiveValues(data = annotaionDF, dr_umap = dr_umap)
+
+      reactVals$th <- kmeansTH(df01)
+
+
       ## Load metadata
-      md <<- read.csv("/Users/ohunewald/work/GoodsSyndrom/metadata.csv")
+      md <<- read.csv("./metadata.csv")
       md$X <- NULL
       reactVals$md<- md
 
