@@ -33,14 +33,14 @@ cycadas <- function() {
 
     # Function: Update cluster labels ----
     updateClusterLabels <- function(mydf) {
+      # browser()
+      mysum <- sum(cell_freq[rownames(mydf),]$clustering_prop)
 
-      mysum <- sum(cell_freq[rownames(mydf),]$frequency)
-
-      output$progressBox <- renderValueBox({
-        valueBox(paste0(mysum, "%"), "Selected", icon = icon("list"),color = "purple")
+      output$progressBox <- renderText({
+        paste0(mysum, "%")
       })
-      output$progressBox2 <- renderValueBox({
-        valueBox(dim(mydf)[1], "Cluster", icon = icon("list"),color = "purple")
+      output$progressBox2 <- renderText({
+        paste0(dim(mydf)[1], "Cluster")
       })
     }
 
@@ -1005,7 +1005,7 @@ cycadas <- function() {
 
     # Do the differential abundance ----
     observeEvent(input$doDA, {
-
+      # browser()
       req(reactVals$counts_table, reactVals$md)
 
       countsTable <- reactVals$counts_table
@@ -1019,7 +1019,8 @@ cycadas <- function() {
 
       props_table <- t(t(countsTable) / colSums(countsTable)) * 100
 
-      mm <- match(md$sample_id, colnames(props_table))
+      # mm <- match(md$sample_id, colnames(props_table))
+      mm <- match(colnames(props_table), md$sample_id)
 
       tmp_cond <- md$condition[mm]
 
@@ -1110,7 +1111,8 @@ cycadas <- function() {
 
       props_table <- t(as.data.frame(colSums(props_table)))
 
-      mm <- match(md$sample_id, colnames(props_table))
+      # mm <- match(md$sample_id, colnames(props_table))
+      mm <- match(colnames(props_table), md$sample_id)
 
       tmp_cond <- md$condition[mm]
 
@@ -1172,7 +1174,8 @@ cycadas <- function() {
       props_table <- as.data.frame(colSums(props_table))
 
 
-      mm <- match(md$sample_id, rownames(props_table))
+      # mm <- match(md$sample_id, rownames(props_table))
+      mm <- match(rownames(props_table), md$sample_id)
 
       props_table$cond <- md$condition[mm]
 
@@ -1298,7 +1301,7 @@ cycadas <- function() {
     ## -------------------------------------------------------------------
     # Upload All Annotation Demo Data ----
     observeEvent(input$btnLoadAnnoData, {
-
+      # browser()
       # Create a Progress object
       progress <- shiny::Progress$new()
       # Make sure it closes when we exit this reactive, even if there's an error
@@ -1309,7 +1312,7 @@ cycadas <- function() {
       # browser()
 
       ## Load median expression and cell frequencies
-      df <- read.csv("./McCarthy_expr_median_400.csv")
+      df <- read.csv("data/McCarthy_expr_median_400.csv")
       df_global <<- df
 
       # create initial master node of all Unassigned clusters
@@ -1325,12 +1328,14 @@ cycadas <- function() {
 
       annotationlist <<- list("Unassigned")
 
-      cell_freq <<- read.csv("./McCarthy_cluster_freq_400.csv") %>%
-        mutate(total = sum(column_name)) %>%
-        mutate(frequency = round(column_name / total * 100, 2))
+      cell_freq <<- read.csv("data/McCarthy_cluster_freq_400.csv")
+
+      # cell_freq <<- read.csv("data/McCarthy_cluster_freq_400.csv") %>%
+      #   mutate(total = sum(column_name)) %>%
+      #   mutate(frequency = round(column_name / total * 100, 2))
 
       labels_row <-
-        paste0(rownames(df), " (", cell_freq$frequency , "%)")
+        paste0(rownames(df), " (", cell_freq$clustering_prop , "%)")
 
       marker_names <- rownames(df)
 
@@ -1395,26 +1400,26 @@ cycadas <- function() {
       )
 
       annotaionDF <<- data.frame("cell" = "unassigned",
-                                 clusterSize = cell_freq$frequency)
+                                 clusterSize = cell_freq$clustering_prop)
       at <<- reactiveValues(data = annotaionDF, dr_umap = dr_umap)
 
       reactVals$th <- kmeansTH(df01)
 
 
       ## Load metadata
-      md <<- read.csv("./metadata.csv")
+      md <<- read.csv("data/metadata_Fig1_Panel2.csv")
       md$X <- NULL
       reactVals$md<- md
 
       ## Load counts table
-      ct <<- read.csv("/Users/ohunewald/work/GoodsSyndrom/results/1600/zip_1600_custers/cluster_counts_1600.csv")
+      ct <<- read.csv("data/props_table_400.csv")
       ct$X <- NULL
       reactVals$counts_table <- ct
 
       ## Load annotaiton Tree
-      df_nodes <- read.csv("/Users/ohunewald/work/GoodsSyndrom/results/1600/cellcat_annotation_data_2023-04-17_level3/nodesTable_data.csv")
-      df_edges <- read.csv("/Users/ohunewald/work/GoodsSyndrom/results/1600/cellcat_annotation_data_2023-04-17_level3/edgesTable_data.csv")
-      df_anno <- read.csv("/Users/ohunewald/work/GoodsSyndrom/results/1600/cellcat_annotation_data_2023-04-17_level3/annTable_data.csv")
+      df_nodes <- read.csv("data/nodesTable_data.csv")
+      df_edges <- read.csv("data/edgesTable_data.csv")
+      df_anno <- read.csv("data/annTable_data.csv")
 
       df_nodes$pm[is.na(df_nodes$pm)] <- ""
       df_nodes$pm <- strsplit(df_nodes$pm, "\\|")

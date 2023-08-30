@@ -11,10 +11,7 @@ ui <- dashboardPage(
       menuItem("UMAP Marker expression", tabName = "UMAP_Marker_expression"),
       menuItem("Differential Abundance", tabName = "DA_tab"),
       menuItem("DA interactive Tree", tabName = "DA_tree"),
-      menuItem("Help", tabName = "help"),
-      valueBoxOutput("progressBox", width = 4),
-      valueBoxOutput("progressBox2", width = 4)
-
+      menuItem("Help", tabName = "help")
     )
   ),
   dashboardBody(
@@ -229,6 +226,8 @@ ui <- dashboardPage(
                 box(
                   width = NULL,
                   title = "Create Node",
+                  textOutput("progressBox"),
+                  textOutput("progressBox2"),
                   textInput("newNode", "Set Name..."),
                   pickerInput(
                     inputId = "parentPicker",
