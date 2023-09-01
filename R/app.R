@@ -17,6 +17,8 @@ library(reshape2)
 
 cycadas <- function() {
 
+  # browser()
+
   reactVals <- reactiveValues(th = NULL,
                               myTH = NULL,
                               md = NULL,
@@ -24,6 +26,23 @@ cycadas <- function() {
                               DA_result_table = NULL,
                               DA_interactive_table = NULL,
                               graph = NULL)
+
+  initTree <- function() {
+
+    # create initial master node of all Unassigned clusters
+    nodes <- tibble(id = 1,
+                    label = "Unassigned",
+                    pm = list(""),
+                    nm = list(""),
+                    color = "blue"
+    )
+
+    edges <- data.frame(from = c(1), to = c(1))
+
+    return (list(nodes = nodes, edges = edges))
+
+  }
+
   # constructs a string of positive or negative markers
   ph_name <<- ""
   # initDATreePage <<- T
@@ -79,6 +98,7 @@ cycadas <- function() {
     # Upload the marker expression file ----
     observeEvent(c(input$fMarkerExpr, input$cluster_freq), {
 
+      reactVals$graph <- initTree()
       # browser()
 
       req(input$fMarkerExpr)
@@ -87,16 +107,16 @@ cycadas <- function() {
       df <- read.csv(input$fMarkerExpr$datapath)
       df_global <<- df
 
-      # create initial master node of all Unassigned clusters
-      nodes <- tibble(id = 1,
-                      label = "Unassigned",
-                      pm = list(""),
-                      nm = list(""),
-                      color = "blue"
-      )
-
-      edges <- data.frame(from = numeric(), to = numeric())
-      reactVals$graph <- list(nodes = nodes, edges = edges)
+      # # create initial master node of all Unassigned clusters
+      # nodes <- tibble(id = 1,
+      #                 label = "Unassigned",
+      #                 pm = list(""),
+      #                 nm = list(""),
+      #                 color = "blue"
+      # )
+      #
+      # edges <- data.frame(from = c(1), to = c(1))
+      # reactVals$graph <- list(nodes = nodes, edges = edges)
 
       annotationlist <<- list("Unassigned")
 
@@ -559,7 +579,7 @@ cycadas <- function() {
       df_nodes$nm <- strsplit(df_nodes$nm, "\\|")
 
       reactVals$graph$nodes <- df_nodes
-      reactVals$graph$edges <<- df_edges
+      reactVals$graph$edges <- df_edges
 
       df01Tree <<- df_anno
 
@@ -644,7 +664,8 @@ cycadas <- function() {
       # threshold value for vertical line
       myTH <- reactVals$th[input$table_rows_selected, 2]
 
-      marker_expr <- getMarkerDistDF(marker, input$radio)
+      # marker_expr <- getMarkerDistDF(marker, input$radio)
+      marker_expr <- getMarkerDistDF(marker, "1")
       myRenderFunction(marker_expr, myTH)
     })
 
@@ -654,42 +675,47 @@ cycadas <- function() {
     ## needed based on the filtered DF
     updateTreeAnnotation <- function(df_row) {
 
+      # browser()
+
       df01Tree$cell <- "Unassigned"
 
       # for all rows in annotation table
       # get all parents for a row:
-      reactVals$graph$nodes$to <- reactVals$graph$edges$to
+      if (nrow(reactVals$graph$nodes) > 1) {
+        reactVals$graph$nodes$to <- reactVals$graph$edges$to
 
-      # Iterate through the dataframe row by row
-      for (i in 1:nrow(reactVals$graph$nodes)) {
+        # Iterate through the dataframe row by row
+        for (i in 1:nrow(reactVals$graph$nodes)) {
 
-        posMarker <- list()
-        negMarker <- list()
+          posMarker <- list()
+          negMarker <- list()
 
-        nodeID <- reactVals$graph$nodes$id[i]
+          nodeID <- reactVals$graph$nodes$id[i]
 
-        # now for that nodeID, get all parents and collect
-        # the pm and nm markers
-        while (nodeID > 1) {
+          # now for that nodeID, get all parents and collect
+          # the pm and nm markers
+          while (nodeID > 1) {
 
-          posMarker <- c(posMarker, unlist(reactVals$graph$nodes$pm[reactVals$graph$nodes$id == nodeID]))
-          negMarker <- c(negMarker, unlist(reactVals$graph$nodes$nm[reactVals$graph$nodes$id == nodeID]))
+            posMarker <- c(posMarker, unlist(reactVals$graph$nodes$pm[reactVals$graph$nodes$id == nodeID]))
+            negMarker <- c(negMarker, unlist(reactVals$graph$nodes$nm[reactVals$graph$nodes$id == nodeID]))
 
-          nodeID <- reactVals$graph$edges$to[reactVals$graph$edges$from == nodeID]
+            nodeID <- reactVals$graph$edges$to[reactVals$graph$edges$from == nodeID]
 
+          }
+          # now we have all positive and negative marker for that type collected
+          # and we can start filtering the df
+          # remove the empty strings in the markers
+          posMarker <- posMarker[nzchar(posMarker)]
+          negMarker <- negMarker[nzchar(negMarker)]
+
+          tmp <- filterHM(df01Tree,unlist(posMarker), unlist(negMarker), reactVals$th)
+
+          df01Tree[rownames(tmp), 'cell'] <<- reactVals$graph$node$label[i]
+
+          updateClusterLabels(tmp)
         }
-        # now we have all positive and negative marker for that type collected
-        # and we can start filtering the df
-        # remove the empty strings in the markers
-        posMarker <- posMarker[nzchar(posMarker)]
-        negMarker <- negMarker[nzchar(negMarker)]
-
-        tmp <- filterHM(df01Tree,unlist(posMarker), unlist(negMarker), reactVals$th)
-
-        df01Tree[rownames(tmp), 'cell'] <<- reactVals$graph$node$label[i]
-
-        updateClusterLabels(tmp)
       }
+
     }
 
     ## Event on click scatter plot for setting the vertical line
@@ -698,22 +724,30 @@ cycadas <- function() {
     ##
     observeEvent(input$plot_click, {
 
+      # browser()
+
       req(input$table_rows_selected)
       selRow <- reactVals$th[input$table_rows_selected,]
       marker <- reactVals$th[input$table_rows_selected, 1]
 
-      if (input$radio == "1") {
-        reactVals$th[input$table_rows_selected, 2] <- round(input$plot_click$x, 3)
-        myTH <- reactVals$th[input$table_rows_selected, 2]
-        marker_expr <- getMarkerDistDF(marker, input$radio)
-        myRenderFunction(marker_expr, myTH)
-      }
-      if (input$radio == "2") {
-        reactVals$th[input$table_rows_selected, 2] <- round(10^(input$plot_click$x), 6)
-        myTH <- reactVals$th[input$table_rows_selected, 2]
-        marker_expr <- getMarkerDistDF(marker, input$radio)
-        myRenderFunction(marker_expr, myTH)
-      }
+      reactVals$th[input$table_rows_selected, 2] <- round(input$plot_click$x, 3)
+      myTH <- reactVals$th[input$table_rows_selected, 2]
+      # marker_expr <- getMarkerDistDF(marker, input$radio)
+      marker_expr <- getMarkerDistDF(marker, "1")
+      myRenderFunction(marker_expr, myTH)
+
+      # if (input$radio == "1") {
+      #   reactVals$th[input$table_rows_selected, 2] <- round(input$plot_click$x, 3)
+      #   myTH <- reactVals$th[input$table_rows_selected, 2]
+      #   marker_expr <- getMarkerDistDF(marker, input$radio)
+      #   myRenderFunction(marker_expr, myTH)
+      # }
+      # if (input$radio == "2") {
+      #   reactVals$th[input$table_rows_selected, 2] <- round(10^(input$plot_click$x), 6)
+      #   myTH <- reactVals$th[input$table_rows_selected, 2]
+      #   marker_expr <- getMarkerDistDF(marker, input$radio)
+      #   myRenderFunction(marker_expr, myTH)
+      # }
 
       updateTreeAnnotation(reactVals$th[input$table_rows_selected])
     })
@@ -721,19 +755,24 @@ cycadas <- function() {
     ##
     ## transform according the selection event --------------------------------
     ##
-    observeEvent(input$radio, {
-      req(input$table_rows_selected)
-      selRow <- reactVals$th[input$table_rows_selected,]
-      marker <- reactVals$th[input$table_rows_selected, 1]
-      myTH <- reactVals$th[input$table_rows_selected, 2]
-      if ( input$radio == "1") {
-        marker_expr <- getMarkerDistDF(marker, input$radio)
-        myRenderFunction(marker_expr, myTH)
-      } else if (input$radio == "2") {
-        marker_expr <- getMarkerDistDF(marker, input$radio)
-        myRenderFunction(marker_expr, myTH)
-      }
-    })
+    # observeEvent(input$radio, {
+    #   req(input$table_rows_selected)
+    #   selRow <- reactVals$th[input$table_rows_selected,]
+    #   marker <- reactVals$th[input$table_rows_selected, 1]
+    #   myTH <- reactVals$th[input$table_rows_selected, 2]
+    #
+    #   marker_expr <- getMarkerDistDF(marker, input$radio)
+    #   myRenderFunction(marker_expr, myTH)
+    # })
+
+    #   if ( input$radio == "1") {
+    #     marker_expr <- getMarkerDistDF(marker, input$radio)
+    #     myRenderFunction(marker_expr, myTH)
+    #   } else if (input$radio == "2") {
+    #     marker_expr <- getMarkerDistDF(marker, input$radio)
+    #     myRenderFunction(marker_expr, myTH)
+    #   }
+    # })
 
     ##
     # Thresholds plotting function ----
@@ -742,65 +781,88 @@ cycadas <- function() {
 
       output$plot <- renderPlot({
         set.seed(1)
-        if (input$radio == "1") {
-          ggplot(me, aes_string(x=me[,1], y=me[,2])) +
-            geom_point(size=1) +
-            theme(axis.title.y = element_blank(),
-                  axis.ticks.y  = element_blank(),
-                  axis.text.y = element_blank(),
-                  panel.grid.major.y = element_blank(),
-                  panel.grid.minor.y = element_blank()) +
-            labs(x = "Scale 0 to 1") +
-            geom_vline(xintercept = myTH, linetype="dotted",
-                       color = "blue", size=1.5)
 
-        } else if (input$radio == "2") {
-          ggplot(me, aes_string(x=me[,1], y=me[,2])) +
-            geom_point(size=1) +
-            theme(axis.title.y = element_blank(),
-                  axis.ticks.y  = element_blank(),
-                  axis.text.y = element_blank(),
-                  panel.grid.major.y = element_blank(),
-                  panel.grid.minor.y = element_blank()) +
-            labs(x = "log 10") +
-            geom_vline(xintercept = log10(myTH), linetype="dotted",
-                       color = "blue", size=1.5)
-        }
+        ggplot(me, aes_string(x=me[,1], y=me[,2])) +
+          geom_point(size=1) +
+          theme(axis.title.y = element_blank(),
+                axis.ticks.y  = element_blank(),
+                axis.text.y = element_blank(),
+                panel.grid.major.y = element_blank(),
+                panel.grid.minor.y = element_blank()) +
+          labs(x = "Scale 0 to 1") +
+          geom_vline(xintercept = myTH, linetype="dotted",
+                     color = "blue", size=1.5)
+
+        # if (input$radio == "1") {
+        #   ggplot(me, aes_string(x=me[,1], y=me[,2])) +
+        #     geom_point(size=1) +
+        #     theme(axis.title.y = element_blank(),
+        #           axis.ticks.y  = element_blank(),
+        #           axis.text.y = element_blank(),
+        #           panel.grid.major.y = element_blank(),
+        #           panel.grid.minor.y = element_blank()) +
+        #     labs(x = "Scale 0 to 1") +
+        #     geom_vline(xintercept = myTH, linetype="dotted",
+        #                color = "blue", size=1.5)
+        #
+        # } else if (input$radio == "2") {
+        #   ggplot(me, aes_string(x=me[,1], y=me[,2])) +
+        #     geom_point(size=1) +
+        #     theme(axis.title.y = element_blank(),
+        #           axis.ticks.y  = element_blank(),
+        #           axis.text.y = element_blank(),
+        #           panel.grid.major.y = element_blank(),
+        #           panel.grid.minor.y = element_blank()) +
+        #     labs(x = "log 10") +
+        #     geom_vline(xintercept = log10(myTH), linetype="dotted",
+        #                color = "blue", size=1.5)
+        # }
       })
       #
       output$plot2 <- renderPlot({
-        if (input$radio == "1") {
-          ggplot(me, aes_string(x = me[, 1])) +
-            geom_histogram(bins = 80) +
-            labs(x = "Scale 0 to 1") +
-            geom_vline(
-              xintercept = myTH,
-              linetype = "dotted",
-              color = "blue",
-              size = 1.5
-            )
 
-        } else if (input$radio == "2") {
-          ggplot(me, aes_string(x = me[, 1])) +
-            geom_histogram(bins = 80) +
-            labs(x = "log 10") +
-            geom_vline(
-              xintercept = log10(myTH),
-              linetype = "dotted",
-              color = "blue",
-              size = 1.5
-            )
+        ggplot(me, aes_string(x = me[, 1])) +
+          geom_histogram(bins = 80) +
+          labs(x = "Scale 0 to 1") +
+          geom_vline(
+            xintercept = myTH,
+            linetype = "dotted",
+            color = "blue",
+            size = 1.5
+          )
 
-        } else {
-          ggplot(me, aes_string(x = me[, 1])) +
-            geom_histogram(bins = 80) +
-            geom_vline(
-              xintercept = log2(myTH),
-              linetype = "dotted",
-              color = "blue",
-              size = 1.5
-            )
-        }
+        # if (input$radio == "1") {
+        #   ggplot(me, aes_string(x = me[, 1])) +
+        #     geom_histogram(bins = 80) +
+        #     labs(x = "Scale 0 to 1") +
+        #     geom_vline(
+        #       xintercept = myTH,
+        #       linetype = "dotted",
+        #       color = "blue",
+        #       size = 1.5
+        #     )
+        #
+        # } else if (input$radio == "2") {
+        #   ggplot(me, aes_string(x = me[, 1])) +
+        #     geom_histogram(bins = 80) +
+        #     labs(x = "log 10") +
+        #     geom_vline(
+        #       xintercept = log10(myTH),
+        #       linetype = "dotted",
+        #       color = "blue",
+        #       size = 1.5
+        #     )
+        #
+        # } else {
+        #   ggplot(me, aes_string(x = me[, 1])) +
+        #     geom_histogram(bins = 80) +
+        #     geom_vline(
+        #       xintercept = log2(myTH),
+        #       linetype = "dotted",
+        #       color = "blue",
+        #       size = 1.5
+        #     )
+        # }
       })
     }
 
@@ -1194,7 +1256,7 @@ cycadas <- function() {
 
     observeEvent(input$btnLoadDemoData, {
 
-
+      # browser()
       # Create a Progress object
       progress <- shiny::Progress$new()
       # Make sure it closes when we exit this reactive, even if there's an error
@@ -1209,21 +1271,21 @@ cycadas <- function() {
       df_global <<- df
 
       # create initial master node of all Unassigned clusters
-      nodes <- tibble(id = 1,
-                      label = "Unassigned",
-                      pm = list(""),
-                      nm = list(""),
-                      color = "blue"
-      )
-
-      edges <- data.frame(from = numeric(), to = numeric())
-      reactVals$graph <- list(nodes = nodes, edges = edges)
+      # nodes <- tibble(id = 1,
+      #                 label = "Unassigned",
+      #                 pm = list(""),
+      #                 nm = list(""),
+      #                 color = "blue"
+      # )
+      #
+      # edges <- data.frame(from = numeric(), to = numeric())
+      # reactVals$graph <- list(nodes = nodes, edges = edges)
+      #
+      reactVals$graph <- initTree()
 
       annotationlist <<- list("Unassigned")
 
-      # cell_freq <<- read.csv("data/McCarthy_cluster_freq_400.csv") %>%
-      #   mutate(total = sum(column_name)) %>%
-      #   mutate(frequency = round(column_name / total * 100, 2))
+      cell_freq <- read.csv("data/McCarthy_cluster_freq_400.csv")
 
       labels_row <-
         paste0(rownames(df), " (", cell_freq$clustering_prop , "%)")
@@ -1302,6 +1364,7 @@ cycadas <- function() {
     # Upload All Annotation Demo Data ----
     observeEvent(input$btnLoadAnnoData, {
       # browser()
+
       # Create a Progress object
       progress <- shiny::Progress$new()
       # Make sure it closes when we exit this reactive, even if there's an error
@@ -1316,15 +1379,18 @@ cycadas <- function() {
       df_global <<- df
 
       # create initial master node of all Unassigned clusters
-      nodes <- tibble(id = 1,
-                      label = "Unassigned",
-                      pm = list(""),
-                      nm = list(""),
-                      color = "blue"
-      )
+      # nodes <- tibble(id = 1,
+      #                 label = "Unassigned",
+      #                 pm = list(""),
+      #                 nm = list(""),
+      #                 color = "blue"
+      # )
+      #
+      # edges <- data.frame(from = numeric(), to = numeric())
+      # reactVals$graph <- list(nodes = nodes, edges = edges)
 
-      edges <- data.frame(from = numeric(), to = numeric())
-      reactVals$graph <- list(nodes = nodes, edges = edges)
+
+      reactVals$graph <- initTree()
 
       annotationlist <<- list("Unassigned")
 
@@ -1427,6 +1493,7 @@ cycadas <- function() {
       df_nodes$nm[is.na(df_nodes$nm)] <- ""
       df_nodes$nm <- strsplit(df_nodes$nm, "\\|")
 
+      # browser()
       reactVals$graph$nodes <- df_nodes
       reactVals$graph$edges <- df_edges
 

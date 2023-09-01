@@ -356,17 +356,17 @@ ui <- dashboardPage(
               ),
               column(
                 width = 6,
-                box(
-                  width = NULL,
-                  id = "transformationBox",
-                  title = "Data transformation",
-                  radioButtons(
-                    "radio",
-                    label = NULL,
-                    choices = list("0 to 1" = "1"),
-                    selected = "1"
-                  )
-                ),
+                # box(
+                #   width = NULL,
+                #   id = "transformationBox",
+                #   title = "Data transformation",
+                #   radioButtons(
+                #     "radio",
+                #     label = NULL,
+                #     choices = list("0 to 1" = "1"),
+                #     selected = "1"
+                #   )
+                # ),
                 box(width = NULL,
                     DTOutput('table'))
               ))),
