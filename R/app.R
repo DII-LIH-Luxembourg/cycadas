@@ -1205,7 +1205,7 @@ cycadas <- function() {
       # browser()
 
       ## Load median expression and cell frequencies
-      df <- read.csv("/Users/ohunewald/work/GoodsSyndrom/results/1600/zip_1600_custers/median_expr_1600.csv")
+      df <- read.csv("data/McCarthy_expr_median_400.csv")
       df_global <<- df
 
       # create initial master node of all Unassigned clusters
@@ -1221,12 +1221,12 @@ cycadas <- function() {
 
       annotationlist <<- list("Unassigned")
 
-      cell_freq <<- read.csv("/Users/ohunewald/work/GoodsSyndrom/results/1600/zip_1600_custers/cluster_freq_1600.csv") %>%
-        mutate(total = sum(column_name)) %>%
-        mutate(frequency = round(column_name / total * 100, 2))
+      # cell_freq <<- read.csv("data/McCarthy_cluster_freq_400.csv") %>%
+      #   mutate(total = sum(column_name)) %>%
+      #   mutate(frequency = round(column_name / total * 100, 2))
 
       labels_row <-
-        paste0(rownames(df), " (", cell_freq$frequency , "%)")
+        paste0(rownames(df), " (", cell_freq$clustering_prop , "%)")
 
       marker_names <- rownames(df)
 
@@ -1291,7 +1291,7 @@ cycadas <- function() {
       )
 
       annotaionDF <<- data.frame("cell" = "unassigned",
-                                 clusterSize = cell_freq$frequency)
+                                 clusterSize = cell_freq$clustering_prop)
       at <<- reactiveValues(data = annotaionDF, dr_umap = dr_umap)
 
       reactVals$th <- kmeansTH(df01)
