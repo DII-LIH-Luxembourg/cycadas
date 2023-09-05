@@ -25,7 +25,8 @@ cycadas <- function() {
                               counts_table = NULL,
                               DA_result_table = NULL,
                               DA_interactive_table = NULL,
-                              graph = NULL)
+                              graph = NULL,
+                              hm = NULL)
 
   initTree <- function() {
 
@@ -79,19 +80,19 @@ cycadas <- function() {
 
       }
 
-      if(input$treeSwitch == T) {
-        output$mynetworkid <- renderVisNetwork({
-          visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
-            visEdges(arrows = "from")
-        })
-
-      } else {
+      # if(input$treeSwitch == T) {
+      #   output$mynetworkid <- renderVisNetwork({
+      #     visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
+      #       visEdges(arrows = "from")
+      #   })
+      #
+      # } else {
         output$mynetworkid <- renderVisNetwork({
           visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
             visEdges(arrows = "from") %>%
             visHierarchicalLayout()
         })
-      }
+      # }
 
     }
 
@@ -359,6 +360,21 @@ cycadas <- function() {
       }
     })
 
+    # Annotation heatmap plot ----
+    output$hm_tree <- renderPlot({
+
+      if (dim(reactVals$hm)[1] < 2) {
+        # browser()
+        pheatmap(reactVals$hm %>% select(-c("cell")), cluster_cols = F, cluster_rows = F)
+      } else {
+        message(dim(reactVals$hm)[1])
+        # browser()
+
+        pheatmap(reactVals$hm %>% select(-c("cell")), cluster_cols = F)
+      }
+    })
+
+
     # Observe Parent Node selection ----
     observeEvent(input$parentPicker, {
 
@@ -397,6 +413,8 @@ cycadas <- function() {
 
       updateClusterLabels(tmp)
 
+      reactVals$hm <- tmp
+
       updateCheckboxGroupButtons(
         session,
         inputId = "treePickerPos",
@@ -412,15 +430,15 @@ cycadas <- function() {
         disabledChoices = filterNegMarkers
       )
 
-      # update picker heatmap plot ----
-      output$hm_tree <- renderPlot({
-        if (dim(tmp)[1] < 2) {
-          pheatmap(tmp[allMarkers], cluster_cols = F, cluster_rows = F)
-        } else {
-          message(dim(tmp)[1])
-          pheatmap(tmp[allMarkers], cluster_cols = F)
-        }
-      })
+      # # update picker heatmap plot ----
+      # output$hm_tree <- renderPlot({
+      #   if (dim(tmp)[1] < 2) {
+      #     pheatmap(tmp[allMarkers], cluster_cols = F, cluster_rows = F)
+      #   } else {
+      #     message(dim(tmp)[1])
+      #     pheatmap(tmp[allMarkers], cluster_cols = F)
+      #   }
+      # })
 
       # update umap plot for Tree ----
       ClusterSelection <- filterColor(df_global,tmp)
@@ -479,6 +497,80 @@ cycadas <- function() {
         inputId = "renameNode",
         label = NULL,
         value = node$label)
+    })
+
+    # Update Node ----
+    observeEvent(input$updateNodeBtn, {
+
+      # browser()
+
+      node <- reactVals$graph$nodes %>% filter(label == input$parentPicker)
+      myid <- node$id
+
+      reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker,]$pm <-
+              list(c(reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker,]$pm[[1]], input$treePickerPos))
+
+      reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker,]$nm <-
+        list(c(reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker,]$nm[[1]], input$treePickerNeg))
+
+      updateTreeAnnotation()
+
+
+      # df01Tree <<- reAnnotateDf()
+#
+#       filterPosMarkers <- reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker,]$pm[[1]]
+#       filterNegMarkers <- reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker,]$nm[[1]]
+#
+#       tmp <- filterHM(df01Tree,filterPosMarkers, filterNegMarkers, reactVals$th)
+#       tmp <- tmp[tmp$cell == node$label ,]
+
+      # reactVals$hm <- tmp
+      reactVals$hm <- df01Tree[df01Tree$cell == input$parentPicker, ]
+
+
+      # if "newNode" textfield is ot empty, update the node name
+      if (input$newNode != "") {
+        # browser()
+
+        old_name <- input$parentPicker
+        new_name <- input$newNode
+
+        reactVals$graph$nodes[reactVals$graph$nodes$label == old_name,]$label <- new_name
+
+        annotationlist[annotationlist == old_name] <<- new_name
+        updatePickerInput(
+          session,
+          inputId = "parentPicker",
+          selected = new_name,
+          choices = annotationlist
+        )
+
+        # replace name in heatmap
+        df01Tree$cell[df01Tree$cell == old_name] <<- new_name
+        reactVals$hm <- df01Tree[df01Tree$cell == new_name, ]
+
+        updateTextInput(
+          session,
+          inputId = "newNode",
+          label = NULL,
+          value = "",
+          placeholder = NULL
+        )
+
+      }
+      # # update picker heatmap plot ----
+      # output$hm_tree <- renderPlot({
+      #   if (dim(tmp)[1] < 2) {
+      #     pheatmap(tmp[allMarkers], cluster_cols = F, cluster_rows = F)
+      #   } else {
+      #     message(dim(tmp)[1])
+      #     pheatmap(tmp[allMarkers], cluster_cols = F)
+      #   }
+      # })
+      # updateClusterLabels(tmp)
+
+      plotTree()
+      # input$renameNode
     })
 
     # Delete Node ----
@@ -673,7 +765,7 @@ cycadas <- function() {
     ## update the tree after a change in the thresholds
     ## walk through the list of nodes and adjust the annotation if
     ## needed based on the filtered DF
-    updateTreeAnnotation <- function(df_row) {
+    updateTreeAnnotation <- function(df_row=NULL) {
 
       # browser()
 
@@ -708,13 +800,15 @@ cycadas <- function() {
           posMarker <- posMarker[nzchar(posMarker)]
           negMarker <- negMarker[nzchar(negMarker)]
 
-          tmp <- filterHM(df01Tree,unlist(posMarker), unlist(negMarker), reactVals$th)
+          tmp <- filterHM(df01Tree,unique(unlist(posMarker)), unique(unlist(negMarker)), reactVals$th)
 
           df01Tree[rownames(tmp), 'cell'] <<- reactVals$graph$node$label[i]
 
           updateClusterLabels(tmp)
         }
       }
+
+      # return(df01Tree)
 
     }
 
@@ -968,16 +1062,16 @@ cycadas <- function() {
     ##
     # Annotation Tree ---------------------------------------------------------
     ##
-    output$hm_tree <- renderPlot({
-      my_new_hm <- dr_umap
-      # my_new_hm <- my_new_hm %>% normalize01()
-      if (dim(my_new_hm)[1] > 0) {
-        # my_new_hm %>% select(-c("cluster_number", "u1", "u2"))
-        pheatmap(my_new_hm %>% select(-c("cluster_number", "u1", "u2")), cluster_cols = F)
-      } else {
-        ggplot() + theme_void() + ggtitle("Select area on Umap to plot Heatmap")
-      }
-    })
+    # output$hm_tree <- renderPlot({
+    #   my_new_hm <- reactVals$hm
+    #   # my_new_hm <- my_new_hm %>% normalize01()
+    #   if (dim(my_new_hm)[1] > 0) {
+    #     # my_new_hm %>% select(-c("cluster_number", "u1", "u2"))
+    #     pheatmap(my_new_hm %>% select(-c("cluster_number", "u1", "u2")), cluster_cols = F)
+    #   } else {
+    #     ggplot() + theme_void() + ggtitle("Select area on Umap to plot Heatmap")
+    #   }
+    # })
 
     # Set Phenotype names -----------------------------------------------------
     observeEvent(input$btnSetType, {
@@ -1498,6 +1592,8 @@ cycadas <- function() {
       reactVals$graph$edges <- df_edges
 
       df01Tree <<- df_anno
+
+      reactVals$hm <- df01Tree
 
       annotationlist <<- as.list(df_nodes$label)
 

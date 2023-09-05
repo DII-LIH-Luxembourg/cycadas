@@ -266,63 +266,74 @@ ui <- dashboardPage(
 
                 box(
                   width = NULL,
-                  switchInput(
-                    inputId = "treeSwitch",
-                    label = "Change Layout",
-                    value = FALSE,
-                    onLabel = "Hierarchical",
-                    offLabel = "Loose"
-                  ),
+                  # switchInput(
+                  #   inputId = "treeSwitch",
+                  #   label = "Change Layout",
+                  #   value = FALSE,
+                  #   onLabel = "Hierarchical",
+                  #   offLabel = "Loose"
+                  # ),
+                  title = "Create New Node",
                   actionButton("createNodeBtn", "Create Node")
               ),
               box(
                 width = NULL,
                 title = "Update Node",
-                pickerInput(
-                  inputId = "updateNodePicker",
-                  label = "Select Node:",
-                  choices = NULL,
-                  options = list(
-                    `actions-box` = TRUE,
-                    size = 10,
-                    `selected-text-format` = "count > 3"
-                  ),
-                  multiple = F
-                ),
-                textInput("renameNode", "Rename..."),
-                # select markers
-                pickerInput(
-                  inputId = "updatePickerPos",
-                  label = "Update Positive Markers",
-                  choices = NULL,
-                  options = list(
-                    `actions-box` = TRUE,
-                    size = 10,
-                    `selected-text-format` = "count > 3"
-                  ),
-                  multiple = TRUE
-                ),
-                pickerInput(
-                  inputId = "updatePickerNeg",
-                  label = "Update Negative Markers",
-                  choices = NULL,
-                  options = list(
-                    `actions-box` = TRUE,
-                    size = 10,
-                    `selected-text-format` = "count > 3"
-                  ),
-                  multiple = TRUE
-                ),
-                actionButton("updateNodeBtn", "Update Node"),
+                actionButton("updateNodeBtn", "Update Node")
+              ),
+              box(
+                width = NULL,
+                title = "Delete Node",
                 actionButton("deleteNodeBtn", "Delete Node")
               ),
+              # box(
+              #   width = NULL,
+              #   title = "Update Node",
+              #   pickerInput(
+              #     inputId = "updateNodePicker",
+              #     label = "Select Node:",
+              #     choices = NULL,
+              #     options = list(
+              #       `actions-box` = TRUE,
+              #       size = 10,
+              #       `selected-text-format` = "count > 3"
+              #     ),
+              #     multiple = F
+              #   ),
+              #   textInput("renameNode", "Rename..."),
+              #   # select markers
+              #   pickerInput(
+              #     inputId = "updatePickerPos",
+              #     label = "Update Positive Markers",
+              #     choices = NULL,
+              #     options = list(
+              #       `actions-box` = TRUE,
+              #       size = 10,
+              #       `selected-text-format` = "count > 3"
+              #     ),
+              #     multiple = TRUE
+              #   ),
+              #   pickerInput(
+              #     inputId = "updatePickerNeg",
+              #     label = "Update Negative Markers",
+              #     choices = NULL,
+              #     options = list(
+              #       `actions-box` = TRUE,
+              #       size = 10,
+              #       `selected-text-format` = "count > 3"
+              #     ),
+              #     multiple = TRUE
+              #   ),
+              #   actionButton("updateNodeBtn", "Update Node"),
+              #   actionButton("deleteNodeBtn", "Delete Node")
+              # ),
               box(
                 width = NULL,
                 title = "Export Annotation",
                 # actionButton("exportAnnotationBtn", "Export Annotation")
                 downloadButton("exportAnnotationBtn", "Export Annotation")
               )
-              ),
+              ), # end column
               column(
                 width = 8,
                 box(

@@ -76,6 +76,9 @@ filterHM <- function(DF,posList, negList, th) {
     return(as.data.frame(DF))
 
   } else {
+
+    # browser()
+
     posTH <- th$value[th$cell %in% posList]
     negTH <- th$value[th$cell %in% negList]
     # first reduce by the positive markers
