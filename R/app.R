@@ -800,7 +800,12 @@ cycadas <- function() {
           posMarker <- posMarker[nzchar(posMarker)]
           negMarker <- negMarker[nzchar(negMarker)]
 
+          # my_th <- reactVals$th
+          #
+          # rownames(my_th) <- my_th$cell
+
           tmp <- filterHM(df01Tree,unique(unlist(posMarker)), unique(unlist(negMarker)), reactVals$th)
+          # tmp <- filterHM(df01Tree,unique(unlist(posMarker)), unique(unlist(negMarker)), my_th)
 
           df01Tree[rownames(tmp), 'cell'] <<- reactVals$graph$node$label[i]
 

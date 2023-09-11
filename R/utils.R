@@ -39,6 +39,7 @@ kmeansTH <- function(df) {
     th[th$cell == m, "value"] <- round(ahist(z, style="midpoints", data=df[, m], plot=FALSE)$breaks[2:2], 3)
   }
 
+  rownames(th) <- th$cell
   return(th)
 }
 
@@ -82,14 +83,24 @@ filterHM <- function(DF,posList, negList, th) {
     posTH <- th$value[th$cell %in% posList]
     negTH <- th$value[th$cell %in% negList]
     # first reduce by the positive markers
+    # for (i in 1:length(posList)) {
+    #   marker <- posList[i]
+    #   DF <- DF[DF[marker] > posTH[i], ]
+    # }
+
     for (i in 1:length(posList)) {
       marker <- posList[i]
-      DF <- DF[DF[marker] > posTH[i], ]
+      DF <- DF[DF[marker] > th[marker,]$value, ]
     }
     # next reduce by the negative markers
+    # for (i in 1:length(negList)) {
+    #   marker <- negList[i]
+    #   DF <- DF[DF[marker] < negTH[i], ]
+    # }
+
     for (i in 1:length(negList)) {
       marker <- negList[i]
-      DF <- DF[DF[marker] < negTH[i], ]
+      DF <- DF[DF[marker] < th[marker,]$value, ]
     }
     return(as.data.frame(DF))
   }
