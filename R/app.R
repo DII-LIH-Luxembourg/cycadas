@@ -1204,6 +1204,23 @@ cycadas <- function() {
 
       }
 
+      # browser()
+      # change the name of nodes:
+      # if node has children add "_remaining"
+      my_list <- lapply(DA_df$cell, function(x) {
+            # get the id
+            nid <- reactVals$graph$nodes$id[reactVals$graph$nodes$label == x]
+            # check if the id has children
+            if(nid %in% reactVals$graph$edges$to) {
+              return (x <- paste0(x, "_remaining"))
+            }
+            else {
+              return(x)
+            }
+          })
+
+      DA_df$list <- unlist(my_list)
+
       reactVals$DA_result_table <- DA_df
 
     })
