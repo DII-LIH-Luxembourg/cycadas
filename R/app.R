@@ -100,7 +100,7 @@ cycadas <- function() {
     observeEvent(c(input$fMarkerExpr, input$cluster_freq), {
 
       reactVals$graph <- initTree()
-      # browser()
+      browser()
 
       req(input$fMarkerExpr)
       req(input$cluster_freq)
@@ -121,12 +121,21 @@ cycadas <- function() {
 
       annotationlist <<- list("Unassigned")
 
-      cell_freq <<- read.csv(input$cluster_freq$datapath) %>%
-        mutate(total = sum(column_name)) %>%
-        mutate(frequency = round(column_name / total * 100, 2))
+      cell_freq <<- read.csv(input$cluster_freq$datapath)
+
+      # cell_freq <<- read.csv("data/McCarthy_cluster_freq_400.csv") %>%
+      #   mutate(total = sum(column_name)) %>%
+      #   mutate(frequency = round(column_name / total * 100, 2))
 
       labels_row <-
-        paste0(rownames(df), " (", cell_freq$frequency , "%)")
+        paste0(rownames(df), " (", cell_freq$clustering_prop , "%)")
+
+      # cell_freq <<- read.csv(input$cluster_freq$datapath) %>%
+      #   mutate(total = sum(column_name)) %>%
+      #   mutate(frequency = round(column_name / total * 100, 2))
+      #
+      # labels_row <-
+      #   paste0(rownames(df), " (", cell_freq$frequency , "%)")
 
       marker_names <- rownames(df)
 
@@ -193,7 +202,7 @@ cycadas <- function() {
       reactVals$th <- kmeansTH(df01)
 
       annotaionDF <<- data.frame("cell" = "unassigned",
-                                 clusterSize = cell_freq$frequency)
+                                 clusterSize = cell_freq$clustering_prop)
       at <<- reactiveValues(data = annotaionDF, dr_umap = dr_umap)
 
     })
