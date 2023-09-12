@@ -100,7 +100,7 @@ cycadas <- function() {
     observeEvent(c(input$fMarkerExpr, input$cluster_freq), {
 
       reactVals$graph <- initTree()
-      browser()
+      # browser()
 
       req(input$fMarkerExpr)
       req(input$cluster_freq)
