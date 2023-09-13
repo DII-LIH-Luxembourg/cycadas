@@ -14,6 +14,7 @@ library(visNetwork)
 library(glue)
 library(purrr)
 library(reshape2)
+library(mousetrap)
 
 cycadas <- function() {
 
@@ -1502,6 +1503,8 @@ cycadas <- function() {
       ## Load median expression and cell frequencies
       df <- read.csv("data/McCarthy_expr_median_400.csv")
       df_global <<- df
+
+      # browser()
 
       # create initial master node of all Unassigned clusters
       # nodes <- tibble(id = 1,

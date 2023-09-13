@@ -276,11 +276,12 @@ ui <- dashboardPage(
                   title = "Create New Node",
                   actionButton("createNodeBtn", "Create Node")
               ),
-              box(
-                width = NULL,
-                title = "Update Node",
-                actionButton("updateNodeBtn", "Update Node")
-              ),
+              # box(
+              #   width = NULL,
+              #   title = "Update Node",
+              #   actionButton("updateNodeBtn", "Update Node"),
+              #
+              # ),
               box(
                 width = NULL,
                 title = "Delete Node",
