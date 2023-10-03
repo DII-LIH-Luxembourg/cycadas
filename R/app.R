@@ -47,14 +47,13 @@ cycadas <- function() {
 
   # constructs a string of positive or negative markers
   ph_name <<- ""
-  # initDATreePage <<- T
 
   # Server function ----
   server = function(input, output, session) {
 
     # Function: Update cluster labels ----
     updateClusterLabels <- function(mydf) {
-      # browser()
+
       mysum <- sum(cell_freq[rownames(mydf),]$clustering_prop)
 
       output$progressBox <- renderText({
@@ -81,19 +80,12 @@ cycadas <- function() {
 
       }
 
-      # if(input$treeSwitch == T) {
-      #   output$mynetworkid <- renderVisNetwork({
-      #     visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
-      #       visEdges(arrows = "from")
-      #   })
-      #
-      # } else {
-        output$mynetworkid <- renderVisNetwork({
-          visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
-            visEdges(arrows = "from") %>%
-            visHierarchicalLayout()
-        })
-      # }
+      output$mynetworkid <- renderVisNetwork({
+        visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
+          visEdges(arrows = "from") %>%
+          visHierarchicalLayout()
+      })
+
 
     }
 
@@ -109,34 +101,12 @@ cycadas <- function() {
       df <- read.csv(input$fMarkerExpr$datapath)
       df_global <<- df
 
-      # # create initial master node of all Unassigned clusters
-      # nodes <- tibble(id = 1,
-      #                 label = "Unassigned",
-      #                 pm = list(""),
-      #                 nm = list(""),
-      #                 color = "blue"
-      # )
-      #
-      # edges <- data.frame(from = c(1), to = c(1))
-      # reactVals$graph <- list(nodes = nodes, edges = edges)
-
       annotationlist <<- list("Unassigned")
 
       cell_freq <<- read.csv(input$cluster_freq$datapath)
 
-      # cell_freq <<- read.csv("data/McCarthy_cluster_freq_400.csv") %>%
-      #   mutate(total = sum(column_name)) %>%
-      #   mutate(frequency = round(column_name / total * 100, 2))
-
       labels_row <-
         paste0(rownames(df), " (", cell_freq$clustering_prop , "%)")
-
-      # cell_freq <<- read.csv(input$cluster_freq$datapath) %>%
-      #   mutate(total = sum(column_name)) %>%
-      #   mutate(frequency = round(column_name / total * 100, 2))
-      #
-      # labels_row <-
-      #   paste0(rownames(df), " (", cell_freq$frequency , "%)")
 
       marker_names <- rownames(df)
 
@@ -209,10 +179,6 @@ cycadas <- function() {
     })
     # Observe MenutItems ----
     observeEvent(input$tabs, {
-      # req(input$fMarkerExpr)
-      # req(input$cluster_freq)
-      # req(df01)
-      # req(graph)
 
       if (exists("df01")) {
         if(input$tabs=="thresholds") { ## Thresholds ----
@@ -411,9 +377,6 @@ cycadas <- function() {
         filterNegMarkers <- c(filterNegMarkers, unlist(next_node$nm))
 
       }
-      # print(filterPosMarkers)
-      # print(filterNegMarkers)
-
       # remove the empty strings in the markers
       filterPosMarkers <- filterPosMarkers[nzchar(filterPosMarkers)]
       filterNegMarkers <- filterNegMarkers[nzchar(filterNegMarkers)]
@@ -440,16 +403,6 @@ cycadas <- function() {
         disabledChoices = filterNegMarkers
       )
 
-      # # update picker heatmap plot ----
-      # output$hm_tree <- renderPlot({
-      #   if (dim(tmp)[1] < 2) {
-      #     pheatmap(tmp[allMarkers], cluster_cols = F, cluster_rows = F)
-      #   } else {
-      #     message(dim(tmp)[1])
-      #     pheatmap(tmp[allMarkers], cluster_cols = F)
-      #   }
-      # })
-
       # update umap plot for Tree ----
       ClusterSelection <- filterColor(df_global,tmp)
 
@@ -460,11 +413,7 @@ cycadas <- function() {
           )) +
             geom_point(size = 1.0) +
             theme_bw() +
-            # scale_color_manual(name='Cluster selection',
-            #                    breaks=c('selected phenotype', 'other clusters'),
-            #                    values=c('selected phenotype'='green', 'other clusters'='grey'))
-            theme(legend.text = element_text(size =
-                                               8)) +
+            theme(legend.text = element_text(size = 8)) +
             guides(color = guide_legend(override.aes = list(size = 4)))
         )
     })
@@ -512,8 +461,6 @@ cycadas <- function() {
     # Update Node ----
     observeEvent(input$updateNodeBtn, {
 
-      # browser()
-
       node <- reactVals$graph$nodes %>% filter(label == input$parentPicker)
       myid <- node$id
 
@@ -525,18 +472,7 @@ cycadas <- function() {
 
       updateTreeAnnotation()
 
-
-      # df01Tree <<- reAnnotateDf()
-#
-#       filterPosMarkers <- reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker,]$pm[[1]]
-#       filterNegMarkers <- reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker,]$nm[[1]]
-#
-#       tmp <- filterHM(df01Tree,filterPosMarkers, filterNegMarkers, reactVals$th)
-#       tmp <- tmp[tmp$cell == node$label ,]
-
-      # reactVals$hm <- tmp
       reactVals$hm <- df01Tree[df01Tree$cell == input$parentPicker, ]
-
 
       # if "newNode" textfield is ot empty, update the node name
       if (input$newNode != "") {
@@ -568,19 +504,8 @@ cycadas <- function() {
         )
 
       }
-      # # update picker heatmap plot ----
-      # output$hm_tree <- renderPlot({
-      #   if (dim(tmp)[1] < 2) {
-      #     pheatmap(tmp[allMarkers], cluster_cols = F, cluster_rows = F)
-      #   } else {
-      #     message(dim(tmp)[1])
-      #     pheatmap(tmp[allMarkers], cluster_cols = F)
-      #   }
-      # })
-      # updateClusterLabels(tmp)
 
       plotTree()
-      # input$renameNode
     })
 
     # Delete Node ----
@@ -811,10 +736,6 @@ cycadas <- function() {
           posMarker <- posMarker[nzchar(posMarker)]
           negMarker <- negMarker[nzchar(negMarker)]
 
-          # my_th <- reactVals$th
-          #
-          # rownames(my_th) <- my_th$cell
-
           tmp <- filterHM(df01Tree,unique(unlist(posMarker)), unique(unlist(negMarker)), reactVals$th)
           # tmp <- filterHM(df01Tree,unique(unlist(posMarker)), unique(unlist(negMarker)), my_th)
 
@@ -823,8 +744,6 @@ cycadas <- function() {
           updateClusterLabels(tmp)
         }
       }
-
-      # return(df01Tree)
 
     }
 
@@ -847,43 +766,8 @@ cycadas <- function() {
       marker_expr <- getMarkerDistDF(marker, "1")
       myRenderFunction(marker_expr, myTH, myCol)
 
-      # if (input$radio == "1") {
-      #   reactVals$th[input$table_rows_selected, 2] <- round(input$plot_click$x, 3)
-      #   myTH <- reactVals$th[input$table_rows_selected, 2]
-      #   marker_expr <- getMarkerDistDF(marker, input$radio)
-      #   myRenderFunction(marker_expr, myTH)
-      # }
-      # if (input$radio == "2") {
-      #   reactVals$th[input$table_rows_selected, 2] <- round(10^(input$plot_click$x), 6)
-      #   myTH <- reactVals$th[input$table_rows_selected, 2]
-      #   marker_expr <- getMarkerDistDF(marker, input$radio)
-      #   myRenderFunction(marker_expr, myTH)
-      # }
-
       updateTreeAnnotation(reactVals$th[input$table_rows_selected])
     })
-
-    ##
-    ## transform according the selection event --------------------------------
-    ##
-    # observeEvent(input$radio, {
-    #   req(input$table_rows_selected)
-    #   selRow <- reactVals$th[input$table_rows_selected,]
-    #   marker <- reactVals$th[input$table_rows_selected, 1]
-    #   myTH <- reactVals$th[input$table_rows_selected, 2]
-    #
-    #   marker_expr <- getMarkerDistDF(marker, input$radio)
-    #   myRenderFunction(marker_expr, myTH)
-    # })
-
-    #   if ( input$radio == "1") {
-    #     marker_expr <- getMarkerDistDF(marker, input$radio)
-    #     myRenderFunction(marker_expr, myTH)
-    #   } else if (input$radio == "2") {
-    #     marker_expr <- getMarkerDistDF(marker, input$radio)
-    #     myRenderFunction(marker_expr, myTH)
-    #   }
-    # })
 
     ##
     # Thresholds plotting function ----
@@ -904,30 +788,6 @@ cycadas <- function() {
           geom_vline(xintercept = myTH, linetype="dotted",
                      color = myCol, size=1.5)
 
-        # if (input$radio == "1") {
-        #   ggplot(me, aes_string(x=me[,1], y=me[,2])) +
-        #     geom_point(size=1) +
-        #     theme(axis.title.y = element_blank(),
-        #           axis.ticks.y  = element_blank(),
-        #           axis.text.y = element_blank(),
-        #           panel.grid.major.y = element_blank(),
-        #           panel.grid.minor.y = element_blank()) +
-        #     labs(x = "Scale 0 to 1") +
-        #     geom_vline(xintercept = myTH, linetype="dotted",
-        #                color = "blue", size=1.5)
-        #
-        # } else if (input$radio == "2") {
-        #   ggplot(me, aes_string(x=me[,1], y=me[,2])) +
-        #     geom_point(size=1) +
-        #     theme(axis.title.y = element_blank(),
-        #           axis.ticks.y  = element_blank(),
-        #           axis.text.y = element_blank(),
-        #           panel.grid.major.y = element_blank(),
-        #           panel.grid.minor.y = element_blank()) +
-        #     labs(x = "log 10") +
-        #     geom_vline(xintercept = log10(myTH), linetype="dotted",
-        #                color = "blue", size=1.5)
-        # }
       })
       #
       output$plot2 <- renderPlot({
@@ -941,39 +801,6 @@ cycadas <- function() {
             color = myCol,
             size = 1.5
           )
-
-        # if (input$radio == "1") {
-        #   ggplot(me, aes_string(x = me[, 1])) +
-        #     geom_histogram(bins = 80) +
-        #     labs(x = "Scale 0 to 1") +
-        #     geom_vline(
-        #       xintercept = myTH,
-        #       linetype = "dotted",
-        #       color = "blue",
-        #       size = 1.5
-        #     )
-        #
-        # } else if (input$radio == "2") {
-        #   ggplot(me, aes_string(x = me[, 1])) +
-        #     geom_histogram(bins = 80) +
-        #     labs(x = "log 10") +
-        #     geom_vline(
-        #       xintercept = log10(myTH),
-        #       linetype = "dotted",
-        #       color = "blue",
-        #       size = 1.5
-        #     )
-        #
-        # } else {
-        #   ggplot(me, aes_string(x = me[, 1])) +
-        #     geom_histogram(bins = 80) +
-        #     geom_vline(
-        #       xintercept = log2(myTH),
-        #       linetype = "dotted",
-        #       color = "blue",
-        #       size = 1.5
-        #     )
-        # }
       })
     }
 
@@ -1075,20 +902,6 @@ cycadas <- function() {
         valueBox(dim(mydf)[1], "Cluster", icon = icon("list"),color = "purple")
       })
     })
-
-    ##
-    # Annotation Tree ---------------------------------------------------------
-    ##
-    # output$hm_tree <- renderPlot({
-    #   my_new_hm <- reactVals$hm
-    #   # my_new_hm <- my_new_hm %>% normalize01()
-    #   if (dim(my_new_hm)[1] > 0) {
-    #     # my_new_hm %>% select(-c("cluster_number", "u1", "u2"))
-    #     pheatmap(my_new_hm %>% select(-c("cluster_number", "u1", "u2")), cluster_cols = F)
-    #   } else {
-    #     ggplot() + theme_void() + ggtitle("Select area on Umap to plot Heatmap")
-    #   }
-    # })
 
     # Set Phenotype names -----------------------------------------------------
     observeEvent(input$btnSetType, {
@@ -1228,20 +1041,6 @@ cycadas <- function() {
 
     })
 
-    # output$mynetworkid <- renderVisNetwork({
-    #   visNetwork(graph$nodes, graph$edges, width = "100%") %>%
-    #     visEdges(arrows = "from") %>%
-    #     visHierarchicalLayout()
-    # })
-
-    ## -------------------------------------------------------------------
-    # Interactive DA Tree ----
-    # output$interactiveTree <- renderVisNetwork({
-    #   visNetwork(graph$nodes, graph$edges, width = "100%") %>%
-    #     visEdges(arrows = "from") %>%
-    #     visHierarchicalLayout()
-    # })
-
     output$interactiveTree <- renderVisNetwork({
       visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
         visEvents(select = "function(nodes) {
@@ -1294,11 +1093,8 @@ cycadas <- function() {
         props_table <- t(as.data.frame(props_table[selected_labels,]))
       }
 
-
-
       ## subest the prps tabel based on the selected node
       # props_table <- props_table[selected_labels, ]
-
       props_table <- t(as.data.frame(colSums(props_table)))
 
       # mm <- match(md$sample_id, colnames(props_table))
@@ -1356,8 +1152,6 @@ cycadas <- function() {
         props_table <- t(as.data.frame(props_table[selected_labels,]))
       }
 
-
-
       ## subest the prps tabel based on the selected node
       # props_table <- props_table[selected_labels, ]
 
@@ -1398,17 +1192,6 @@ cycadas <- function() {
       df <- read.csv("data/McCarthy_expr_median_400.csv")
       df_global <<- df
 
-      # create initial master node of all Unassigned clusters
-      # nodes <- tibble(id = 1,
-      #                 label = "Unassigned",
-      #                 pm = list(""),
-      #                 nm = list(""),
-      #                 color = "blue"
-      # )
-      #
-      # edges <- data.frame(from = numeric(), to = numeric())
-      # reactVals$graph <- list(nodes = nodes, edges = edges)
-      #
       reactVals$graph <- initTree()
 
       annotationlist <<- list("Unassigned")
@@ -1486,7 +1269,6 @@ cycadas <- function() {
 
       reactVals$th <- kmeansTH(df01)
 
-
     })
     ## -------------------------------------------------------------------
     # Upload All Annotation Demo Data ----
@@ -1511,29 +1293,11 @@ cycadas <- function() {
 
       df_global <<- df
 
-      # browser()
-
-      # create initial master node of all Unassigned clusters
-      # nodes <- tibble(id = 1,
-      #                 label = "Unassigned",
-      #                 pm = list(""),
-      #                 nm = list(""),
-      #                 color = "blue"
-      # )
-      #
-      # edges <- data.frame(from = numeric(), to = numeric())
-      # reactVals$graph <- list(nodes = nodes, edges = edges)
-
-
       reactVals$graph <- initTree()
 
       annotationlist <<- list("Unassigned")
 
       cell_freq <<- read.csv("data/McCarthy_cluster_freq_400.csv")
-
-      # cell_freq <<- read.csv("data/McCarthy_cluster_freq_400.csv") %>%
-      #   mutate(total = sum(column_name)) %>%
-      #   mutate(frequency = round(column_name / total * 100, 2))
 
       labels_row <-
         paste0(rownames(df), " (", cell_freq$clustering_prop , "%)")
