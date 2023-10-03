@@ -32,9 +32,16 @@ subsetdf <- function(markers) {
 # }
 
 kmeansTH <- function(df) {
-  th <- data.frame(cell = colnames(df), value = 0.0)
+  th <- data.frame(cell = colnames(df), value = 0.0, color = "blue")
 
   for (m in th$cell) {
+
+    # check for bi-modal distribution, if not color = red to indicate
+    # stated in Pfister et al., 2013
+    if (bimodality_coefficient(df[, m]) < 0.555) {
+      th[th$cell == m, "color"] <- "red"
+    }
+
     z <- Ckmeans.1d.dp(df[, m], 2)
     th[th$cell == m, "value"] <- round(ahist(z, style="midpoints", data=df[, m], plot=FALSE)$breaks[2:2], 3)
   }

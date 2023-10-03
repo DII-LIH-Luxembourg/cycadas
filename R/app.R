@@ -741,7 +741,7 @@ cycadas <- function() {
     # Server - Thresholds Tab -------------------------------------------------
     ##
     output$table = renderDataTable(
-      reactVals$th,
+      reactVals$th[,1:2],
       editable = F,
       extensions = c('Buttons', 'Scroller'),
       selection = 'single',
@@ -765,10 +765,11 @@ cycadas <- function() {
       marker <- reactVals$th[input$table_rows_selected, 1]
       # threshold value for vertical line
       myTH <- reactVals$th[input$table_rows_selected, 2]
+      myCol <- reactVals$th[input$table_rows_selected, 3]
 
       # marker_expr <- getMarkerDistDF(marker, input$radio)
       marker_expr <- getMarkerDistDF(marker, "1")
-      myRenderFunction(marker_expr, myTH)
+      myRenderFunction(marker_expr, myTH, myCol)
     })
 
     # update Tree Annotation ----
@@ -841,9 +842,10 @@ cycadas <- function() {
 
       reactVals$th[input$table_rows_selected, 2] <- round(input$plot_click$x, 3)
       myTH <- reactVals$th[input$table_rows_selected, 2]
+      myCol <- reactVals$th[input$table_rows_selected, 3]
       # marker_expr <- getMarkerDistDF(marker, input$radio)
       marker_expr <- getMarkerDistDF(marker, "1")
-      myRenderFunction(marker_expr, myTH)
+      myRenderFunction(marker_expr, myTH, myCol)
 
       # if (input$radio == "1") {
       #   reactVals$th[input$table_rows_selected, 2] <- round(input$plot_click$x, 3)
@@ -886,7 +888,7 @@ cycadas <- function() {
     ##
     # Thresholds plotting function ----
     ##
-    myRenderFunction <- function(me, myTH){
+    myRenderFunction <- function(me, myTH, myCol){
 
       output$plot <- renderPlot({
         set.seed(1)
@@ -900,7 +902,7 @@ cycadas <- function() {
                 panel.grid.minor.y = element_blank()) +
           labs(x = "Scale 0 to 1") +
           geom_vline(xintercept = myTH, linetype="dotted",
-                     color = "blue", size=1.5)
+                     color = myCol, size=1.5)
 
         # if (input$radio == "1") {
         #   ggplot(me, aes_string(x=me[,1], y=me[,2])) +
@@ -936,7 +938,7 @@ cycadas <- function() {
           geom_vline(
             xintercept = myTH,
             linetype = "dotted",
-            color = "blue",
+            color = myCol,
             size = 1.5
           )
 
@@ -1502,6 +1504,11 @@ cycadas <- function() {
 
       ## Load median expression and cell frequencies
       df <- read.csv("data/McCarthy_expr_median_400.csv")
+
+      # !----------- TEST bimodal check !-----------------
+      #
+      df$testCol <- rnorm(nrow(df), 5.0, 1.0)
+
       df_global <<- df
 
       # browser()
