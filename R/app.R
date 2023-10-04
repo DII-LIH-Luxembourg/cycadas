@@ -76,7 +76,7 @@ cycadas <- function() {
         nLabel <- sum(df01Tree$cell == l)
         mysum <- sum(cell_freq[rownames(df01Tree),]$frequency)
 
-        if (nLabel == 0) reactVals$graph$nodes[i,]$color <- "red"
+        if (nLabel == 0) reactVals$graph$nodes[i,]$color <- "grey"
 
       }
 
