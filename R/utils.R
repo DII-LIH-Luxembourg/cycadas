@@ -49,14 +49,14 @@ filterHM <- function(DF,posList, negList, th) {
     return(as.data.frame(DF))
 
   } else if (length(posList) == 0 & length(negList) != 0) {
-    negTH <- th$value[th$cell %in% negList]
+    negTH <- th$threshold[th$cell %in% negList]
     for (i in 1:length(negList)) {
       marker <- negList[i]
       DF <- DF[DF[marker] < negTH[i], ]
     }
     return(as.data.frame(DF))
   } else if (length(posList) != 0 & length(negList) == 0) {
-    posTH <- th$value[th$cell %in% posList]
+    posTH <- th$threshold[th$cell %in% posList]
     for (i in 1:length(posList)) {
       marker <- posList[i]
       DF <- DF[DF[marker] > posTH[i], ]
@@ -67,19 +67,19 @@ filterHM <- function(DF,posList, negList, th) {
 
     # browser()
 
-    posTH <- th$value[th$cell %in% posList]
-    negTH <- th$value[th$cell %in% negList]
+    posTH <- th$threshold[th$cell %in% posList]
+    negTH <- th$threshold[th$cell %in% negList]
     # first reduce by the positive markers
 
     for (i in 1:length(posList)) {
       marker <- posList[i]
-      DF <- DF[DF[marker] > th[marker,]$value, ]
+      DF <- DF[DF[marker] > th[marker,]$threshold, ]
     }
     # next reduce by the negative markers
 
     for (i in 1:length(negList)) {
       marker <- negList[i]
-      DF <- DF[DF[marker] < th[marker,]$value, ]
+      DF <- DF[DF[marker] < th[marker,]$threshold, ]
     }
     return(as.data.frame(DF))
   }

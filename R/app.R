@@ -396,7 +396,10 @@ cycadas <- function() {
       filterPosMarkers <- filterPosMarkers[nzchar(filterPosMarkers)]
       filterNegMarkers <- filterNegMarkers[nzchar(filterNegMarkers)]
 
-      tmp <- filterHM(df01Tree,filterPosMarkers, filterNegMarkers, reactVals$th)
+      # tmp <- filterHM(df01Tree,filterPosMarkers, filterNegMarkers, reactVals$th)
+
+      tmp <- filterHM(df01Tree,unique(unlist(filterPosMarkers)), unique(unlist(filterNegMarkers)), reactVals$th)
+
       tmp <- tmp[tmp$cell == node$label ,]
 
       updateClusterLabels(tmp)
@@ -435,6 +438,8 @@ cycadas <- function() {
 
     # Observe node update picker ----
     observeEvent(input$updateNodePicker, {
+
+      # browser()
 
       node <- reactVals$graph$nodes %>% filter(label == input$updateNodePicker)
       myid <- node$id
