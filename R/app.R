@@ -629,6 +629,20 @@ cycadas <- function() {
 
     })
 
+
+    observeEvent(input$exportTreeGraphics, {
+
+      # browser()
+
+      # visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
+      #   visEdges(arrows = "from") %>%
+      #   visHierarchicalLayout() %>%
+      #   visExport(type = "png", name = "export-network",
+      #             float = "left", label = "Save network", background = "purple", style= "")
+
+
+    })
+
     # Export Annotation Tree ----
     output$exportAnnotationBtn <- downloadHandler(
 
