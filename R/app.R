@@ -98,7 +98,9 @@ cycadas <- function() {
       output$mynetworkid <- renderVisNetwork({
         visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
           visEdges(arrows = "from") %>%
-          visHierarchicalLayout()
+          visHierarchicalLayout() %>%
+          visExport(type = "png", name = "export-network",
+                    float = "left", label = "Save network", background = "white", style= "")
       })
 
 
