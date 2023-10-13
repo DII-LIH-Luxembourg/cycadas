@@ -1,4 +1,3 @@
-#' @export
 availMarkers <- function(sm) {
 
   m <- colnames(df)
@@ -25,7 +24,6 @@ availMarkers <- function(sm) {
 #' dataframe. If a column is determined to be bimodal, the threshold separating
 #' high and low expression is calculated using 1D k-means clustering.
 #'
-#' @export
 kmeansTH <- function(df) {
   th <- data.frame(cell = colnames(df), threshold = 0.0, color = "blue", bi_mod = 0)
 

@@ -1,25 +1,3 @@
-#' @importFrom grDevices colorRampPalette
-#' @importFrom stats aggregate filter pairwise.wilcox.test rnorm
-#' @importFrom matrixStats colQuantiles
-#' @importFrom utils read.csv
-#' @importFrom purrr is_empty
-#' @importFrom mousetrap bimodality_coefficient
-#' @import Ckmeans.1d.dp
-
-
-# # List of packages you want to check and install if needed
-packages_to_install <- c("shiny", "DT", "ggplot2", "matrixStats", "tidyverse", "stats",
-                         "pheatmap", "Ckmeans.1d.dp", "umap", "RColorBrewer", "shinydashboard",
-                         "shinyWidgets", "visNetwork", "glue", "purrr", "reshape2", "mousetrap")
-
-# Check if each package is already installed, and install if not
-for (package in packages_to_install) {
-  if (!require(package, character.only = TRUE)) {
-    install.packages(package)
-    library(package, character.only = TRUE)
-  }
-}
-
 #' Main function to run the Cycadas Shiny app
 #'
 #' This function is the entry point for running the Cycadas Shiny app.
@@ -27,6 +5,27 @@ for (package in packages_to_install) {
 #' @details
 #' It calls the ShinyApp function, which initializes the Shiny app with the
 #' specified UI and server components.
+#'
+#' @import Ckmeans.1d.dp
+#' @import shiny
+#' @import DT
+#' @import shinyWidgets
+#' @import ggplot2
+#' @import pheatmap
+#' @import umap
+#' @import RColorBrewer
+#' @import visNetwork
+#' @import glue
+#' @import purrr
+#' @import reshape2
+#' @import shinydashboard
+#' @importFrom grDevices colorRampPalette
+#' @importFrom stats aggregate filter pairwise.wilcox.test rnorm
+#' @importFrom matrixStats colQuantiles
+#' @importFrom utils read.csv
+#' @importFrom mousetrap bimodality_coefficient
+#' @importFrom shinydashboard dashboardPage
+#' @importFrom dplyr select
 #'
 #' @seealso \code{\link{shinyApp}}
 #'
@@ -47,7 +46,7 @@ cycadas <- function() {
 
   initTree <- function() {
     # create initial master node of all Unassigned clusters
-    nodes <- tibble(id = 1,
+    nodes <- data.frame(id = 1,
                     label = "Unassigned",
                     pm = list(""),
                     nm = list(""),
@@ -361,6 +360,7 @@ cycadas <- function() {
 
       if (dim(reactVals$hm)[1] < 2) {
         # browser()
+        pheatmap(reactVals$hm %>% select(-c("cell")), cluster_cols = F, cluster_rows = F)
         pheatmap(reactVals$hm %>% select(-c("cell")), cluster_cols = F, cluster_rows = F)
       } else {
         message(dim(reactVals$hm)[1])
@@ -709,7 +709,7 @@ cycadas <- function() {
     ##
     # Server - Thresholds Tab -------------------------------------------------
     ##
-    output$table = renderDataTable(
+    output$table = DT::renderDataTable(
       reactVals$th[, c(1,2,4)],
       editable = F,
       extensions = c('Buttons', 'Scroller'),

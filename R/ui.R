@@ -385,7 +385,7 @@ ui <- dashboardPage(
                 #   )
                 # ),
                 box(width = NULL,
-                    DTOutput('table'))
+                    DT::DTOutput('table'))
               ))),
       # umap Reactive  Tab ----------------------------------------------------
       tabItem(tabName = "umap_reactive",
@@ -402,7 +402,7 @@ ui <- dashboardPage(
               fluidRow(column(width = 12,
                               box(
                                 width = NULL,
-                                DTOutput("umap_data")
+                                DT::DTOutput("umap_data")
                               )))),
       # Umap Marker expression Tab --------------------------------------------
       tabItem(tabName = "UMAP_Marker_expression",

@@ -30,5 +30,8 @@ Imports:
     mousetrap,
     Ckmeans.1d.dp,
     stats,
-    matrixStats
-
+    matrixStats,
+    RColorBrewer,
+    glue,
+    visNetwork
+    
