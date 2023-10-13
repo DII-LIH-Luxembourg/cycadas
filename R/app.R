@@ -1,23 +1,13 @@
-# library(shiny)
-# library(DT)
-# library(ggplot2)
-# library(matrixStats)
-# library(tidyverse)
-# library(stats)
-# library(pheatmap)
-# library(Ckmeans.1d.dp)
-# library(umap)
-# library(RColorBrewer)
-# library(shinydashboard)
-# library(shinyWidgets)
-# library(visNetwork)
-# library(glue)
-# library(purrr)
-# library(reshape2)
-# library(mousetrap)
+#' @importFrom grDevices colorRampPalette
+#' @importFrom stats aggregate filter pairwise.wilcox.test rnorm
+#' @importFrom matrixStats colQuantiles
+#' @importFrom utils read.csv
+#' @importFrom purrr is_empty
+#' @importFrom mousetrap bimodality_coefficient
+#' @import Ckmeans.1d.dp
 
 
-# List of packages you want to check and install if needed
+# # List of packages you want to check and install if needed
 packages_to_install <- c("shiny", "DT", "ggplot2", "matrixStats", "tidyverse", "stats",
                          "pheatmap", "Ckmeans.1d.dp", "umap", "RColorBrewer", "shinydashboard",
                          "shinyWidgets", "visNetwork", "glue", "purrr", "reshape2", "mousetrap")
@@ -44,8 +34,20 @@ cycadas <- function() {
                               graph = NULL,
                               hm = NULL)
 
+  #' Initialize a visTree with a single "unassigned" node containing all clusters.
+  #'
+  #' This function initializes a visTree graph with a single "unassigned" node that
+  #' contains all clusters. The function returns the visTree with this initial
+  #' configuration, along with empty lists for additional nodes and edges to be added.
+  #'
+  #' @return A list with three elements:
+  #'   \describe{
+  #'     \item{tree}{A visTree graph with an "unassigned" node containing all clusters.}
+  #'     \item{nodes}{An empty list to store additional nodes in the visTree graph.}
+  #'     \item{edges}{An empty list to store edges in the visTree graph.}
+  #'   }
+  #'
   initTree <- function() {
-
     # create initial master node of all Unassigned clusters
     nodes <- tibble(id = 1,
                     label = "Unassigned",
@@ -63,7 +65,7 @@ cycadas <- function() {
   # constructs a string of positive or negative markers
   ph_name <<- ""
 
-  # Server function ----
+
   server = function(input, output, session) {
 
     # Function: Update cluster labels ----
@@ -79,7 +81,28 @@ cycadas <- function() {
       })
     }
 
-    # Function: Plot the annotation tree ----
+
+    #' Render and display a visNetwork plot utilizing global variables.
+    #'
+    #' This function is designed to render and display a visNetwork plot within a Shiny
+    #' application using the `renderVisNetwork` function. The visNetwork plot is displayed
+    #' in the Shiny application's UI with the specified `mynetworkid`. The function utilizes
+    #' global variables for defining the plot elements.
+    #'
+    #' @param output The Shiny output object. The visNetwork plot is assigned to
+    #' \code{output$mynetworkid}.
+    #'
+    #' @param mynetworkid A character string representing the unique identifier for
+    #' the visNetwork plot. The `output$mynetworkid` must be defined in your Shiny UI.
+    #'
+    #' @examples
+    #' \dontrun{
+    #' # Define a Shiny UI with the visNetwork plot output element.
+    #' ui <- fluidPage(
+    #'   visNetworkOutput("mynetworkid")
+    #' }
+    #'
+    #' @export
     plotTree <- function() {
 
       # before plotting the tree, update its properties
@@ -98,9 +121,10 @@ cycadas <- function() {
       output$mynetworkid <- renderVisNetwork({
         visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
           visEdges(arrows = "from") %>%
-          visHierarchicalLayout() %>%
-          visExport(type = "png", name = "export-network",
-                    float = "left", label = "Save network", background = "white", style= "")
+          visHierarchicalLayout()
+        # %>%
+        #   visExport(type = "png", name = "export-network",
+        #             float = "left", label = "Save network", background = "white", style= "")
       })
 
 
@@ -206,6 +230,7 @@ cycadas <- function() {
         }
         else if(input$tabs=="treeannotation") { # Tree annotation ----
 
+          # browser()
           updatePickerInput(
             session,
             inputId = "parentPicker",
@@ -356,6 +381,8 @@ cycadas <- function() {
     # Annotation heatmap plot ----
     output$hm_tree <- renderPlot({
 
+      # browser()
+
       if (dim(reactVals$hm)[1] < 2) {
         # browser()
         pheatmap(reactVals$hm %>% select(-c("cell")), cluster_cols = F, cluster_rows = F)
@@ -373,7 +400,9 @@ cycadas <- function() {
 
       # browser()
 
-      node <- reactVals$graph$nodes %>% filter(label == input$parentPicker)
+      node <- reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker, ]
+
+      # node <- reactVals$graph$nodes %>% filter(label == input$parentPicker)
       myid <- node$id
 
       filterPosMarkers <- unlist(node$pm)
@@ -385,11 +414,14 @@ cycadas <- function() {
       while (myid > 1) {
         print(myid)
 
-        edge <- reactVals$graph$edges %>% filter(from == myid)
+        # edge <- reactVals$graph$edges %>% filter(from == myid)
+        edge <- reactVals$graph$edges[reactVals$graph$edges$from == myid, ]
+
         next_id <- edge$to
 
         myid <- next_id
-        next_node <- reactVals$graph$nodes %>% filter(id == next_id)
+        # next_node <- reactVals$graph$nodes %>% filter(id == next_id)
+        next_node <- reactVals$graph$nodes[reactVals$graph$nodes$id == next_id, ]
         filterPosMarkers <- append(filterPosMarkers, unlist(next_node$pm))
         filterNegMarkers <- c(filterNegMarkers, unlist(next_node$nm))
 
@@ -1222,7 +1254,7 @@ cycadas <- function() {
 
       progress$set(message = "loading Data...", value = 0)
 
-      # browser()
+      browser()
 
       ## Load median expression and cell frequencies
       df <- read.csv("data/McCarthy_expr_median_400.csv")

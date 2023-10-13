@@ -1,14 +1,31 @@
+#' @export
 availMarkers <- function(sm) {
 
   m <- colnames(df)
   return(setdiff(m, sm))
 }
-subsetdf <- function(markers) {
+# subsetdf <- function(markers) {
+#
+#   return(df[1:20, 1:8])
+# }
 
-  return(df[1:20, 1:8])
-}
-
-
+#' Perform k-means clustering and identify bimodal expression thresholds
+#'
+#' This function takes a dataframe of expression data where each column represents
+#' an expression profile. It checks whether the data in each column is bimodally
+#' distributed and calculates the threshold between high and low expression using
+#' 1D k-means clustering.
+#'
+#' @param df A dataframe of expression data.
+#'
+#' @return th: A dataframe containing the calculated thresholds for each column.
+#'
+#' @details
+#' The function checks the bimodal distribution of each column in the input
+#' dataframe. If a column is determined to be bimodal, the threshold separating
+#' high and low expression is calculated using 1D k-means clustering.
+#'
+#' @export
 kmeansTH <- function(df) {
   th <- data.frame(cell = colnames(df), threshold = 0.0, color = "blue", bi_mod = 0)
 
@@ -45,6 +62,9 @@ normalize01 <- function(hm) {
 
 filterHM <- function(DF,posList, negList, th) {
 
+  # browser()
+
+
   if (length(posList) == 0 & length(negList) == 0) {
     return(as.data.frame(DF))
 
@@ -73,13 +93,17 @@ filterHM <- function(DF,posList, negList, th) {
 
     for (i in 1:length(posList)) {
       marker <- posList[i]
-      DF <- DF[DF[marker] > th[marker,]$threshold, ]
+      DF <- DF[DF[marker] > posTH[i], ]
+      # DF <- DF[DF[marker] > th[marker,]$threshold, ]
+      # DF <- DF[DF[marker] > th$threshold[th$cell == marker]]
     }
     # next reduce by the negative markers
 
     for (i in 1:length(negList)) {
       marker <- negList[i]
-      DF <- DF[DF[marker] < th[marker,]$threshold, ]
+      DF <- DF[DF[marker] < negTH[i], ]
+      # DF <- DF[DF[marker] < th[marker,]$threshold, ]
+      # DF <- DF[DF[marker] < th$threshold[th$cell == marker]]
     }
     return(as.data.frame(DF))
   }
