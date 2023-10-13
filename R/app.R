@@ -20,7 +20,17 @@ for (package in packages_to_install) {
   }
 }
 
-
+#' Main function to run the Cycadas Shiny app
+#'
+#' This function is the entry point for running the Cycadas Shiny app.
+#'
+#' @details
+#' It calls the ShinyApp function, which initializes the Shiny app with the
+#' specified UI and server components.
+#'
+#' @seealso \code{\link{shinyApp}}
+#'
+#' @export
 cycadas <- function() {
 
   # browser()
@@ -34,19 +44,7 @@ cycadas <- function() {
                               graph = NULL,
                               hm = NULL)
 
-  #' Initialize a visTree with a single "unassigned" node containing all clusters.
-  #'
-  #' This function initializes a visTree graph with a single "unassigned" node that
-  #' contains all clusters. The function returns the visTree with this initial
-  #' configuration, along with empty lists for additional nodes and edges to be added.
-  #'
-  #' @return A list with three elements:
-  #'   \describe{
-  #'     \item{tree}{A visTree graph with an "unassigned" node containing all clusters.}
-  #'     \item{nodes}{An empty list to store additional nodes in the visTree graph.}
-  #'     \item{edges}{An empty list to store edges in the visTree graph.}
-  #'   }
-  #'
+
   initTree <- function() {
     # create initial master node of all Unassigned clusters
     nodes <- tibble(id = 1,
@@ -81,28 +79,6 @@ cycadas <- function() {
       })
     }
 
-
-    #' Render and display a visNetwork plot utilizing global variables.
-    #'
-    #' This function is designed to render and display a visNetwork plot within a Shiny
-    #' application using the `renderVisNetwork` function. The visNetwork plot is displayed
-    #' in the Shiny application's UI with the specified `mynetworkid`. The function utilizes
-    #' global variables for defining the plot elements.
-    #'
-    #' @param output The Shiny output object. The visNetwork plot is assigned to
-    #' \code{output$mynetworkid}.
-    #'
-    #' @param mynetworkid A character string representing the unique identifier for
-    #' the visNetwork plot. The `output$mynetworkid` must be defined in your Shiny UI.
-    #'
-    #' @examples
-    #' \dontrun{
-    #' # Define a Shiny UI with the visNetwork plot output element.
-    #' ui <- fluidPage(
-    #'   visNetworkOutput("mynetworkid")
-    #' }
-    #'
-    #' @export
     plotTree <- function() {
 
       # before plotting the tree, update its properties
