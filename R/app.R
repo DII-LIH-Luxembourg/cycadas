@@ -6,26 +6,6 @@
 #' It calls the ShinyApp function, which initializes the Shiny app with the
 #' specified UI and server components.
 #'
-#' @import Ckmeans.1d.dp
-#' @import shiny
-#' @import DT
-#' @import shinyWidgets
-#' @import ggplot2
-#' @import pheatmap
-#' @import umap
-#' @import RColorBrewer
-#' @import visNetwork
-#' @import glue
-#' @import purrr
-#' @import reshape2
-#' @import shinydashboard
-#' @importFrom grDevices colorRampPalette
-#' @importFrom stats aggregate filter pairwise.wilcox.test rnorm
-#' @importFrom matrixStats colQuantiles
-#' @importFrom utils read.csv
-#' @importFrom mousetrap bimodality_coefficient
-#' @importFrom shinydashboard dashboardPage
-#' @importFrom dplyr select
 #'
 #' @seealso \code{\link{shinyApp}}
 #'
