@@ -82,6 +82,8 @@ cycadas <- function() {
     # Function: Plot the annotation tree ----
     plotTree <- function() {
 
+      # browser()
+
       # before plotting the tree, update its properties
       # based on the annotated DF
       for(i in 1:nrow(reactVals$graph$nodes)) {
@@ -89,7 +91,7 @@ cycadas <- function() {
 
         # get the number of clusters with that label
         nLabel <- sum(df01Tree$cell == l)
-        mysum <- sum(cell_freq[rownames(df01Tree),]$frequency)
+        # mysum <- sum(cell_freq[rownames(df01Tree),]$clustering_prop)
 
         if (nLabel == 0) reactVals$graph$nodes[i,]$color <- "grey"
 
