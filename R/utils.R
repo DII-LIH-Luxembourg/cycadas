@@ -161,8 +161,10 @@ getMarkerDistDF <- function(marker, myScale){
 # a function to add a new row for nodes and edges
 add_node <- function(graph,parent,name,pos_m,neg_m,color) {
 
+  browser()
+
   next_id <- max(graph$nodes$id) + 1
-  parent_row <- graph$nodes %>% filter(label == parent)
+  parent_row <- graph$nodes %>% dplyr::filter(label == parent)
   # node_level <- paste0(parent_row$id,".",2)
   graph$nodes <- graph$nodes %>% add_row(id = next_id,
                                          label = name,

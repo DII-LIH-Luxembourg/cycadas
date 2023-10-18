@@ -25,8 +25,9 @@ cycadas <- function() {
 
 
   initTree <- function() {
+
     # create initial master node of all Unassigned clusters
-    nodes <- data.frame(id = 1,
+    nodes <- tibble(id = 1,
                     label = "Unassigned",
                     pm = list(""),
                     nm = list(""),
@@ -60,6 +61,8 @@ cycadas <- function() {
 
     plotTree <- function() {
 
+      # browser()
+
       # before plotting the tree, update its properties
       # based on the annotated DF
       for(i in 1:nrow(reactVals$graph$nodes)) {
@@ -67,7 +70,7 @@ cycadas <- function() {
 
         # get the number of clusters with that label
         nLabel <- sum(df01Tree$cell == l)
-        mysum <- sum(cell_freq[rownames(df01Tree),]$frequency)
+        # mysum <- sum(cell_freq[rownames(df01Tree),]$clustering_prop)
 
         if (nLabel == 0) reactVals$graph$nodes[i,]$color <- "grey"
 
@@ -225,6 +228,8 @@ cycadas <- function() {
 
     # Create new node ----
     observeEvent(input$createNodeBtn, {
+
+      # browser()
 
       if (is.null(input$treePickerPos) & is.null(input$treePickerNeg)) {
         print("no selection")
@@ -1210,7 +1215,7 @@ cycadas <- function() {
 
       progress$set(message = "loading Data...", value = 0)
 
-      browser()
+      # browser()
 
       ## Load median expression and cell frequencies
       df <- read.csv("data/McCarthy_expr_median_400.csv")
@@ -1220,7 +1225,7 @@ cycadas <- function() {
 
       annotationlist <<- list("Unassigned")
 
-      cell_freq <- read.csv("data/McCarthy_cluster_freq_400.csv")
+      cell_freq <<- read.csv("data/McCarthy_cluster_freq_400.csv")
 
       labels_row <-
         paste0(rownames(df), " (", cell_freq$clustering_prop , "%)")

@@ -20,7 +20,7 @@
 #' @importFrom utils read.csv
 #' @importFrom mousetrap bimodality_coefficient
 #' @importFrom shinydashboard dashboardPage
-#' @importFrom dplyr select
+#' @importFrom dplyr select filter
 #' @import rlang
 #' @importFrom glue glue
 #' @importFrom glue glue_collapse
