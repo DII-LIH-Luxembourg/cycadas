@@ -7,38 +7,26 @@ subsetdf <- function(markers) {
 
   return(df[1:20, 1:8])
 }
-# kmeansTH <- function(df) {
-#   # browser()
-#   marker <- colnames(df)
-#
-#   th <- as.data.frame(marker)
-#   th$value <- 0.0
-#
-#   colnames(th) <- c('cell', 'value')
-#
-#   # M <- as.matrix(df %>% normalize01())
-#   M <- as.matrix(df)
-#
-#   for (m in th$cell) {
-#
-#     k<-2
-#     z <- Ckmeans.1d.dp(M[, m], 2)
-#     midpoints <- ahist(z, style="midpoints", data=M[,m], plot=FALSE)$breaks[2:k]
-#
-#     th[th$cell == m, "value"] <- round(midpoints, 3)
-#   }
-#
-#   return(th)
-# }
+
 
 kmeansTH <- function(df) {
-  th <- data.frame(cell = colnames(df), value = 0.0)
+  th <- data.frame(cell = colnames(df), threshold = 0.0, color = "blue", bi_mod = 0)
 
   for (m in th$cell) {
+
+    # check for bi-modal distribution, if not color = red to indicate
+    # stated in Pfister et al., 2013
+    bi_mod_value <- bimodality_coefficient(df[, m])
+    th[th$cell == m, "bi_mod"] <- round(bi_mod_value, 3)
+    if (bi_mod_value < 0.555) {
+      th[th$cell == m, "color"] <- "red"
+    }
+
     z <- Ckmeans.1d.dp(df[, m], 2)
-    th[th$cell == m, "value"] <- round(ahist(z, style="midpoints", data=df[, m], plot=FALSE)$breaks[2:2], 3)
+    th[th$cell == m, "threshold"] <- round(ahist(z, style="midpoints", data=df[, m], plot=FALSE)$breaks[2:2], 3)
   }
 
+  rownames(th) <- th$cell
   return(th)
 }
 
@@ -61,14 +49,14 @@ filterHM <- function(DF,posList, negList, th) {
     return(as.data.frame(DF))
 
   } else if (length(posList) == 0 & length(negList) != 0) {
-    negTH <- th$value[th$cell %in% negList]
+    negTH <- th$threshold[th$cell %in% negList]
     for (i in 1:length(negList)) {
       marker <- negList[i]
       DF <- DF[DF[marker] < negTH[i], ]
     }
     return(as.data.frame(DF))
   } else if (length(posList) != 0 & length(negList) == 0) {
-    posTH <- th$value[th$cell %in% posList]
+    posTH <- th$threshold[th$cell %in% posList]
     for (i in 1:length(posList)) {
       marker <- posList[i]
       DF <- DF[DF[marker] > posTH[i], ]
@@ -76,17 +64,22 @@ filterHM <- function(DF,posList, negList, th) {
     return(as.data.frame(DF))
 
   } else {
-    posTH <- th$value[th$cell %in% posList]
-    negTH <- th$value[th$cell %in% negList]
+
+    # browser()
+
+    posTH <- th$threshold[th$cell %in% posList]
+    negTH <- th$threshold[th$cell %in% negList]
     # first reduce by the positive markers
+
     for (i in 1:length(posList)) {
       marker <- posList[i]
-      DF <- DF[DF[marker] > posTH[i], ]
+      DF <- DF[DF[marker] > th[marker,]$threshold, ]
     }
     # next reduce by the negative markers
+
     for (i in 1:length(negList)) {
       marker <- negList[i]
-      DF <- DF[DF[marker] < negTH[i], ]
+      DF <- DF[DF[marker] < th[marker,]$threshold, ]
     }
     return(as.data.frame(DF))
   }
@@ -113,22 +106,7 @@ filterAnnotation <- function(hm_tmp,at_tmp) {
 set_ptname <- function(ptname, df) {
   df$phenotype <- ptname
 }
-# setPhenotypeName <- function(markers, s, ph_name) {
-#
-#   if (s == "pos") {
-#     for (n in markers) {
-#       ph_name <- paste0(ph_name, n, '+')
-#     }
-#     return(ph_name)
-#   }
-#   if (s == "neg") {
-#     for (n in markers) {
-#       ph_name <- paste0(ph_name, n, '-')
-#     }
-#     return(ph_name)
-#   }
-#
-# }
+
 
 setPhenotypeName <- function(markers, s, ph_name) {
   if (s == "pos") {
@@ -157,24 +135,6 @@ getMarkerDistDF <- function(marker, myScale){
   return(marker_expr)
 }
 
-# # a function to add a new row for nodes and edges
-# add_node <- function(graph,parent,name,pos_m,neg_m,color,freq,nrows) {
-#
-#   next_id <- max(graph$nodes$id) + 1
-#   parent_row <- graph$nodes %>% filter(label == parent)
-#   # node_level <- paste0(parent_row$id,".",2)
-#   graph$nodes <- graph$nodes %>% add_row(id = next_id,
-#                                          label = name,
-#                                          pm = pos_m,
-#                                          nm = neg_m,
-#                                          color = color,
-#                                          nFreq = freq,
-#                                          nRows = nrows)
-#
-#   graph$edges <- graph$edges %>% add_row(from = next_id, to = parent_row$id)
-#
-#   return(graph)
-# }
 
 # a function to add a new row for nodes and edges
 add_node <- function(graph,parent,name,pos_m,neg_m,color) {
@@ -231,7 +191,6 @@ all_my_children <- function(graph_data, node_id) {
 
 
 }
-
 
 # define recursive function to delete a node and all its children
 delete_leaf_node <- function(graph_data, node_id) {

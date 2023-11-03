@@ -11,10 +11,7 @@ ui <- dashboardPage(
       menuItem("UMAP Marker expression", tabName = "UMAP_Marker_expression"),
       menuItem("Differential Abundance", tabName = "DA_tab"),
       menuItem("DA interactive Tree", tabName = "DA_tree"),
-      menuItem("Help", tabName = "help"),
-      valueBoxOutput("progressBox", width = 4),
-      valueBoxOutput("progressBox2", width = 4)
-
+      menuItem("Help", tabName = "help")
     )
   ),
   dashboardBody(
@@ -95,9 +92,14 @@ ui <- dashboardPage(
                       )
                     ),
                     box(
-                      title = "Load Test Data",
+                      title = "Load Cluster Expression Demo Data",
                       width = NULL,
-                      actionButton("btnLoadTestData", "Load Test Data")
+                      actionButton("btnLoadDemoData", "Load")
+                    ),
+                    box(
+                      title = "Load Annotated Demo Data",
+                      width = NULL,
+                      actionButton("btnLoadAnnoData", "Load")
                     )
                   ),
                   tabPanel(
@@ -224,6 +226,8 @@ ui <- dashboardPage(
                 box(
                   width = NULL,
                   title = "Create Node",
+                  textOutput("progressBox"),
+                  textOutput("progressBox2"),
                   textInput("newNode", "Set Name..."),
                   pickerInput(
                     inputId = "parentPicker",
@@ -262,63 +266,80 @@ ui <- dashboardPage(
 
                 box(
                   width = NULL,
-                  switchInput(
-                    inputId = "treeSwitch",
-                    label = "Change Layout",
-                    value = FALSE,
-                    onLabel = "Hierarchical",
-                    offLabel = "Loose"
-                  ),
+                  # switchInput(
+                  #   inputId = "treeSwitch",
+                  #   label = "Change Layout",
+                  #   value = FALSE,
+                  #   onLabel = "Hierarchical",
+                  #   offLabel = "Loose"
+                  # ),
+                  title = "Create New Node",
                   actionButton("createNodeBtn", "Create Node")
               ),
+              # box(
+              #   width = NULL,
+              #   title = "Update Node",
+              #   actionButton("updateNodeBtn", "Update Node"),
+              #
+              # ),
               box(
                 width = NULL,
-                title = "Update Node",
-                pickerInput(
-                  inputId = "updateNodePicker",
-                  label = "Select Node:",
-                  choices = NULL,
-                  options = list(
-                    `actions-box` = TRUE,
-                    size = 10,
-                    `selected-text-format` = "count > 3"
-                  ),
-                  multiple = F
-                ),
-                textInput("renameNode", "Rename..."),
-                # select markers
-                pickerInput(
-                  inputId = "updatePickerPos",
-                  label = "Update Positive Markers",
-                  choices = NULL,
-                  options = list(
-                    `actions-box` = TRUE,
-                    size = 10,
-                    `selected-text-format` = "count > 3"
-                  ),
-                  multiple = TRUE
-                ),
-                pickerInput(
-                  inputId = "updatePickerNeg",
-                  label = "Update Negative Markers",
-                  choices = NULL,
-                  options = list(
-                    `actions-box` = TRUE,
-                    size = 10,
-                    `selected-text-format` = "count > 3"
-                  ),
-                  multiple = TRUE
-                ),
-                actionButton("updateNodeBtn", "Update Node"),
+                title = "Delete Node",
                 actionButton("deleteNodeBtn", "Delete Node")
               ),
+              # box(
+              #   width = NULL,
+              #   title = "Update Node",
+              #   pickerInput(
+              #     inputId = "updateNodePicker",
+              #     label = "Select Node:",
+              #     choices = NULL,
+              #     options = list(
+              #       `actions-box` = TRUE,
+              #       size = 10,
+              #       `selected-text-format` = "count > 3"
+              #     ),
+              #     multiple = F
+              #   ),
+              #   textInput("renameNode", "Rename..."),
+              #   # select markers
+              #   pickerInput(
+              #     inputId = "updatePickerPos",
+              #     label = "Update Positive Markers",
+              #     choices = NULL,
+              #     options = list(
+              #       `actions-box` = TRUE,
+              #       size = 10,
+              #       `selected-text-format` = "count > 3"
+              #     ),
+              #     multiple = TRUE
+              #   ),
+              #   pickerInput(
+              #     inputId = "updatePickerNeg",
+              #     label = "Update Negative Markers",
+              #     choices = NULL,
+              #     options = list(
+              #       `actions-box` = TRUE,
+              #       size = 10,
+              #       `selected-text-format` = "count > 3"
+              #     ),
+              #     multiple = TRUE
+              #   ),
+              #   actionButton("updateNodeBtn", "Update Node"),
+              #   actionButton("deleteNodeBtn", "Delete Node")
+              # ),
               box(
                 width = NULL,
                 title = "Export Annotation",
                 # actionButton("exportAnnotationBtn", "Export Annotation")
                 downloadButton("exportAnnotationBtn", "Export Annotation")
-              )
               ),
+              box(
+                width = NULL,
+                title = "Export Tree as Image",
+                actionButton("exportTreeGraphics", "Export Tree Image")
+              )
+              ), # end column
               column(
                 width = 8,
                 box(
@@ -352,17 +373,17 @@ ui <- dashboardPage(
               ),
               column(
                 width = 6,
-                box(
-                  width = NULL,
-                  id = "transformationBox",
-                  title = "Data transformation",
-                  radioButtons(
-                    "radio",
-                    label = NULL,
-                    choices = list("0 to 1" = "1"),
-                    selected = "1"
-                  )
-                ),
+                # box(
+                #   width = NULL,
+                #   id = "transformationBox",
+                #   title = "Data transformation",
+                #   radioButtons(
+                #     "radio",
+                #     label = NULL,
+                #     choices = list("0 to 1" = "1"),
+                #     selected = "1"
+                #   )
+                # ),
                 box(width = NULL,
                     DTOutput('table'))
               ))),
