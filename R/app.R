@@ -599,18 +599,20 @@ cycadas <- function() {
     })
 
 
-    importNodes <- function(id, label, pm, nm, parent_id) {
+    importNodes <- function(id, label, pm, nm, parent_id, color) {
 
       if(id == parent_id) {return()}
 
       parent_row <- reactVals$graph$nodes %>% filter(id == parent_id)
       parent_name <- parent_row$label
 
-      add_node(reactVals$graph, parent_name, label,)
+      add_node(reactVals$graph, parent_name, label, color)
     }
 
     # Load Annotation Tree ----
     observeEvent(input$btnImportTree, {
+
+      # browser()
 
       req(input$fNodes)
       req(input$fEdges)
@@ -656,7 +658,7 @@ cycadas <- function() {
     output$exportAnnotationBtn <- downloadHandler(
 
       filename = function(){
-        paste("cellcat_annotation_data_", Sys.Date(), ".zip", sep = "")
+        paste("cycadas_annotation_data_", Sys.Date(), ".zip", sep = "")
       },
       content = function(file) {
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
@@ -679,9 +681,12 @@ cycadas <- function() {
         export_df_nodes$pm <- pm_concatenated
         export_df_nodes$nm <- nm_concatenated
 
-        download_list <- list(annTable = df01Tree["cell"],
+        download_list <- list(annTable = df01Tree,
                               nodesTable = export_df_nodes,
                               edgesTable = reactVals$graph$edges)
+        # download_list <- list(annTable = df01Tree["cell"],
+        #                       nodesTable = export_df_nodes,
+        #                       edgesTable = reactVals$graph$edges)
 
         download_list %>%
           imap(function(x,y){

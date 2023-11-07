@@ -22,7 +22,7 @@ gen_DF <- function() {
 
 gen_TH <- function() {
 
-  df <- data.frame(cell = c("m1", "m2") ,value = c(5.0, 2.0))
+  df <- data.frame(cell = c("m1", "m2") ,threshold = c(5.0, 2.0))
 
   return(df)
 }
@@ -32,7 +32,7 @@ test_that("kmean_TH() selcted threshold is within middle range", {
   mydf <- gen_DF()
   th_tmp <- kmeansTH(mydf)
 
-  expect_equal(th_tmp$value[1], (mean(mydf$m1)+mean(mydf$m2))/2 , tolerance = 0.5)
+  expect_equal(th_tmp$threshold[1], (mean(mydf$m1)+mean(mydf$m2))/2 , tolerance = 0.5)
 })
 
 test_that("normalize01() works as expected", {
