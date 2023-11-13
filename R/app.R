@@ -709,7 +709,7 @@ cycadas <- function() {
     # Server - Thresholds Tab -------------------------------------------------
     ##
     output$table = renderDataTable(
-      reactVals$th[, c(1,2,4)],
+      reactVals$th,
       editable = F,
       extensions = c('Buttons', 'Scroller'),
       selection = 'single',
