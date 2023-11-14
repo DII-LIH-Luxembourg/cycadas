@@ -93,7 +93,11 @@ cycadas <- function() {
         nLabel <- sum(df01Tree$cell == l)
         # mysum <- sum(cell_freq[rownames(df01Tree),]$clustering_prop)
 
-        if (nLabel == 0) reactVals$graph$nodes[i,]$color <- "grey"
+        if (nLabel == 0) {
+          reactVals$graph$nodes[i,]$color <- "grey"
+        } else {
+          reactVals$graph$nodes[i,]$color <- "blue"
+        }
 
       }
 
