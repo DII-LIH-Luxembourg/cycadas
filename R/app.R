@@ -716,7 +716,7 @@ cycadas <- function() {
     # Server - Thresholds Tab -------------------------------------------------
     ##
     output$table = renderDataTable(
-      reactVals$th,
+      reactVals$th[, c("cell", "threshold", "bi_mod")],
       editable = F,
       extensions = c('Buttons', 'Scroller'),
       selection = 'single',
@@ -736,11 +736,13 @@ cycadas <- function() {
     ## from marker, plot the expression in scatterplot or histogram
     observeEvent(input$table_rows_selected, {
 
+      # browser()
+
       selRow <- reactVals$th[input$table_rows_selected,]
-      marker <- reactVals$th[input$table_rows_selected, 1]
+      marker <- reactVals$th[input$table_rows_selected, "cell"]
       # threshold value for vertical line
-      myTH <- reactVals$th[input$table_rows_selected, 2]
-      myCol <- reactVals$th[input$table_rows_selected, 3]
+      myTH <- reactVals$th[input$table_rows_selected, "threshold"]
+      myCol <- reactVals$th[input$table_rows_selected, "color"]
 
       # marker_expr <- getMarkerDistDF(marker, input$radio)
       marker_expr <- getMarkerDistDF(marker, "1")
@@ -807,11 +809,11 @@ cycadas <- function() {
 
       req(input$table_rows_selected)
       selRow <- reactVals$th[input$table_rows_selected,]
-      marker <- reactVals$th[input$table_rows_selected, 1]
+      marker <- reactVals$th[input$table_rows_selected, "cell"]
 
-      reactVals$th[input$table_rows_selected, 2] <- round(input$plot_click$x, 3)
-      myTH <- reactVals$th[input$table_rows_selected, 2]
-      myCol <- reactVals$th[input$table_rows_selected, 3]
+      reactVals$th[input$table_rows_selected, "threshold"] <- round(input$plot_click$x, 3)
+      myTH <- reactVals$th[input$table_rows_selected, "threshold"]
+      myCol <- reactVals$th[input$table_rows_selected, "color"]
       # marker_expr <- getMarkerDistDF(marker, input$radio)
       marker_expr <- getMarkerDistDF(marker, "1")
       myRenderFunction(marker_expr, myTH, myCol)
@@ -857,28 +859,38 @@ cycadas <- function() {
     ##
     # Server - Annotations Tab ------------------------------------------------
     ##
-    ## upload the annotation file ---------------------------------------------
+    # Load the annotation file ---------------------------------------------
     observeEvent(input$annTable,{
       annData <<- read.csv(input$annTable$datapath)
       annData$X <- NULL
       at$data <- annData
     })
 
-    ## upload the marker threshold file ---------------------------------------
+    # Load the marker threshold file ---------------------------------------
     observeEvent(input$fTH,{
+
+      # browser()
+
       th <<- read.csv(input$fTH$datapath)
       th$X <- NULL
+      th$color <- "blue"
+
+      th[th$bi_mod < 0.555, "color"] <- "red"
+
+      rownames(th) <- th$cell
+
       reactVals$th<- th
+
     })
 
-    ## upload the metadata ----------------------------------------------------
+    # Load the metadata ----------------------------------------------------
     observeEvent(input$metadata,{
       md <<- read.csv(input$metadata$datapath)
       md$X <- NULL
       reactVals$md<- md
     })
 
-    ## upload the counts talbe -------------------------------------------------
+    # Load the counts talbe -------------------------------------------------
     observeEvent(input$counts_table,{
       ct <<- read.csv(input$counts_table$datapath)
       ct$X <- NULL
