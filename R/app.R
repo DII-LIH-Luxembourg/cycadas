@@ -443,7 +443,7 @@ cycadas <- function() {
     # Observe node update picker ----
     observeEvent(input$updateNodePicker, {
 
-      # browser()
+      browser()
 
       node <- reactVals$graph$nodes %>% filter(label == input$updateNodePicker)
       myid <- node$id
@@ -535,7 +535,10 @@ cycadas <- function() {
     # Delete Node ----
     observeEvent(input$deleteNodeBtn, {
 
-      node <- reactVals$graph$nodes %>% filter(label == input$updateNodePicker)
+      # browser()
+
+      # node <- reactVals$graph$nodes %>% filter(label == input$updateNodePicker)
+      node <- reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker, ]
 
       # check and make sure that this node is a leaf node
       if(TRUE %in% (reactVals$graph$edges$to == node$id)) {
