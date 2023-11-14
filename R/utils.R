@@ -45,6 +45,8 @@ normalize01 <- function(hm) {
 
 filterHM <- function(DF,posList, negList, th) {
 
+  # browser()
+
   if (length(posList) == 0 & length(negList) == 0) {
     return(as.data.frame(DF))
 
@@ -73,13 +75,15 @@ filterHM <- function(DF,posList, negList, th) {
 
     for (i in 1:length(posList)) {
       marker <- posList[i]
-      DF <- DF[DF[marker] > th[marker,]$threshold, ]
+      DF <- DF[DF[marker] > posTH[i], ]
+      # DF <- DF[DF[marker] > th[marker,]$threshold, ]
     }
     # next reduce by the negative markers
 
     for (i in 1:length(negList)) {
       marker <- negList[i]
-      DF <- DF[DF[marker] < th[marker,]$threshold, ]
+      DF <- DF[DF[marker] < negTH[i], ]
+      # DF <- DF[DF[marker] < th[marker,]$threshold, ]
     }
     return(as.data.frame(DF))
   }

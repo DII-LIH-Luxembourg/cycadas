@@ -93,7 +93,11 @@ cycadas <- function() {
         nLabel <- sum(df01Tree$cell == l)
         # mysum <- sum(cell_freq[rownames(df01Tree),]$clustering_prop)
 
-        if (nLabel == 0) reactVals$graph$nodes[i,]$color <- "grey"
+        if (nLabel == 0) {
+          reactVals$graph$nodes[i,]$color <- "grey"
+        } else {
+          reactVals$graph$nodes[i,]$color <- "blue"
+        }
 
       }
 
@@ -443,7 +447,7 @@ cycadas <- function() {
     # Observe node update picker ----
     observeEvent(input$updateNodePicker, {
 
-      # browser()
+      browser()
 
       node <- reactVals$graph$nodes %>% filter(label == input$updateNodePicker)
       myid <- node$id
@@ -535,7 +539,10 @@ cycadas <- function() {
     # Delete Node ----
     observeEvent(input$deleteNodeBtn, {
 
-      node <- reactVals$graph$nodes %>% filter(label == input$updateNodePicker)
+      # browser()
+
+      # node <- reactVals$graph$nodes %>% filter(label == input$updateNodePicker)
+      node <- reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker, ]
 
       # check and make sure that this node is a leaf node
       if(TRUE %in% (reactVals$graph$edges$to == node$id)) {
@@ -599,18 +606,20 @@ cycadas <- function() {
     })
 
 
-    importNodes <- function(id, label, pm, nm, parent_id) {
+    importNodes <- function(id, label, pm, nm, parent_id, color) {
 
       if(id == parent_id) {return()}
 
       parent_row <- reactVals$graph$nodes %>% filter(id == parent_id)
       parent_name <- parent_row$label
 
-      add_node(reactVals$graph, parent_name, label,)
+      add_node(reactVals$graph, parent_name, label, color)
     }
 
     # Load Annotation Tree ----
     observeEvent(input$btnImportTree, {
+
+      # browser()
 
       req(input$fNodes)
       req(input$fEdges)
@@ -656,7 +665,7 @@ cycadas <- function() {
     output$exportAnnotationBtn <- downloadHandler(
 
       filename = function(){
-        paste("cellcat_annotation_data_", Sys.Date(), ".zip", sep = "")
+        paste("cycadas_annotation_data_", Sys.Date(), ".zip", sep = "")
       },
       content = function(file) {
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
@@ -679,9 +688,12 @@ cycadas <- function() {
         export_df_nodes$pm <- pm_concatenated
         export_df_nodes$nm <- nm_concatenated
 
-        download_list <- list(annTable = df01Tree["cell"],
+        download_list <- list(annTable = df01Tree,
                               nodesTable = export_df_nodes,
                               edgesTable = reactVals$graph$edges)
+        # download_list <- list(annTable = df01Tree["cell"],
+        #                       nodesTable = export_df_nodes,
+        #                       edgesTable = reactVals$graph$edges)
 
         download_list %>%
           imap(function(x,y){
@@ -704,7 +716,7 @@ cycadas <- function() {
     # Server - Thresholds Tab -------------------------------------------------
     ##
     output$table = renderDataTable(
-      reactVals$th[, c(1,2,4)],
+      reactVals$th[, c("cell", "threshold", "bi_mod")],
       editable = F,
       extensions = c('Buttons', 'Scroller'),
       selection = 'single',
@@ -724,11 +736,13 @@ cycadas <- function() {
     ## from marker, plot the expression in scatterplot or histogram
     observeEvent(input$table_rows_selected, {
 
+      # browser()
+
       selRow <- reactVals$th[input$table_rows_selected,]
-      marker <- reactVals$th[input$table_rows_selected, 1]
+      marker <- reactVals$th[input$table_rows_selected, "cell"]
       # threshold value for vertical line
-      myTH <- reactVals$th[input$table_rows_selected, 2]
-      myCol <- reactVals$th[input$table_rows_selected, 3]
+      myTH <- reactVals$th[input$table_rows_selected, "threshold"]
+      myCol <- reactVals$th[input$table_rows_selected, "color"]
 
       # marker_expr <- getMarkerDistDF(marker, input$radio)
       marker_expr <- getMarkerDistDF(marker, "1")
@@ -795,11 +809,11 @@ cycadas <- function() {
 
       req(input$table_rows_selected)
       selRow <- reactVals$th[input$table_rows_selected,]
-      marker <- reactVals$th[input$table_rows_selected, 1]
+      marker <- reactVals$th[input$table_rows_selected, "cell"]
 
-      reactVals$th[input$table_rows_selected, 2] <- round(input$plot_click$x, 3)
-      myTH <- reactVals$th[input$table_rows_selected, 2]
-      myCol <- reactVals$th[input$table_rows_selected, 3]
+      reactVals$th[input$table_rows_selected, "threshold"] <- round(input$plot_click$x, 3)
+      myTH <- reactVals$th[input$table_rows_selected, "threshold"]
+      myCol <- reactVals$th[input$table_rows_selected, "color"]
       # marker_expr <- getMarkerDistDF(marker, input$radio)
       marker_expr <- getMarkerDistDF(marker, "1")
       myRenderFunction(marker_expr, myTH, myCol)
@@ -845,28 +859,38 @@ cycadas <- function() {
     ##
     # Server - Annotations Tab ------------------------------------------------
     ##
-    ## upload the annotation file ---------------------------------------------
+    # Load the annotation file ---------------------------------------------
     observeEvent(input$annTable,{
       annData <<- read.csv(input$annTable$datapath)
       annData$X <- NULL
       at$data <- annData
     })
 
-    ## upload the marker threshold file ---------------------------------------
+    # Load the marker threshold file ---------------------------------------
     observeEvent(input$fTH,{
+
+      # browser()
+
       th <<- read.csv(input$fTH$datapath)
       th$X <- NULL
+      th$color <- "blue"
+
+      th[th$bi_mod < 0.555, "color"] <- "red"
+
+      rownames(th) <- th$cell
+
       reactVals$th<- th
+
     })
 
-    ## upload the metadata ----------------------------------------------------
+    # Load the metadata ----------------------------------------------------
     observeEvent(input$metadata,{
       md <<- read.csv(input$metadata$datapath)
       md$X <- NULL
       reactVals$md<- md
     })
 
-    ## upload the counts talbe -------------------------------------------------
+    # Load the counts talbe -------------------------------------------------
     observeEvent(input$counts_table,{
       ct <<- read.csv(input$counts_table$datapath)
       ct$X <- NULL
