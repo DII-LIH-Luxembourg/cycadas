@@ -66,7 +66,8 @@ Upon uploading: • metadata table (defining the condition of each sample, for e
 
 CyCadas contains not annotated and annotated demo datasets of clustered mass cytometry data from acute infected infividuals and uninfected controls (<https://doi.org/10.1016/j.celrep.2022.110815>) that can be loaded to enable tool exploration.
 
-### R code example for median expression and cluster frequencies using FlowSOM:
+## Prepare the Data input
+### Median Expression and Cluster Frequencies from FlowSOM (R Code):
 
 ``` r
 # within your clustering workflow create sample_ids according to the metadata files:
@@ -101,10 +102,10 @@ props <- as.data.frame.matrix(props_table)
 write.csv(props, "proportion_table.csv")
 ```
 
-### Julia code example for the usage of GigaSOM:
+### Median Expression and Cluster Frequencies from GigaSOM (Julia Code):
 
 ``` julia
-Random.seed!(1)
+Random.seed!(42)
 
 som = initGigaSOM(di, gridSize, gridSize, seed = 13) # set a seed value
 som = trainGigaSOM(som, di, epochs = nEpochs)
