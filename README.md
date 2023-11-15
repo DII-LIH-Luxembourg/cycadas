@@ -64,7 +64,7 @@ Upon uploading: • metadata table (defining the condition of each sample, for e
 
 ### Demo dataset
 
-CyCadas contains not annotated and annotated demo datasets of clustered mass cytometry data from acute infected infividuals and uninfected controls (<https://doi.org/10.1016/j.celrep.2022.110815>) that can be loaded to enable tool exploration.
+CyCadas includes two versions of a dataset for demonstration purpose. Version 1 includes median expression and cluster frequencies but no annotation has been performaed yet. Version two includes the fully annotated dataset for exploration and differential abundance.     
 
 ## Prepare the Data input
 ### Median Expression and Cluster Frequencies from FlowSOM (R Code):
