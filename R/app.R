@@ -1,21 +1,3 @@
-# library(shiny)
-# library(DT)
-# library(ggplot2)
-# library(matrixStats)
-# library(tidyverse)
-# library(stats)
-# library(pheatmap)
-# library(Ckmeans.1d.dp)
-# library(umap)
-# library(RColorBrewer)
-# library(shinydashboard)
-# library(shinyWidgets)
-# library(visNetwork)
-# library(glue)
-# library(purrr)
-# library(reshape2)
-# library(mousetrap)
-
 
 # List of packages you want to check and install if needed
 packages_to_install <- c("shiny", "DT", "ggplot2", "matrixStats", "tidyverse", "stats",

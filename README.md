@@ -31,11 +31,15 @@ To run:
 
 -   Checkout branch develop
 
-<!-- -->
+``` r
+library(devtools)
 
--   load all required settings by: pkgload::load_all(".")
+# load all required packages
+pkgload::load_all(".")
 
--   call cycadas() to run
+# start the cycadas shiny app
+cycadas()
+```
 
 ## Working with CyCadas
 
@@ -67,4 +71,78 @@ Upon uploading: • metadata table (defining the condition of each sample, for e
 
 ### Demo dataset
 
-CyCadas contains not annotated and annotated demo datasets of clustered mass cytometry data from acute infected infividuals and uninfected controls (<https://doi.org/10.1016/j.celrep.2022.110815>) that can be loaded to enable tool exploration.
+CyCadas includes two versions of a dataset for demonstration purpose. Version 1 includes median expression and cluster frequencies but no annotation has been performaed yet. Version two includes the fully annotated dataset for exploration and differential abundance.     
+
+## Prepare the Data input
+### Median Expression and Cluster Frequencies from FlowSOM (R Code):
+
+``` r
+# within your clustering workflow create sample_ids according to the metadata files:
+
+sample_ids <- rep(metadata$sample_id, fsApply(fcs, nrow))
+
+library(FlowSOM)
+fsom <- ReadInput(fcs, transform = FALSE, scale = FALSE)
+
+set.seed(42)
+som <- BuildSOM(fsom, colsToUse = lineage_markers, xdim=20, ydim=20, rlen=40)
+
+expr_median <- som$map$medianValues
+
+# Calculate cluster frequencies
+clustering_table <- as.numeric(table(som$map$mapping[,1]))
+clustering_prop <- round(clustering_table / sum(clustering_table) * 100, 2)
+df_prop <- as.data.frame(clustering_prop)
+df_prop$cluster <- rownames(df_prop)
+
+write.csv(expr_median, "expr_median.csv", row.names = F)
+write.csv(df_prop, "cluster_freq.csv")
+
+## ----------------------------------------------------------------------------
+## Generate the Proportion Table
+## ----------------------------------------------------------------------------
+counts_table <- table(som$map$mapping[,1], sample_ids)
+props_table <- t(t(counts_table) / colSums(counts_table)) * 100
+
+props <- as.data.frame.matrix(props_table)
+
+write.csv(props, "proportion_table.csv")
+```
+
+### Median Expression and Cluster Frequencies from GigaSOM (Julia Code):
+
+``` julia
+Random.seed!(42)
+
+som = initGigaSOM(di, gridSize, gridSize, seed = 13) # set a seed value
+som = trainGigaSOM(som, di, epochs = nEpochs)
+
+mapping_di = mapToGigaSOM(som, di)
+mapping = gather_array(mapping_di)
+
+# get the cluster frequencies
+clusterFreq = dcount(mc, mapping_di)
+df = DataFrame(column_name = clusterFreq)
+CSV.write("cluster_freq_$mc.csv", df)
+
+files = distributeFCSFileVector(:fileIDs, md[:, :file_name])
+
+# Get the count table per fileID
+count_tbl = dcount_buckets(mc, mapping_di, size(md, 1), files)
+ct = DataFrame(count_tbl, :auto)
+# ct = convert(DataFrame, count_tbl)
+rename!(ct, md.sample_id)
+# export the count talbe
+CSV.write("cluster_counts_$mc.csv", ct)
+
+# Get the median expression per cluster
+expr_tbl = dmedian_buckets(di, mc, mapping_di, cols)
+
+et  = DataFrame(expr_tbl, :auto)
+rename!(et, lineage_markers)
+
+# export median marker expression
+CSV.write("median_expr_$mc.csv", et)
+```
+
+Detailed workflow for each method can be found in the data section.
