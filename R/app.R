@@ -24,7 +24,8 @@ cycadas <- function() {
                               DA_result_table = NULL,
                               DA_interactive_table = NULL,
                               graph = NULL,
-                              hm = NULL)
+                              hm = NULL,
+                              merged_prop_table = NULL)
 
   initTree <- function() {
 
@@ -847,6 +848,47 @@ cycadas <- function() {
       annData$X <- NULL
       at$data <- annData
     })
+    
+    # Save the DA Table ----
+    output$exportDA <- downloadHandler(
+      filename = function() {
+        paste("DA_Table_", Sys.Date(), ".csv", sep="")
+      },
+      content = function(file) {
+        write.csv(reactVals$DA_result_table, file)
+      }
+    )
+    
+    get_merged_prop_table <- function() {
+      
+      req(reactVals$counts_table)
+      
+      countsTable <- reactVals$counts_table
+      ## aggregate the clusters by name:
+      countsTable['cell'] <- df01Tree$cell
+      # merge and aggregate by cell
+      countsTable <- aggregate(. ~ cell, countsTable, sum)
+      
+      rownames(countsTable) <- countsTable$cell
+      countsTable$cell <- NULL
+      
+      props_table <- t(t(countsTable) / colSums(countsTable)) * 100
+      
+      return(props_table)
+      
+    }
+    
+    # Save the Merged Proportion Table ----
+    output$exportProp <- downloadHandler(
+      
+      filename = function() {
+        paste("Merged_Proportions_Table_", Sys.Date(), ".csv", sep="")
+      },
+      content = function(file) {
+        write.csv(get_merged_prop_table(), file)
+      }
+    )
+    
 
     # Load the marker threshold file ---------------------------------------
     observeEvent(input$fTH,{
@@ -1080,6 +1122,8 @@ cycadas <- function() {
           })
 
       DA_df$list <- unlist(my_list)
+      
+      colnames(DA_df) <- c("Cond1", "Cond2", "p-value", "Cell", "Naming")
 
       reactVals$DA_result_table <- DA_df
 
@@ -1233,14 +1277,14 @@ cycadas <- function() {
       # browser()
 
       ## Load median expression and cell frequencies
-      df <- read.csv("data/McCarthy_expr_median_400.csv")
+      df <- read.csv("data/demo_data/median_expr_1600.csv")
       df_global <<- df
 
       reactVals$graph <- initTree()
 
       annotationlist <<- list("Unassigned")
 
-      cell_freq <- read.csv("data/McCarthy_cluster_freq_400.csv")
+      cell_freq <- read.csv("data/demo_data/cluster_freq_1600.csv")
 
       labels_row <-
         paste0(rownames(df), " (", cell_freq$clustering_prop , "%)")
@@ -1329,7 +1373,7 @@ cycadas <- function() {
       # browser()
 
       ## Load median expression and cell frequencies
-      df <- read.csv("data/McCarthy_expr_median_400.csv")
+      df <- read.csv("data/demo_data/median_expr_1600.csv")
 
       # !----------- TEST bimodal check !-----------------
       #
@@ -1341,7 +1385,7 @@ cycadas <- function() {
 
       annotationlist <<- list("Unassigned")
 
-      cell_freq <<- read.csv("data/McCarthy_cluster_freq_400.csv")
+      cell_freq <<- read.csv("data/demo_data/cluster_freq_1600.csv")
 
       labels_row <-
         paste0(rownames(df), " (", cell_freq$clustering_prop , "%)")
@@ -1412,23 +1456,34 @@ cycadas <- function() {
                                  clusterSize = cell_freq$clustering_prop)
       at <<- reactiveValues(data = annotaionDF, dr_umap = dr_umap)
 
-      reactVals$th <- kmeansTH(df01)
+      
+      # reactVals$th <- kmeansTH(df01)
+      
+      ## Load demo thresholds
+      th <- read.csv("data/demo_data/MarkerThresholds.csv")
 
+      th$X <- NULL
+      th$color <- "blue"
+      
+      th[th$bi_mod < 0.555, "color"] <- "red"
+      
+      rownames(th) <- th$cell
+      reactVals$th<- th
 
       ## Load metadata
-      md <<- read.csv("data/metadata_Fig1_Panel2.csv")
+      md <<- read.csv("data/demo_data/metadata.csv")
       md$X <- NULL
       reactVals$md<- md
 
       ## Load counts table
-      ct <<- read.csv("data/props_table_400.csv")
+      ct <<- read.csv("data/demo_data/cluster_counts_1600.csv")
       ct$X <- NULL
       reactVals$counts_table <- ct
 
       ## Load annotaiton Tree
-      df_nodes <- read.csv("data/nodesTable_data.csv")
-      df_edges <- read.csv("data/edgesTable_data.csv")
-      df_anno <- read.csv("data/annTable_data.csv")
+      df_nodes <- read.csv("data/demo_data/nodesTable_data.csv")
+      df_edges <- read.csv("data/demo_data/edgesTable_data.csv")
+      df_anno <- read.csv("data/demo_data/annTable_data.csv")
 
       df_nodes$pm[is.na(df_nodes$pm)] <- ""
       df_nodes$pm <- strsplit(df_nodes$pm, "\\|")

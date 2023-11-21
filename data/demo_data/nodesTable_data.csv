@@ -1,0 +1,36 @@
+id,label,pm,nm,color
+1,Unassigned,,,grey
+2,Granulocytes,CD66b,,blue
+3,Non-granulocytes,,CD66b,blue
+4,Eosinophils,CD294,CD16,blue
+5,Neutrophils,CD16,CD294,blue
+6,Basophils,CD123|CD38,CD19|CD3|CD56_NCAM|HLA_DR,blue
+7,B cells,CD19,CD3,blue
+8,Mono + DCs,HLA_DR,CD19|CD3,grey
+9,NK cells,CD56_NCAM,CD19|CD3|HLA_DR,blue
+10,CD3+CD19-,CD3,CD19,blue
+11,Plasma cells,CD27|CD38|HLA_DR,CD20,blue
+12,HLA-DR+CD20+,CD20|HLA_DR,,blue
+13,non-class and interm Mono,,CD38,blue
+14,classical Mono,CD14|CD38,,blue
+15,DCs,CD38,CD14,blue
+16,NKT cells,CD56_NCAM,TCRgd,blue
+17,Classic T cells,,CD56_NCAM|TCRgd,blue
+18,gd T cells,TCRgd,CD56_NCAM,blue
+19,Naive B cells,IgD,CD27,blue
+20,Class-switched memory B cells,CD27,IgD,blue
+21,IgM memory B cells,CD27|IgD,,blue
+22,mDCs,CD11c,CD123,blue
+23,pDCs,CD123,CD11c,blue
+24,CD4+ NKT,CD4,CD8a,blue
+25,CD8+ NKT,CD8a,CD4,blue
+26,CD8+ T cells,CD8a,CD4,grey
+27,CD4+ T cells,CD4,CD8a,grey
+28,CD8+ TN,CD197_CCR7|CD45RA,,blue
+29,CD8+ TCM,CD197_CCR7,CD45RA,blue
+30,CD8+ TEM,,CD197_CCR7|CD45RA,blue
+31,CD8+ TEMRA,CD45RA,CD197_CCR7,blue
+32,CD4+ TN,CD197_CCR7|CD45RA,,blue
+33,CD4+ TCM,CD197_CCR7,CD45RA,blue
+34,CD4+ TEM,,CD197_CCR7|CD45RA,blue
+35,CD4+ TEMRA,CD45RA,CD197_CCR7,blue
