@@ -1122,6 +1122,8 @@ cycadas <- function() {
           })
 
       DA_df$list <- unlist(my_list)
+      
+      colnames(DA_df) <- c("Cond1", "Cond2", "p-value", "Cell", "Naming")
 
       reactVals$DA_result_table <- DA_df
 
