@@ -431,19 +431,42 @@ ui <- dashboardPage(
                               ),
                               box(
                                 width = NULL,
-                                column(width = 6,
-                                      box(
-                                        width = NULL,
-                                        selectInput("correction_method", "Select:", choices = c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY",
-                                                                                                "fdr", "none"))
-                                      )
+                                fluidRow(column(width = 4,
+                                                 box(
+                                                   width = NULL,
+                                                   selectInput("correction_method", "Select:", choices = c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY",
+                                                                                                           "fdr", "none"))
+                                                 )
+                                                ),
+                                         column(width = 4,
+                                                 box(
+                                                   width = NULL,
+                                                   title = "Do Analysis",
+                                                   actionButton("doDA", "Calculate")
+                                                 )
+                                         )
+                                
                                 )
-                                ),
-                               box(
-                                 width = NULL,
-                                 title = "Do Analysis",
-                                 actionButton("doDA", "Calculate")
-                               )
+                              ),
+                              
+                              fluidRow(column(width = 4,
+                                              box(
+                                                width = NULL,
+                                                title = "Export DA Result",
+                                                downloadButton("exportDA", "Download")
+                                              )
+                                              ),
+                                       
+                                       column(width = 4,
+                                              box(
+                                                width = NULL,
+                                                title = "Export Proportion Table",
+                                                downloadButton("exportProp", "Download")
+                                              )
+                                              ),
+
+                                       )
+                              
                               ),
                        column(width = 6,
                               box(
