@@ -22,7 +22,7 @@ Key features:
 
 To run:
 
--   Checkout branch develop
+-   Checkout the develop branch, and within R:
 
 ``` r
 library(devtools)
@@ -64,9 +64,10 @@ Upon uploading: • metadata table (defining the condition of each sample, for e
 
 ### Demo dataset
 
-CyCadas includes two versions of a dataset for demonstration purpose. Version 1 includes median expression and cluster frequencies but no annotation has been performaed yet. Version two includes the fully annotated dataset for exploration and differential abundance.     
+CyCadas includes two versions of a dataset for demonstration purpose. Version 1 includes median expression and cluster frequencies but no annotation has been performaed yet. Version two includes the fully annotated dataset for exploration and differential abundance.
 
 ## Prepare the Data input
+
 ### Median Expression and Cluster Frequencies from FlowSOM (R Code):
 
 ``` r
