@@ -1,10 +1,3 @@
-# cycadas
-
-### ToRun:
-pkgload::load_all(".")
-
-cycadas()
-=======
 ![Alt text](./cycadas_logo.png)
 
 ## Cytometry Cluster Annotation and Differential Abundance Suite
