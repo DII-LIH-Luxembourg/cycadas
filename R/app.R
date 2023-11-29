@@ -595,37 +595,6 @@ cycadas <- function() {
       add_node(reactVals$graph, parent_name, label, color)
     }
 
-    # Load Annotation Tree ----
-    observeEvent(input$btnImportTree, {
-
-      # browser()
-
-      req(input$fNodes)
-      req(input$fEdges)
-      req(input$fAnno)
-
-      req(input$fMarkerExpr)
-      req(input$cluster_freq)
-
-      df_nodes <- read.csv(input$fNodes$datapath)
-      df_edges <- read.csv(input$fEdges$datapath)
-      df_anno <- read.csv(input$fAnno$datapath)
-
-      df_nodes$pm[is.na(df_nodes$pm)] <- ""
-      df_nodes$pm <- strsplit(df_nodes$pm, "\\|")
-
-      df_nodes$nm[is.na(df_nodes$nm)] <- ""
-      df_nodes$nm <- strsplit(df_nodes$nm, "\\|")
-
-      reactVals$graph$nodes <- df_nodes
-      reactVals$graph$edges <- df_edges
-
-      df01Tree <<- df_anno
-
-      annotationlist <<- as.list(df_nodes$label)
-
-    })
-
 
     observeEvent(input$exportTreeGraphics, {
 
@@ -1260,102 +1229,14 @@ cycadas <- function() {
 
     # children <- graph$edges$from[graph$edges$to == myNode$selected]
 
-    observeEvent(input$btnLoadDemoData, {
-
-      # browser()
-      # Create a Progress object
-      progress <- shiny::Progress$new()
-      # Make sure it closes when we exit this reactive, even if there's an error
-      on.exit(progress$close())
-
-      progress$set(message = "loading Data...", value = 0)
-
-      # browser()
-
-      ## Load median expression and cell frequencies
-      df <- read.csv("data/demo_data/median_expr_1600.csv")
-      df_global <<- df
-
-      reactVals$graph <- initTree()
-
-      annotationlist <<- list("Unassigned")
-
-      cell_freq <- read.csv("data/demo_data/cluster_freq_1600.csv")
-
-      labels_row <-
-        paste0(rownames(df), " (", cell_freq$clustering_prop , "%)")
-
-      marker_names <- rownames(df)
-
-      set.seed(1234)
-
-      my_umap <- umap(df)
-      dr_umap <<- data.frame(
-        u1 = my_umap$layout[, 1],
-        u2 = my_umap$layout[, 2],
-        my_umap$data,
-        cluster_number = 1:length(my_umap$layout[, 1]),
-        check.names = FALSE
-      )
-
-      df01 <<- df %>% normalize01()
-      myDF <<- df %>% normalize01()
-
-      df01Tree <<- df %>% normalize01()
-      allMarkers <<- colnames(df)
-      df01Tree$cell <<- "Unassigned"
-
-      selectedMarkers <<- colnames(df)
-      posPickerList <<- colnames(df)
-
-      ## load only at start to fill the picker list
-      updatePickerInput(
-        session,
-        inputId = "myPickerPos",
-        label = "Select Positive Markers",
-        choices = colnames(df01),
-        # choices = NULL,
-        options = list(
-          `actions-box` = TRUE,
-          size = 10,
-          `selected-text-format` = "count > 3"
-        )
-      )
-      updatePickerInput(
-        session,
-        inputId = "myPickerNeg",
-        label = "Select Negative Markers",
-        choices = colnames(df01),
-        options = list(
-          `actions-box` = TRUE,
-          size = 10,
-          `selected-text-format` = "count > 3"
-        )
-      )
-      updateSelectInput(session, "markerSelect", "Select:", colnames(df01))
-
-      updateCheckboxGroupButtons(
-        session,
-        inputId = "treePickerPos",
-        choices = colnames(df01),
-        selected = NULL
-      )
-      updateCheckboxGroupButtons(
-        session,
-        inputId = "treePickerNeg",
-        choices = colnames(df01),
-        selected = NULL
-      )
-
-      annotaionDF <<- data.frame("cell" = "unassigned",
-                                 clusterSize = cell_freq$clustering_prop)
-      at <<- reactiveValues(data = annotaionDF, dr_umap = dr_umap)
-
-      reactVals$th <- kmeansTH(df01)
-
-    })
+    # observeEvent(input$btnLoadDemoData, {
+    # 
+    # })
     
-    observeEvent(input$btnLoadAnnoData, {Settings_Server(id="Settings")})
+
+    observeEvent(input$btnLoadDemoData, {Settings_Server1(id="Settings")})
+    observeEvent(input$btnLoadAnnoData, {Settings_Server2(id="Settings")})
+    observeEvent(input$btnImportTree, {Settings_Server3(id="Settings")})
 
   }
 
