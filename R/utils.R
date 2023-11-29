@@ -1,3 +1,14 @@
+reactVals <- reactiveValues(th = NULL,
+                            myTH = NULL,
+                            md = NULL,
+                            counts_table = NULL,
+                            DA_result_table = NULL,
+                            DA_interactive_table = NULL,
+                            graph = NULL,
+                            hm = NULL,
+                            merged_prop_table = NULL)
+
+
 availMarkers <- function(sm) {
 
   m <- colnames(df)
@@ -225,7 +236,21 @@ delete_leaf_node <- function(graph_data, node_id) {
 }
 
 
-
+initTree <- function() {
+  
+  # create initial master node of all Unassigned clusters
+  nodes <- tibble(id = 1,
+                  label = "Unassigned",
+                  pm = list(""),
+                  nm = list(""),
+                  color = "blue"
+  )
+  
+  edges <- data.frame(from = c(1), to = c(1))
+  
+  return (list(nodes = nodes, edges = edges))
+  
+}
 # deleteChildNodes <- function(graph, node) {
 #   children <- successors(graph, node)  # Get the immediate children of the node
 #   if (length(children) > 0) {  # If the node has children, recursively delete them

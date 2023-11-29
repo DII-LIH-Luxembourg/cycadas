@@ -19,15 +19,6 @@ cycadas <- function() {
 
   # browser()
 
-  reactVals <- reactiveValues(th = NULL,
-                              myTH = NULL,
-                              md = NULL,
-                              counts_table = NULL,
-                              DA_result_table = NULL,
-                              DA_interactive_table = NULL,
-                              graph = NULL,
-                              hm = NULL,
-                              merged_prop_table = NULL)
 
   initTree <- function() {
 
@@ -346,17 +337,20 @@ cycadas <- function() {
 
     # Annotation heatmap plot ----
     output$hm_tree <- renderPlot({
-
+      
+     req(!is.null(reactVals$hm))
+      req(nrow(reactVals$hm)>0)
       if (dim(reactVals$hm)[1] < 2) {
         # browser()
+        TEST1<<-reactVals$hm
         pheatmap(reactVals$hm %>% select(-c("cell")), cluster_cols = F, cluster_rows = F)
       } else {
         message(dim(reactVals$hm)[1])
         # browser()
-
+        TEST1<<-reactVals$hm
         pheatmap(reactVals$hm %>% select(-c("cell")), cluster_cols = F)
       }
-    })
+      })
 
 
     # Observe Parent Node selection ----
