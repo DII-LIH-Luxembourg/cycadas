@@ -73,6 +73,11 @@ threshold_Server <- function(id,reactVals) {
         
         req(input$table_rows_selected)
         
+        
+        TEST <<- input$plot_click
+        
+        if(!is.null(input$plot_click)){reactVals$th[input$table_rows_selected, "threshold"] <- round(input$plot_click$x, 3)}
+        
         selectedid <- input$table_rows_selected
         selRow <- reactVals$th[selectedid,]
         marker <- reactVals$th[selectedid, "cell"]
