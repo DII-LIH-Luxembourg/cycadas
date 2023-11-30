@@ -9,6 +9,30 @@ reactVals <- reactiveValues(th = NULL,
                             merged_prop_table = NULL)
 
 
+
+# myRenderFunction <- function(me, myTH, myCol){
+#   
+# 
+# }
+
+
+initTree <- function() {
+  
+  # create initial master node of all Unassigned clusters
+  nodes <- tibble(id = 1,
+                  label = "Unassigned",
+                  pm = list(""),
+                  nm = list(""),
+                  color = "blue"
+  )
+  
+  edges <- data.frame(from = c(1), to = c(1))
+  
+  return (list(nodes = nodes, edges = edges))
+  
+}
+
+
 availMarkers <- function(sm) {
 
   m <- colnames(df)
@@ -18,8 +42,6 @@ subsetdf <- function(markers) {
 
   return(df[1:20, 1:8])
 }
-
-
 kmeansTH <- function(df) {
   th <- data.frame(cell = colnames(df), threshold = 0.0, color = "blue", bi_mod = 0)
 
@@ -40,8 +62,6 @@ kmeansTH <- function(df) {
   rownames(th) <- th$cell
   return(th)
 }
-
-
 normalize01 <- function(hm) {
 
   eDR <- as.matrix(hm)
@@ -52,8 +72,6 @@ normalize01 <- function(hm) {
 
   return(as.data.frame(expr01))
 }
-
-
 filterHM <- function(DF,posList, negList, th) {
 
   # browser()
@@ -99,8 +117,6 @@ filterHM <- function(DF,posList, negList, th) {
     return(as.data.frame(DF))
   }
 }
-
-
 filterColor <- function(DF,hm) {
   # browser()
   tmp <- replicate(nrow(DF), "other clusters")
@@ -121,8 +137,6 @@ filterAnnotation <- function(hm_tmp,at_tmp) {
 set_ptname <- function(ptname, df) {
   df$phenotype <- ptname
 }
-
-
 setPhenotypeName <- function(markers, s, ph_name) {
   if (s == "pos") {
     ph_name <- paste0(ph_name, paste0(markers, collapse = "+"), "+")
@@ -131,7 +145,6 @@ setPhenotypeName <- function(markers, s, ph_name) {
   }
   return(ph_name)
 }
-
 # a function which generates the dataframe for plotting the distribution
 getMarkerDistDF <- function(marker, myScale){
 
@@ -149,8 +162,6 @@ getMarkerDistDF <- function(marker, myScale){
 
   return(marker_expr)
 }
-
-
 # a function to add a new row for nodes and edges
 add_node <- function(graph,parent,name,pos_m,neg_m,color) {
 
@@ -167,7 +178,6 @@ add_node <- function(graph,parent,name,pos_m,neg_m,color) {
 
   return(graph)
 }
-
 # define recursive function to delete a node and all its children
 delete_child_nodes <- function(graph_data, node_id) {
   # find the children nodes

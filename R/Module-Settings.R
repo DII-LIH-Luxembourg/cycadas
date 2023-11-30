@@ -3,12 +3,12 @@
 
 
 Settings_UI <- function(id) {
-  ns <- NS(id)
+  # ns <- NS(id)
+  
+  print(getwd())
   fluidRow(column(width = 12,
     tabBox(width = NULL,title = "Data upload",id = "tab-required",height = "450px",
            tabPanel("Required",
-                    "Required",
-                    
         box(title = "Upload Marker-expression",collapsible = TRUE,solidHeader = TRUE,status = "info",width = NULL,collapsed = F,
           fileInput("fMarkerExpr","Choose CSV File",multiple = FALSE,accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
           tags$hr(),
@@ -53,6 +53,7 @@ Settings_Server1 <- function(id) {
   moduleServer(
     id = id,
     module = function(input, output, session) {
+      print(getwd())
 
 # browser()
 # Create a Progress object
@@ -164,6 +165,7 @@ Settings_Server2 <- function(id) {
         # browser()
         
         # Create a Progress object
+      print(getwd())
         progress <- shiny::Progress$new()
         # Make sure it closes when we exit this reactive, even if there's an error
         on.exit(progress$close())

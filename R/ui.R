@@ -22,6 +22,7 @@ ui <- dashboardPage(
     # Load/Settings Tab ----------------------------------------------------------------
     tabItems(
       tabItem(tabName = "settings",Settings_UI(id="Settings")),
+      tabItem(tabName = "thresholds",Threshold_UI(id="threshold")),
 
       # Tree-Annotation Tab ----------------------------------------------------
       tabItem(tabName = "treeannotation",
@@ -162,36 +163,7 @@ ui <- dashboardPage(
               ) # end row
 
               ),
-      # Thresholds Tab --------------------------------------------------------
-      tabItem(tabName = "thresholds",
-              fluidRow(column(
-                width = 6,
-                box(
-                  width = NULL,
-                  title = "Marker Expression:",
-                  plotOutput("plot", click = "plot_click")
-                ),
-                box(width = NULL,
-                    title = "Histogram:",
-                    plotOutput("plot2"))
-              ),
-              column(
-                width = 6,
-                # box(
-                #   width = NULL,
-                #   id = "transformationBox",
-                #   title = "Data transformation",
-                #   radioButtons(
-                #     "radio",
-                #     label = NULL,
-                #     choices = list("0 to 1" = "1"),
-                #     selected = "1"
-                #   )
-                # ),
-                box(width = NULL,
-                    DTOutput('table'))
-              ))),
-      # umap Reactive  Tab ----------------------------------------------------
+            # umap Reactive  Tab ----------------------------------------------------
       tabItem(tabName = "umap_reactive",
               fluidRow(column(width = 6,
                               box(
