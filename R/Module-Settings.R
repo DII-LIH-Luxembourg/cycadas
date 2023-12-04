@@ -281,8 +281,8 @@ Settings_Server2 <- function(id) {
         df_nodes$nm <- strsplit(df_nodes$nm, "\\|")
         
         # browser()
-        reactVals$graph$nodes <- df_nodes
-        reactVals$graph$edges <- df_edges
+        reactVals$graph$nodes <<- df_nodes
+        reactVals$graph$edges <<- df_edges
         
         df01Tree <<- df_anno
         
@@ -290,6 +290,8 @@ Settings_Server2 <- function(id) {
         
         annotationlist <<- as.list(df_nodes$label)
 
+        
+        # Settings_Server3(id="Settings")
     }
   )
 }
@@ -300,7 +302,7 @@ Settings_Server3 <- function(id) {
 
       # Load Annotation Tree ----
         # browser()
-        
+        print("Run setting server 3")
         req(input$fNodes)
         req(input$fEdges)
         req(input$fAnno)
