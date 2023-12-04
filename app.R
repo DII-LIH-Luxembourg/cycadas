@@ -16,6 +16,7 @@ for (package in packages_to_install) {
 source("R/utils.R")
 source("R/Module-Settings.R")
 source("R/Module-Threshold.R")
+source("R/Module-TreeAnnotation.R")
 source("R/ui.R")
 # cycadas <- function() {
 
@@ -28,12 +29,12 @@ source("R/ui.R")
 
   # Server function ----
   server = function(input, output, session) {
-
+    
     # Function: Update cluster labels ----
     updateClusterLabels <- function(mydf) {
-
+      
       mysum <- sum(cell_freq[rownames(mydf),]$clustering_prop)
-
+      
       output$progressBox <- renderText({
         paste0(mysum, "%")
       })
@@ -41,6 +42,8 @@ source("R/ui.R")
         paste0(dim(mydf)[1], "Cluster")
       })
     }
+
+
 
     # Function: Plot the annotation tree ----
     plotTree <- function() {
@@ -1100,14 +1103,13 @@ source("R/ui.R")
       bindEvent(input$btnLoadAnnoData)
     
     observeEvent(input$btnImportTree, {Settings_Server3(id="Settings")})
-    
-    
     observe(threshold_Server(id="threshold",reactVals))
     # %>% 
     #   bindEvent(input$btnLoadAnnoData)
     # observe(ThresholdPlot_Server(id="threshold",reactVals,selectedid=input$table_rows_selected)) %>% 
     #   bindEvent(input$table_rows_selected)
       
+    observe(TreeAnnotation_Server(id="TreeAnnotation"))
     
 
     

@@ -6,7 +6,7 @@ Threshold_UI <- function(id) {
     box(
       width = NULL,
       title = "Marker Expression:",
-      plotOutput(ns("plot"), click = "plot_click")
+      plotOutput(ns("plot"), click = ns("plot_click"))
     ),
     box(width = NULL,
         title = "Histogram:",
@@ -55,6 +55,7 @@ threshold_Server <- function(id,reactVals) {
         editable = F,
         extensions = c('Buttons', 'Scroller'),
         selection = 'single',
+        # selection = list(selection='single',selected = 5),
         options = list(
           dom = 'Bfrtip',
           server = FALSE,
@@ -72,11 +73,13 @@ threshold_Server <- function(id,reactVals) {
       observeEvent(c(input$plot_click,input$table_rows_selected), {
         
         req(input$table_rows_selected)
-        
+        req(reactVals$th)
         
         TEST <<- input$plot_click
         
-        if(!is.null(input$plot_click)){reactVals$th[input$table_rows_selected, "threshold"] <- round(input$plot_click$x, 3)}
+        if(!is.null(input$plot_click)){
+          print("Threshold click")
+          reactVals$th[input$table_rows_selected, "threshold"] <- round(input$plot_click$x, 3)}
         
         selectedid <- input$table_rows_selected
         selRow <- reactVals$th[selectedid,]
@@ -98,7 +101,7 @@ threshold_Server <- function(id,reactVals) {
                   axis.text.y = element_blank(),
                   panel.grid.major.y = element_blank(),
                   panel.grid.minor.y = element_blank()) +
-            labs(x = "Scale 0 to 1") +
+            labs(x = "Scale 0 to 1",title = marker ) +
             geom_vline(xintercept = myTH, linetype="dotted",
                        color = myCol, size=1.5)
         })
