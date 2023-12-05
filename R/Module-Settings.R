@@ -66,7 +66,7 @@ Settings_Server1 <- function(id) {
   moduleServer(
     id = id,
     module = function(input, output, session) {
-      print(getwd())
+      print("Run setting server 1")
 
 # browser()
 # Create a Progress object
@@ -178,7 +178,7 @@ Settings_Server2 <- function(id) {
         # browser()
         
         # Create a Progress object
-      print(getwd())
+      print("Run setting server 2")
         progress <- shiny::Progress$new()
         # Make sure it closes when we exit this reactive, even if there's an error
         on.exit(progress$close())
@@ -283,12 +283,15 @@ Settings_Server2 <- function(id) {
         # browser()
         reactVals$graph$nodes <<- df_nodes
         reactVals$graph$edges <<- df_edges
-        
+    
         df01Tree <<- df_anno
         
         reactVals$hm <- df01Tree
         
         annotationlist <<- as.list(df_nodes$label)
+        
+       print ("update paraent picker")
+        updatePickerInput(session,inputId = "parentPicker",choices = annotationlist) 
 
         
         # Settings_Server3(id="Settings")

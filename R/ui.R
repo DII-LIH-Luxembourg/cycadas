@@ -23,7 +23,19 @@ ui <- dashboardPage(
     tabItems(
       tabItem(tabName = "settings",Settings_UI(id="Settings")),
       tabItem(tabName = "thresholds",Threshold_UI(id="threshold")),
-      tabItem(tabName = "treeannotation",TreeAnnotation_UI(id="TreeAnnotation")),
+      tabItem(tabName = "treeannotation",
+              fluidRow(
+                 column(width = 4,TreeAnnotation_UI(id="TreeAnnotation")),
+                 column(width = 8,
+                        box(width = NULL,title = "Annotation Tree",
+                            visNetworkOutput(("mynetworkid"))),
+                        box(width = NULL,title = "Heatmap",
+                            Heatmap_UI(id="Heatmap")),
+                        box(width = NULL,
+                            plotOutput(("umap_tree")))
+                 ))),
+        
+        
             # umap Reactive  Tab ----------------------------------------------------
       tabItem(tabName = "umap_reactive",
               fluidRow(column(width = 6,
@@ -146,3 +158,4 @@ ui <- dashboardPage(
     ) # tabItems
   ) # dashboardBody
 )
+

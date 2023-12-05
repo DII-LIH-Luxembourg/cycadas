@@ -7,17 +7,11 @@
 
 TreeAnnotation_UI <- function(id) {
   ns <- NS(id)
-
-  fluidRow(
-    column(width = 4,
-    box(width = NULL,title = "Create Node",
+    c(box(width = NULL,title = "Create Node",
       textOutput(ns("progressBox")),
       textOutput(ns("progressBox2")),
       textInput(ns("newNode"), "Set Name..."),
-      pickerInput(inputId = ns("parentPicker"),label = "Select Parent:",choices = NULL,
-                  options = list(`actions-box` = TRUE,size = 10,`selected-text-format` = "count > 3"),
-                  multiple = F)
-      ),
+      parentPicker_UI(id="parentPicker")),
     box(width = NULL,
         column(width = 4,
                checkboxGroupButtons(inputId = ns("treePickerPos"),label = "Positive:",choices = c("A"),direction = "vertical")
@@ -37,19 +31,10 @@ TreeAnnotation_UI <- function(id) {
       ),
     box(width = NULL,title = "Export Tree as Image",
       actionButton(ns("exportTreeGraphics"), "Export Tree Image")
-      )
-    ),
-    # end column
-  column(width = 8,
-         box(width = NULL,title = "Annotation Tree",
-             visNetworkOutput(ns("mynetworkid"))),
-         box(width = NULL,title = "Heatmap",
-             # TreeHeatmapUI(ns(id="TreeHeatmap"))
-             plotOutput(ns("hm_tree"))
-             ),
-         box(width = NULL,
-             plotOutput(ns("umap_tree")))
-  ))}
+      ))
+    
+  
+  }
 
 TreeAnnotation_Server <- function(id,reactVals,df01,tab) {
   moduleServer(
@@ -74,7 +59,7 @@ TreeAnnotation_Server <- function(id,reactVals,df01,tab) {
         })
       }
       
-updatePickerInput(session,inputId = "parentPicker",choices = annotationlist)
+
 
 
 
@@ -91,35 +76,35 @@ updatePickerInput(session,inputId = "parentPicker",choices = annotationlist)
       # 
 
 # observe({
-      nodes <- reactVals$graph$nodes
-      edges <- reactVals$graph$edges
- 
-      print (head(nodes))
-      
-        output$mynetworkid <- renderVisNetwork({
-          
-          for(i in 1:nrow(nodes)) {
-            
-            l <- nodes$label[i]
-            
-            # get the number of clusters with that label
-            nLabel <- sum(df01Tree$cell == l)
-            # mysum <- sum(cell_freq[rownames(df01Tree),]$clustering_prop)
-            
-            if (nLabel == 0) {
-              nodes[i,]$color <- "grey"
-            } else {
-              nodes[i,]$color <- "blue"
-            }
-            
-          }
-          
-          visNetwork(nodes, edges, width = "100%") %>%
-            visEdges(arrows = "from") %>%
-            visHierarchicalLayout() %>%
-            visExport(type = "png", name = "export-network",
-                      float = "left", label = "Save network", background = "white", style= "")
-        })
+      # nodes <- reactVals$graph$nodes
+      # edges <- reactVals$graph$edges
+      # 
+      # print (head(nodes))
+      # 
+      #   output$mynetworkid <- renderVisNetwork({
+      #     
+      #     for(i in 1:nrow(nodes)) {
+      #       
+      #       l <- nodes$label[i]
+      #       
+      #       # get the number of clusters with that label
+      #       nLabel <- sum(df01Tree$cell == l)
+      #       # mysum <- sum(cell_freq[rownames(df01Tree),]$clustering_prop)
+      #       
+      #       if (nLabel == 0) {
+      #         nodes[i,]$color <- "grey"
+      #       } else {
+      #         nodes[i,]$color <- "blue"
+      #       }
+      #       
+      #     }
+      #     
+      #     visNetwork(nodes, edges, width = "100%") %>%
+      #       visEdges(arrows = "from") %>%
+      #       visHierarchicalLayout() %>%
+      #       visExport(type = "png", name = "export-network",
+      #                 float = "left", label = "Save network", background = "white", style= "")
+      #   })
         
 # })   
       
@@ -138,27 +123,27 @@ updatePickerInput(session,inputId = "parentPicker",choices = annotationlist)
 # observeEvent(input$parentPicker, {Heatmap_module(id = "TreeHeatmap",df = reactVals$hm,filter = input$parentPicker)})
         
         
-        
-  observeEvent(input$parentPicker, {
-        filter = input$parentPicker
-        df = reactVals
-
-        print("run heatmaps plot")
-        print(filter)
-        print(head(df$hm))
-        # print(Sys.getenv)
-
-
-        output$hm_tree <- renderPlot({
-          heatmap_matrix <<- df$hm %>%
-            filter(cell == filter) %>%
-            select(-c("cell"))
-
-          if(nrow(heatmap_matrix) > 0 & ncol(heatmap_matrix) > 0 ){
-            pheatmap(heatmap_matrix,cluster_cols = F,cluster_rows = T)
-          }
-        })})
-  #
+  #       
+  # observeEvent(input$parentPicker, {
+  #       filter = input$parentPicker
+  #       df = reactVals
+  # 
+  #       print("run heatmaps plot")
+  #       print(filter)
+  #       print(head(df$hm))
+  #       # print(Sys.getenv)
+  # 
+  # 
+  #       output$hm_tree <- renderPlot({
+  #         heatmap_matrix <<- df$hm %>%
+  #           filter(cell == filter) %>%
+  #           select(-c("cell"))
+  # 
+  #         if(nrow(heatmap_matrix) > 0 & ncol(heatmap_matrix) > 0 ){
+  #           pheatmap(heatmap_matrix,cluster_cols = F,cluster_rows = T)
+  #         }
+  #       })})
+  # #
 
       
 # Upload the marker expression file ----
@@ -379,109 +364,109 @@ updatePickerInput(session,inputId = "parentPicker",choices = annotationlist)
       # browser()
       
 
-      print("nodes1")
-      print(head(nodes))
-      # print(search())
-      # browser()
-      # Observe Parent Node selection ----
-      observeEvent(input$parentPicker,{
-
-        
-        nodes2 <-  .GlobalEnv$reactVals$graph$nodes
-        filter <- input$parentPicker
-
-        
-        # df = reactVals
-
-        # # require(filter)
-        # node <- nodes %>%
-        #   filter(label == filter) %>%
-        #   glimpse()
-        # 
-        print("nodes2")  
-        print(head(nodes2))
-        # print(head(node))
-        
-        
-
-        
-        
-        # myid <- node$id
-
-        # filterPosMarkers <- unlist(node$pm)
-        # filterNegMarkers <- unlist(node$nm)
-        # 
-        # # collect all positive and negative markers
-        # # upwards from parent
-        # # go through edges until we reach one level below master node
-        # while (myid > 1) {
-        #   print(myid)
-        # 
-        #   edge <- reactVals$graph$edges %>% filter(from == myid)
-        #   next_id <- edge$to
-        # 
-        #   myid <- next_id
-        #   next_node <- reactVals$graph$nodes %>% filter(id == next_id)
-        #   filterPosMarkers <- append(filterPosMarkers, unlist(next_node$pm))
-        #   filterNegMarkers <- c(filterNegMarkers, unlist(next_node$nm))
-        # 
-        # }
-        # # remove the empty strings in the markers
-        # filterPosMarkers <- filterPosMarkers[nzchar(filterPosMarkers)]
-        # filterNegMarkers <- filterNegMarkers[nzchar(filterNegMarkers)]
-        # # 
-        # # # tmp <- filterHM(df01Tree,filterPosMarkers, filterNegMarkers, reactVals$th)
-        # # 
-        # tmp <- filterHM(df01Tree,unique(unlist(filterPosMarkers)), unique(unlist(filterNegMarkers)), reactVals$th)
-        # 
-        # tmp <- tmp[tmp$cell == node$label ,]
-        # # 
-        # updateClusterLabels(tmp)
-        # # 
-        # reactVals$hm <- tmp
-        # # 
-        # # updateCheckboxGroupButtons(
-        # #   session,
-        # #   inputId = "treePickerPos",
-        # #   choices = colnames(df01),
-        # #   selected = NULL,
-        # #   disabledChoices = filterPosMarkers
-        # # )
-        # # updateCheckboxGroupButtons(
-        # #   session,
-        # #   inputId = "treePickerNeg",
-        # #   choices = colnames(df01),
-        # #   selected = NULL,
-        # #   disabledChoices = filterNegMarkers
-        # # )
-        # 
-        # # update umap plot for Tree ----
-        # ClusterSelection <- filterColor(df_global,tmp)
-        # 
-        # 
-        # set.seed(1234)
-        # my_umap <- umap(df)
-        # dr_umap <<- data.frame(
-        #   u1 = my_umap$layout[, 1],
-        #   u2 = my_umap$layout[, 2],
-        #   my_umap$data,
-        #   cluster_number = 1:length(my_umap$layout[, 1]),
-        #   check.names = FALSE
-        # )
-        # 
-        # 
-        # output$umap_tree <-
-        #   renderPlot(
-        #     ggplot(dr_umap, aes(
-        #       x = u1, y = u2, color = ClusterSelection)) +
-        #       geom_point(size = 1.0) +
-        #       theme_bw() +
-        #       theme(legend.text = element_text(size = 8)) +
-        #       guides(color = guide_legend(override.aes = list(size = 4)))
-        #   )
-
-
-      })
+      # print("nodes1")
+      # print(head(nodes))
+      # # print(search())
+      # # browser()
+      # # Observe Parent Node selection ----
+      # observeEvent(input$parentPicker,{
+      # 
+      # 
+      #   nodes2 <-  .GlobalEnv$reactVals$graph$nodes
+      #   filter <- input$parentPicker
+      # 
+      # 
+      #   # df = reactVals
+      # 
+      #   # # require(filter)
+      #   # node <- nodes %>%
+      #   #   filter(label == filter) %>%
+      #   #   glimpse()
+      #   #
+      #   print("nodes2")
+      #   print(head(nodes2))
+      #   # print(head(node))
+      # 
+      #   
+      # 
+      #   
+      #   
+      #   # myid <- node$id
+      # 
+      #   # filterPosMarkers <- unlist(node$pm)
+      #   # filterNegMarkers <- unlist(node$nm)
+      #   # 
+      #   # # collect all positive and negative markers
+      #   # # upwards from parent
+      #   # # go through edges until we reach one level below master node
+      #   # while (myid > 1) {
+      #   #   print(myid)
+      #   # 
+      #   #   edge <- reactVals$graph$edges %>% filter(from == myid)
+      #   #   next_id <- edge$to
+      #   # 
+      #   #   myid <- next_id
+      #   #   next_node <- reactVals$graph$nodes %>% filter(id == next_id)
+      #   #   filterPosMarkers <- append(filterPosMarkers, unlist(next_node$pm))
+      #   #   filterNegMarkers <- c(filterNegMarkers, unlist(next_node$nm))
+      #   # 
+      #   # }
+      #   # # remove the empty strings in the markers
+      #   # filterPosMarkers <- filterPosMarkers[nzchar(filterPosMarkers)]
+      #   # filterNegMarkers <- filterNegMarkers[nzchar(filterNegMarkers)]
+      #   # # 
+      #   # # # tmp <- filterHM(df01Tree,filterPosMarkers, filterNegMarkers, reactVals$th)
+      #   # # 
+      #   # tmp <- filterHM(df01Tree,unique(unlist(filterPosMarkers)), unique(unlist(filterNegMarkers)), reactVals$th)
+      #   # 
+      #   # tmp <- tmp[tmp$cell == node$label ,]
+      #   # # 
+      #   # updateClusterLabels(tmp)
+      #   # # 
+      #   # reactVals$hm <- tmp
+      #   # # 
+      #   # # updateCheckboxGroupButtons(
+      #   # #   session,
+      #   # #   inputId = "treePickerPos",
+      #   # #   choices = colnames(df01),
+      #   # #   selected = NULL,
+      #   # #   disabledChoices = filterPosMarkers
+      #   # # )
+      #   # # updateCheckboxGroupButtons(
+      #   # #   session,
+      #   # #   inputId = "treePickerNeg",
+      #   # #   choices = colnames(df01),
+      #   # #   selected = NULL,
+      #   # #   disabledChoices = filterNegMarkers
+      #   # # )
+      #   # 
+      #   # # update umap plot for Tree ----
+      #   # ClusterSelection <- filterColor(df_global,tmp)
+      #   # 
+      #   # 
+      #   # set.seed(1234)
+      #   # my_umap <- umap(df)
+      #   # dr_umap <<- data.frame(
+      #   #   u1 = my_umap$layout[, 1],
+      #   #   u2 = my_umap$layout[, 2],
+      #   #   my_umap$data,
+      #   #   cluster_number = 1:length(my_umap$layout[, 1]),
+      #   #   check.names = FALSE
+      #   # )
+      #   # 
+      #   # 
+      #   # output$umap_tree <-
+      #   #   renderPlot(
+      #   #     ggplot(dr_umap, aes(
+      #   #       x = u1, y = u2, color = ClusterSelection)) +
+      #   #       geom_point(size = 1.0) +
+      #   #       theme_bw() +
+      #   #       theme(legend.text = element_text(size = 8)) +
+      #   #       guides(color = guide_legend(override.aes = list(size = 4)))
+      #   #   )
+      # 
+      # 
+      # })
       
       # # Observe node update picker ----
       # observeEvent(input$updateNodePicker, {
@@ -699,31 +684,14 @@ updatePickerInput(session,inputId = "parentPicker",choices = annotationlist)
       # })
       
       
+      
+
+      
+      
     })}
 
 
 
 
 # 
-# Heatmap_module <- function(id,df,filter) {
-#   moduleServer(
-#     id = id,
-#     module = function(input, output, session) {
-#       
-#     print("run heatmaps plot") 
-#       print(filter)
-#       print(df)
-#       # print(Sys.getenv)
-#       
-#       
-#     output$hm_tree <- renderPlot({
-#       heatmap_matrix <<- df %>% 
-#           filter(cell == filter) %>% 
-#           select(-c("cell"))
-#         
-#         if(nrow(heatmap_matrix) > 0 & ncol(heatmap_matrix) > 0 ){
-#           pheatmap(heatmap_matrix,cluster_cols = F,cluster_rows = T)
-#         } else {plot(1,1)}
-#       print(paste0(nrow(heatmap_matrix),ncol(heatmap_matrix)))  
-#       })
-#       })}
+

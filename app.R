@@ -16,7 +16,9 @@ for (package in packages_to_install) {
 source("R/utils.R")
 source("R/Module-Settings.R")
 source("R/Module-Threshold.R")
+source("R/Module-parentPicker.R")
 source("R/Module-TreeAnnotation.R")
+source("R/Module-Heatmap.R")
 source("R/ui.R")
 # cycadas <- function() {
 
@@ -455,7 +457,7 @@ source("R/ui.R")
 
     observeEvent(input$btnLoadDemoData, {Settings_Server1(id="Settings")})
     
-    observe(Settings_Server2(id="Settings")) %>% 
+    observe({Settings_Server2(id="Settings")}) %>% 
       bindEvent(input$btnLoadAnnoData)
     
     observeEvent(input$btnImportTree, {Settings_Server3(id="Settings")})
@@ -474,7 +476,10 @@ source("R/ui.R")
       }) %>%
       bindEvent(input$btnLoadAnnoData,input$fMarkerExpr, input$cluster_freq)
     
+    
 
+    parentPicker <- parentPicker_Server(id="parentPicker")
+    observeEvent(input$parentPicker,{Heatmap_Server(id="Heatmap",df=reactVals,filter=parentPicker)})
     
   }
 
