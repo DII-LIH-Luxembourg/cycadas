@@ -469,8 +469,9 @@ source("R/ui.R")
     observe({req(exists("df01"))
       TreeAnnotation_Server(id="TreeAnnotation",
                             reactVals=reactVals,
-                            df01 = df01,
-                            tab=input$tabs)}) %>% 
+                            df01 = df01)
+      
+      }) %>%
       bindEvent(input$btnLoadAnnoData,input$fMarkerExpr, input$cluster_freq)
     
 

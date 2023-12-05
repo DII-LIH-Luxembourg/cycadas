@@ -58,7 +58,7 @@ TreeAnnotation_Server <- function(id,reactVals,df01,tab) {
       
       req(exists("df01"))
  
-      TEST5 <<- reactVals
+      # TEST5 <<- reactVals
       print("Run Tree Annotation")
       
 # Function: Update cluster labels ----
@@ -89,6 +89,8 @@ updatePickerInput(session,inputId = "parentPicker",choices = annotationlist)
       # nodes <- TEST7
       # edges <- TEST8
       # 
+
+# observe({
       nodes <- reactVals$graph$nodes
       edges <- reactVals$graph$edges
  
@@ -119,7 +121,7 @@ updatePickerInput(session,inputId = "parentPicker",choices = annotationlist)
                       float = "left", label = "Save network", background = "white", style= "")
         })
         
-        
+# })   
       
 
 
@@ -191,7 +193,7 @@ updatePickerInput(session,inputId = "parentPicker",choices = annotationlist)
         # posPickerList <<- colnames(df)
 
         
-        TEST2 <<- colnames(df01)
+        # TEST2 <<- colnames(df01)
         
         ## load only at start to fill the picker list
         updatePickerInput(session,inputId = "myPickerPos",label = "Select Positive Markers",choices = colnames(df01),
@@ -374,34 +376,34 @@ updatePickerInput(session,inputId = "parentPicker",choices = annotationlist)
       
       
 
-      browser()
+      # browser()
       
 
       print("nodes1")
       print(head(nodes))
-      
+      # print(search())
+      # browser()
       # Observe Parent Node selection ----
       observeEvent(input$parentPicker,{
 
-        browser()
-        # 
-        # nodes <- isolate(reactVals$graph$nodes)
         
-        nodes2 <- reactVals$graph$nodes
+        nodes2 <-  .GlobalEnv$reactVals$graph$nodes
         filter <- input$parentPicker
+
+        
         # df = reactVals
-        
-        # require(filter)
+
+        # # require(filter)
         # node <- nodes %>%
-        #   filter(label == filter) %>% 
+        #   filter(label == filter) %>%
         #   glimpse()
-        
+        # 
         print("nodes2")  
         print(head(nodes2))
         # print(head(node))
         
         
-        browser()
+
         
         
         # myid <- node$id
@@ -523,55 +525,7 @@ updatePickerInput(session,inputId = "parentPicker",choices = annotationlist)
       #     value = node$label)
       # })
       
-      # # Update Node ----
-      # observeEvent(input$updateNodeBtn, {
-      #   
-      #   node <- reactVals$graph$nodes %>% filter(label == input$parentPicker)
-      #   myid <- node$id
-      #   
-      #   reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker,]$pm <-
-      #     list(c(reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker,]$pm[[1]], input$treePickerPos))
-      #   
-      #   reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker,]$nm <-
-      #     list(c(reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker,]$nm[[1]], input$treePickerNeg))
-      #   
-      #   updateTreeAnnotation()
-      #   
-      #   reactVals$hm <- df01Tree[df01Tree$cell == input$parentPicker, ]
-      #   
-      #   # if "newNode" textfield is ot empty, update the node name
-      #   if (input$newNode != "") {
-      #     # browser()
-      #     
-      #     old_name <- input$parentPicker
-      #     new_name <- input$newNode
-      #     
-      #     reactVals$graph$nodes[reactVals$graph$nodes$label == old_name,]$label <- new_name
-      #     
-      #     annotationlist[annotationlist == old_name] <<- new_name
-      #     updatePickerInput(
-      #       session,
-      #       inputId = "parentPicker",
-      #       selected = new_name,
-      #       choices = annotationlist
-      #     )
-      #     
-      #     # replace name in heatmap
-      #     df01Tree$cell[df01Tree$cell == old_name] <<- new_name
-      #     reactVals$hm <- df01Tree[df01Tree$cell == new_name, ]
-      #     
-      #     updateTextInput(
-      #       session,
-      #       inputId = "newNode",
-      #       label = NULL,
-      #       value = "",
-      #       placeholder = NULL
-      #     )
-      #     
-      #   }
-      #   
-      #   plotTree()
-      # })
+     
       
       # # Delete Node ----
       # observeEvent(input$deleteNodeBtn, {
@@ -746,6 +700,10 @@ updatePickerInput(session,inputId = "parentPicker",choices = annotationlist)
       
       
     })}
+
+
+
+
 # 
 # Heatmap_module <- function(id,df,filter) {
 #   moduleServer(
