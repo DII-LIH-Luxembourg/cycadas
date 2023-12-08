@@ -602,18 +602,18 @@ cycadas <- function() {
     # Load Annotation Tree ----
     observeEvent(input$btnImportTree, {
 
-      # browser()
+      browser()
 
       req(input$fNodes)
       req(input$fEdges)
-      req(input$fAnno)
+      # req(input$fAnno)
 
       req(input$fMarkerExpr)
       req(input$cluster_freq)
 
       df_nodes <- read.csv(input$fNodes$datapath)
       df_edges <- read.csv(input$fEdges$datapath)
-      df_anno <- read.csv(input$fAnno$datapath)
+      # df_anno <- read.csv(input$fAnno$datapath)
 
       df_nodes$pm[is.na(df_nodes$pm)] <- ""
       df_nodes$pm <- strsplit(df_nodes$pm, "\\|")
@@ -623,8 +623,10 @@ cycadas <- function() {
 
       reactVals$graph$nodes <- df_nodes
       reactVals$graph$edges <- df_edges
+      
+      updateTreeAnnotation()
 
-      df01Tree <<- df_anno
+      # df01Tree <<- df_anno
 
       annotationlist <<- as.list(df_nodes$label)
 

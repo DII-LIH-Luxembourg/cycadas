@@ -147,14 +147,6 @@ ui <- dashboardPage(
                                    "text/comma-separated-values,text/plain",
                                    ".csv")
                       ),
-                      fileInput(
-                        "fAnno",
-                        "Choose Annotation File",
-                        multiple = FALSE,
-                        accept = c("text/csv",
-                                   "text/comma-separated-values,text/plain",
-                                   ".csv")
-                      ),
                       actionButton("btnImportTree", "Import")
                     ),
                     # box(
