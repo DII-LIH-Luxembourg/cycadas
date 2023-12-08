@@ -602,7 +602,7 @@ cycadas <- function() {
     # Load Annotation Tree ----
     observeEvent(input$btnImportTree, {
 
-      browser()
+      # browser()
 
       req(input$fNodes)
       req(input$fEdges)
@@ -906,6 +906,12 @@ cycadas <- function() {
       rownames(th) <- th$cell
 
       reactVals$th<- th
+      
+      # re-calculate the tree after threshold upload
+      req(input$fMarkerExpr)
+      
+      updateTreeAnnotation()
+      
 
     })
 
