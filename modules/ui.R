@@ -30,7 +30,7 @@ ui <- dashboardPage(
                         TreeAnnotation_UI(id="TreeAnnotation")),
                  column(width = 8,
                         box(width = NULL,title = "Annotation Tree",
-                            visNetworkOutput(("mynetworkid"))),
+                            visNetwork_UI(id="visNetwork")),
                         box(width = NULL,title = "Heatmap",
                             Heatmap_UI(id="Heatmap")),
                         box(width = NULL,

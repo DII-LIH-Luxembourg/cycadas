@@ -20,8 +20,8 @@ for (package in packages_to_install) {
 source("modules/utils.R")
 source("modules/Module-Settings.R")
 source("modules/Module-Threshold.R")
-# source("modules/Module-parentPicker.R")
 source("modules/Module-TreeAnnotation.R")
+source("modules/Module-visNetwork.R")
 source("modules/Module-Heatmap.R")
 source("modules/ui.R")
 # cycadas <- function() {
@@ -44,8 +44,7 @@ source("modules/ui.R")
                                 DA_interactive_table = NULL,
                                 graph = NULL,
                                 hm = NULL,
-                                merged_prop_table = NULL,
-                                ParentValue=NULL)
+                                merged_prop_table = NULL)
 
     
     # Save the DA Table ----
@@ -483,7 +482,9 @@ source("modules/ui.R")
     
 # Lead threshold Tab    ----
     
-    observe(threshold_Server(id="threshold",reactVals))
+    observe({
+      req(reactVals)
+      threshold_Server(id="threshold",reactVals)})
     
 # Run the Tree Annotation Tab based on pressing the Annotated demo button  ----
     observe({
@@ -507,9 +508,9 @@ source("modules/ui.R")
     
     observe({
       req(!is.null(reactVals$hm))
-      Heatmap_Server(id="Heatmap",reactVals=reactVals,filter=input$parentPicker)}) %>% 
+      Heatmap_Server(id="Heatmap",reactVals=reactVals,filter=input$parentPicker)
+      visNetwork_Server(id="visNetwork",reactVals=reactVals,filter=input$parentPicker)}) %>% 
       bindEvent(input$parentPicker)
-      
   }
 
   shinyApp(
