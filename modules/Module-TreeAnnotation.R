@@ -10,8 +10,7 @@ TreeAnnotation_UI <- function(id) {
     c(box(width = NULL,title = "Create Node",
       textOutput(ns("progressBox")),
       textOutput(ns("progressBox2")),
-      textInput(ns("newNode"), "Set Name..."),
-      parentPicker_UI(id="parentPicker")),
+      textInput(ns("newNode"), "Set Name...")),
     box(width = NULL,
         column(width = 4,
                checkboxGroupButtons(inputId = ns("treePickerPos"),label = "Positive:",choices = c("A"),direction = "vertical")

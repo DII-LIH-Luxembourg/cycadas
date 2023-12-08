@@ -10,16 +10,20 @@ for (package in packages_to_install) {
     install.packages(package)
     library(package, character.only = TRUE)
   }
+
 }
 
 
-source("R/utils.R")
-source("R/Module-Settings.R")
-source("R/Module-Threshold.R")
-source("R/Module-parentPicker.R")
-source("R/Module-TreeAnnotation.R")
-source("R/Module-Heatmap.R")
-source("R/ui.R")
+
+
+
+source("modules/utils.R")
+source("modules/Module-Settings.R")
+source("modules/Module-Threshold.R")
+# source("modules/Module-parentPicker.R")
+source("modules/Module-TreeAnnotation.R")
+source("modules/Module-Heatmap.R")
+source("modules/ui.R")
 # cycadas <- function() {
 
   # browser()
@@ -32,6 +36,16 @@ source("R/ui.R")
   # Server function ----
   server = function(input, output, session) {
     
+    reactVals <- reactiveValues(th = NULL,
+                                myTH = NULL,
+                                md = NULL,
+                                counts_table = NULL,
+                                DA_result_table = NULL,
+                                DA_interactive_table = NULL,
+                                graph = NULL,
+                                hm = NULL,
+                                merged_prop_table = NULL,
+                                ParentValue=NULL)
 
     
     # Save the DA Table ----
@@ -454,33 +468,48 @@ source("R/ui.R")
     # })
     
    
+# Load data based on pressing the unannotated data button
+    observe({Settings_Server1(id="Settings",reactVals=reactVals)}) %>% 
+      bindEvent(input$btnLoadDemoData)
 
-    observeEvent(input$btnLoadDemoData, {Settings_Server1(id="Settings")})
+# Load data based on pressing the annotated data button ----
     
-    observe({Settings_Server2(id="Settings")}) %>% 
+    observe({Settings_Server2(id="Settings",reactVals=reactVals)}) %>% 
       bindEvent(input$btnLoadAnnoData)
     
+# Load data based on pressing the Import Tree button  ----
+    
     observeEvent(input$btnImportTree, {Settings_Server3(id="Settings")})
+    
+# Lead threshold Tab    ----
+    
     observe(threshold_Server(id="threshold",reactVals))
-    # %>% 
-    #   bindEvent(input$btnLoadAnnoData)
-    # observe(ThresholdPlot_Server(id="threshold",reactVals,selectedid=input$table_rows_selected)) %>% 
-    #   bindEvent(input$table_rows_selected)
     
-    
-    observe({req(exists("df01"))
+# Run the Tree Annotation Tab based on pressing the Annotated demo button  ----
+    observe({
+      req(exists("cellfreq"))
+      req(exists("df01"))
       TreeAnnotation_Server(id="TreeAnnotation",
                             reactVals=reactVals,
-                            df01 = df01)
-      
-      }) %>%
-      bindEvent(input$btnLoadAnnoData,input$fMarkerExpr, input$cluster_freq)
-    
-    
+                            df01 = df01)}) %>%
+      bindEvent(c(input$btnLoadAnnoData,input$btnLoadDemoData))
 
-    parentPicker <- parentPicker_Server(id="parentPicker")
-    observeEvent(input$parentPicker,{Heatmap_Server(id="Heatmap",df=reactVals,filter=parentPicker)})
+# Update Parent picker based on annotation list once Annotated demo is pressed ----
     
+    observe({
+      req(exists("annotationlist"))
+      print("update Parent Picker")
+      updateSelectizeInput(session, ("parentPicker"), choices = annotationlist, server = TRUE)
+      })  %>%
+    bindEvent(c(input$btnLoadAnnoData,input$btnLoadDemoData))
+    
+# Update Heatmap in Tree annotation tab based on parent picker ----
+    
+    observe({
+      req(!is.null(reactVals$hm))
+      Heatmap_Server(id="Heatmap",reactVals=reactVals,filter=input$parentPicker)}) %>% 
+      bindEvent(input$parentPicker)
+      
   }
 
   shinyApp(

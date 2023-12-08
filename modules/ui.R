@@ -25,7 +25,9 @@ ui <- dashboardPage(
       tabItem(tabName = "thresholds",Threshold_UI(id="threshold")),
       tabItem(tabName = "treeannotation",
               fluidRow(
-                 column(width = 4,TreeAnnotation_UI(id="TreeAnnotation")),
+                 column(width = 4,
+                        selectizeInput(inputId = ("parentPicker"),label = "Select Parent:",choices=NULL),
+                        TreeAnnotation_UI(id="TreeAnnotation")),
                  column(width = 8,
                         box(width = NULL,title = "Annotation Tree",
                             visNetworkOutput(("mynetworkid"))),

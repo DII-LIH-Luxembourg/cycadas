@@ -62,7 +62,7 @@ Settings_UI <- function(id) {
   )
 }
 
-Settings_Server1 <- function(id) {
+Settings_Server1 <- function(id,reactVals) {
   moduleServer(
     id = id,
     module = function(input, output, session) {
@@ -168,7 +168,7 @@ reactVals$th <- kmeansTH(df01)
 
 
 })}
-Settings_Server2 <- function(id) {
+Settings_Server2 <- function(id,reactVals) {
   moduleServer(
     id = id,
     module = function(input, output, session) {
@@ -289,9 +289,6 @@ Settings_Server2 <- function(id) {
         reactVals$hm <- df01Tree
         
         annotationlist <<- as.list(df_nodes$label)
-        
-       print ("update paraent picker")
-        updatePickerInput(session,inputId = "parentPicker",choices = annotationlist) 
 
         
         # Settings_Server3(id="Settings")

@@ -1,12 +1,5 @@
-reactVals <- reactiveValues(th = NULL,
-                            myTH = NULL,
-                            md = NULL,
-                            counts_table = NULL,
-                            DA_result_table = NULL,
-                            DA_interactive_table = NULL,
-                            graph = NULL,
-                            hm = NULL,
-                            merged_prop_table = NULL)
+
+
 
 
 
