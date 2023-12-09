@@ -23,6 +23,7 @@ source("modules/Module-Threshold.R")
 source("modules/Module-TreeAnnotation.R")
 source("modules/Module-visNetwork.R")
 source("modules/Module-Heatmap.R")
+source("modules/Module-umap.R")
 source("modules/ui.R")
 # cycadas <- function() {
 
@@ -509,7 +510,8 @@ source("modules/ui.R")
     observe({
       req(!is.null(reactVals$hm))
       Heatmap_Server(id="Heatmap",reactVals=reactVals,filter=input$parentPicker)
-      visNetwork_Server(id="visNetwork",reactVals=reactVals,filter=input$parentPicker)}) %>% 
+      visNetwork_Server(id="visNetwork",reactVals=reactVals,filter=input$parentPicker)
+      Umap_Server(id="Umap",reactVals=reactVals,filter=input$parentPicker)}) %>% 
       bindEvent(input$parentPicker)
   }
 
