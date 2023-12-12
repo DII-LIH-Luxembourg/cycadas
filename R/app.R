@@ -743,7 +743,7 @@ cycadas <- function() {
     ## needed based on the filtered DF
     updateTreeAnnotation <- function() {
 
-      browser()
+      # browser()
 
       df01Tree$cell <<- "Unassigned"
 
