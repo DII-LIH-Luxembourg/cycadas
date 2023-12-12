@@ -14,7 +14,7 @@ for (package in packages_to_install) {
 }
 
 
-
+session$userData$vars <- reactiveValues(hm = NULL)
 
 
 source("modules/utils.R")

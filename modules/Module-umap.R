@@ -85,29 +85,31 @@ Umap_Server <- function(id,reactVals,filter) {
       )
       
       # update umap plot for Tree ----
-      ClusterSelection <- filterColor(df_global,tmp)
       
-      # 
-      # set.seed(1234)
-      # my_umap <- umap(df)
-      # dr_umap <<- data.frame(
-      #   u1 = my_umap$layout[, 1],
-      #   u2 = my_umap$layout[, 2],
-      #   my_umap$data,
-      #   cluster_number = 1:length(my_umap$layout[, 1]),
-      #   check.names = FALSE
-      # )
-      # browser()
+      filterColor <- function(DF,hm) {
+        # browser()
+        tmp <- replicate(nrow(DF), "other clusters")
+        tmp[as.numeric(rownames(hm))] <- "selected phenotype"
+        
+        return(unname(tmp))
+        
+      }
       
-      output$umap_tree <-
+      ClusterSelection <<- filterColor(df_global,tmp)
+
+            output$umap_tree <-
         renderPlot(
+          
           ggplot(dr_umap, aes(
             x = u1, y = u2, color = ClusterSelection)) +
             geom_point(size = 1.0) +
             theme_bw() +
             theme(legend.text = element_text(size = 8)) +
             guides(color = guide_legend(override.aes = list(size = 4)))
-        )
+        
+          
+          
+          )
       
       }
       

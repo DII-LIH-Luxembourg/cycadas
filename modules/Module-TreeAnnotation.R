@@ -59,6 +59,16 @@ TreeAnnotation_Server <- function(id,reactVals,df01,tab) {
 
 
 
+      # set.seed(1234)
+      # my_umap <- umap(df)
+      # dr_umap <<- data.frame(
+      #   u1 = my_umap$layout[, 1],
+      #   u2 = my_umap$layout[, 2],
+      #   my_umap$data,
+      #   cluster_number = 1:length(my_umap$layout[, 1]),
+      #   check.names = FALSE
+      # )
+      
 
 
 
@@ -215,115 +225,115 @@ TreeAnnotation_Server <- function(id,reactVals,df01,tab) {
       
       
       
-      # # Create new node ----
-      # observeEvent(input$createNodeBtn, {
-      #   
-      #   if (is.null(input$treePickerPos) & is.null(input$treePickerNeg)) {
-      #     print("no selection")
-      #     showModal(modalDialog(
-      #       title = "No Marker Selection",
-      #       "Select positive and / or negative markers!",
-      #       easyClose = TRUE,
-      #       footer = NULL,
-      #       return()
-      #     ))
-      #   } else if(input$newNode == "") {
-      #     showModal(modalDialog(
-      #       title = "Phenotype Name",
-      #       "Set a Name for this Phenotype!",
-      #       easyClose = TRUE,
-      #       footer = NULL,
-      #       return()
-      #     ))
-      #   }
-      #   else {
-      #     
-      #     name <- input$newNode
-      #     
-      #     # make sure name is not yet taken
-      #     if(name %in% reactVals$graph$nodes$label) {
-      #       showModal(modalDialog(
-      #         title = "Naming Error!",
-      #         "The Name for this Phenotype is already taken!",
-      #         easyClose = TRUE,
-      #         footer = NULL
-      #       ))
-      #       
-      #       return()
-      #     }
-      #     
-      #     # browser()
-      #     parent <- input$parentPicker
-      #     
-      #     # receive the parent settings, resp. parent hm
-      #     # filter hm by parent cell name
-      #     tmp <- df01Tree[df01Tree$cell == parent, ]
-      #     tmp <- filterHM(tmp,input$treePickerPos, input$treePickerNeg, reactVals$th)
-      #     
-      #     # Make sure the selection is not empty!
-      #     if(dim(tmp)[1] == 0) {
-      #       
-      #       showModal(modalDialog(
-      #         title = "No Result",
-      #         "The Selection for this Phenotype is empty!",
-      #         easyClose = TRUE,
-      #         footer = NULL
-      #       ))
-      #       return()
-      #       
-      #     } else {
-      #       
-      #       annotationlist <<- append(annotationlist, name)
-      #       
-      #       updatePickerInput(
-      #         session,
-      #         inputId = "parentPicker",
-      #         choices = annotationlist
-      #       )
-      #       updatePickerInput(
-      #         session,
-      #         inputId = "updateNodePicker",
-      #         choices = annotationlist,
-      #         selected = ""
-      #       )
-      #       
-      #       posmarker <- list(input$treePickerPos)
-      #       negmarker <- list(input$treePickerNeg)
-      #       
-      #       reactVals$graph <- add_node(reactVals$graph,parent,name,posmarker,negmarker,"blue")
-      #       
-      #       df01Tree[rownames(tmp),]$cell <<- name
-      #       
-      #       updateCheckboxGroupButtons(
-      #         session,
-      #         inputId = "treePickerPos",
-      #         choices = colnames(df01),
-      #         selected = NULL,
-      #         disabledChoices = input$treePickerPos
-      #         
-      #       )
-      #       updateCheckboxGroupButtons(
-      #         session,
-      #         inputId = "treePickerNeg",
-      #         choices = colnames(df01),
-      #         selected = NULL,
-      #         disabledChoices = input$treePickerNeg
-      #         
-      #       )
-      #       updatePickerInput(
-      #         session,
-      #         inputId = "parentPicker",
-      #         selected = name
-      #       )
-      #       
-      #       updateClusterLabels(tmp)
-      #       
-      #       plotTree()
-      #       
-      #     }
-      #     
-      #   }
-      # })
+      # Create new node ----
+      observeEvent(input$createNodeBtn, {
+
+        if (is.null(input$treePickerPos) & is.null(input$treePickerNeg)) {
+          print("no selection")
+          showModal(modalDialog(
+            title = "No Marker Selection",
+            "Select positive and / or negative markers!",
+            easyClose = TRUE,
+            footer = NULL,
+            return()
+          ))
+        } else if(input$newNode == "") {
+          showModal(modalDialog(
+            title = "Phenotype Name",
+            "Set a Name for this Phenotype!",
+            easyClose = TRUE,
+            footer = NULL,
+            return()
+          ))
+        }
+        else {
+
+          name <- input$newNode
+
+          # make sure name is not yet taken
+          if(name %in% reactVals$graph$nodes$label) {
+            showModal(modalDialog(
+              title = "Naming Error!",
+              "The Name for this Phenotype is already taken!",
+              easyClose = TRUE,
+              footer = NULL
+            ))
+
+            return()
+          }
+
+          # browser()
+          parent <- input$parentPicker
+
+          # receive the parent settings, resp. parent hm
+          # filter hm by parent cell name
+          tmp <- df01Tree[df01Tree$cell == parent, ]
+          tmp <- filterHM(tmp,input$treePickerPos, input$treePickerNeg, reactVals$th)
+
+          # Make sure the selection is not empty!
+          if(dim(tmp)[1] == 0) {
+
+            showModal(modalDialog(
+              title = "No Result",
+              "The Selection for this Phenotype is empty!",
+              easyClose = TRUE,
+              footer = NULL
+            ))
+            return()
+
+          } else {
+
+            annotationlist <<- append(annotationlist, name)
+
+            updatePickerInput(
+              session,
+              inputId = "parentPicker",
+              choices = annotationlist
+            )
+            updatePickerInput(
+              session,
+              inputId = "updateNodePicker",
+              choices = annotationlist,
+              selected = ""
+            )
+
+            posmarker <- list(input$treePickerPos)
+            negmarker <- list(input$treePickerNeg)
+
+            reactVals$graph <- add_node(reactVals$graph,parent,name,posmarker,negmarker,"blue")
+
+            df01Tree[rownames(tmp),]$cell <<- name
+
+            updateCheckboxGroupButtons(
+              session,
+              inputId = "treePickerPos",
+              choices = colnames(df01),
+              selected = NULL,
+              disabledChoices = input$treePickerPos
+
+            )
+            updateCheckboxGroupButtons(
+              session,
+              inputId = "treePickerNeg",
+              choices = colnames(df01),
+              selected = NULL,
+              disabledChoices = input$treePickerNeg
+
+            )
+            updatePickerInput(
+              session,
+              inputId = "parentPicker",
+              selected = name
+            )
+
+            updateClusterLabels(tmp)
+
+            plotTree()
+
+          }
+
+        }
+      })
       
       
       
@@ -372,74 +382,74 @@ TreeAnnotation_Server <- function(id,reactVals,df01,tab) {
       
      
       
-      # # Delete Node ----
-      # observeEvent(input$deleteNodeBtn, {
-      #   
-      #   # browser()
-      #   
-      #   # node <- reactVals$graph$nodes %>% filter(label == input$updateNodePicker)
-      #   node <- reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker, ]
-      #   
-      #   # check and make sure that this node is a leaf node
-      #   if(TRUE %in% (reactVals$graph$edges$to == node$id)) {
-      #     
-      #     showModal(modalDialog(
-      #       title = "Cannot delete Node",
-      #       "The selected Node is not a Leaf Node!",
-      #       easyClose = TRUE,
-      #       footer = NULL
-      #     ))
-      #     
-      #     return()
-      #     
-      #   }
-      #   else {
-      #     
-      #     # before deleting the node, we must assign the cluster annotation
-      #     # name for that node back to its parent
-      #     parent_id <- reactVals$graph$edges$to[reactVals$graph$edges$from == node$id]
-      #     parent_label <- reactVals$graph$nodes$label[reactVals$graph$nodes$id == parent_id]
-      #     
-      #     # In case there is a empty node with no the filtered clusters
-      #     # we do not assign any labeling
-      #     if( dim(df01Tree[df01Tree$cell == node$label,])[1] >0 ) {
-      #       
-      #       df01Tree[df01Tree$cell == node$label,]$cell <<- parent_label
-      #       
-      #     }
-      #     
-      #     annotationlist[annotationlist == node$label] <<- NULL
-      #     
-      #     updatePickerInput(
-      #       session,
-      #       inputId = "parentPicker",
-      #       selected = NULL,
-      #       choices = annotationlist
-      #     )
-      #     updatePickerInput(
-      #       session,
-      #       inputId = "updateNodePicker",
-      #       selected = NULL,
-      #       choices = annotationlist
-      #     )
-      #     updateTextInput(
-      #       session,
-      #       inputId = "renameNode",
-      #       label = NULL,
-      #       value = ""
-      #     )
-      #     updateTextInput(
-      #       session,
-      #       inputId = "newNode",
-      #       label = NULL,
-      #       value = ""
-      #     )
-      #     
-      #     reactVals$graph <- delete_leaf_node(reactVals$graph, node$id)
-      #     plotTree()
-      #   }
-      #   
-      # })
+      # Delete Node ----
+      observeEvent(input$deleteNodeBtn, {
+
+        # browser()
+
+        # node <- reactVals$graph$nodes %>% filter(label == input$updateNodePicker)
+        node <- reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker, ]
+
+        # check and make sure that this node is a leaf node
+        if(TRUE %in% (reactVals$graph$edges$to == node$id)) {
+
+          showModal(modalDialog(
+            title = "Cannot delete Node",
+            "The selected Node is not a Leaf Node!",
+            easyClose = TRUE,
+            footer = NULL
+          ))
+
+          return()
+
+        }
+        else {
+
+          # before deleting the node, we must assign the cluster annotation
+          # name for that node back to its parent
+          parent_id <- reactVals$graph$edges$to[reactVals$graph$edges$from == node$id]
+          parent_label <- reactVals$graph$nodes$label[reactVals$graph$nodes$id == parent_id]
+
+          # In case there is a empty node with no the filtered clusters
+          # we do not assign any labeling
+          if( dim(df01Tree[df01Tree$cell == node$label,])[1] >0 ) {
+
+            df01Tree[df01Tree$cell == node$label,]$cell <<- parent_label
+
+          }
+
+          annotationlist[annotationlist == node$label] <<- NULL
+
+          updatePickerInput(
+            session,
+            inputId = "parentPicker",
+            selected = NULL,
+            choices = annotationlist
+          )
+          updatePickerInput(
+            session,
+            inputId = "updateNodePicker",
+            selected = NULL,
+            choices = annotationlist
+          )
+          updateTextInput(
+            session,
+            inputId = "renameNode",
+            label = NULL,
+            value = ""
+          )
+          updateTextInput(
+            session,
+            inputId = "newNode",
+            label = NULL,
+            value = ""
+          )
+
+          reactVals$graph <- delete_leaf_node(reactVals$graph, node$id)
+          plotTree()
+        }
+
+      })
       
       
       # importNodes <- function(id, label, pm, nm, parent_id, color) {

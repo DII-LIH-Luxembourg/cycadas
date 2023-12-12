@@ -29,9 +29,9 @@ ui <- dashboardPage(
                         selectizeInput(inputId = ("parentPicker"),label = "Select Parent:",choices=NULL),
                         TreeAnnotation_UI(id="TreeAnnotation")),
                  column(width = 8,
-                        # box(title = "Annotation Tree",visNetwork_UI(id="visNetwork")),
-                        box(title = "Heatmap",Heatmap_UI(id="Heatmap")),
-                        box(title = "Umap",Umap_UI(id="Umap")))
+                        box(width = NULL,title = "Annotation Tree",visNetwork_UI(id="visNetwork")),
+                        box(width = NULL,title = "Heatmap",Heatmap_UI(id="Heatmap")),
+                        box(width = NULL,title = "Umap",Umap_UI(id="Umap")))
                  )
               ),
       # umap Reactive  Tab ----------------------------------------------------
