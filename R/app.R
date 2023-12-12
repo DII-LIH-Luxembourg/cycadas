@@ -422,7 +422,10 @@ cycadas <- function() {
           )) +
             geom_point(size = 1.0) +
             theme_bw() +
-            theme(legend.text = element_text(size = 8)) +
+            theme(legend.text = element_text(size = 12),
+                  legend.title = element_text(size = 20),
+                  axis.text = element_text(size = 12),
+                  axis.title = element_text(size = 20)) +
             guides(color = guide_legend(override.aes = list(size = 4)))
         )
     })
@@ -819,6 +822,8 @@ cycadas <- function() {
           theme(axis.title.y = element_blank(),
                 axis.ticks.y  = element_blank(),
                 axis.text.y = element_blank(),
+                axis.text.x = element_text(size = 12),
+                axis.title.x = element_text(size = 18),
                 panel.grid.major.y = element_blank(),
                 panel.grid.minor.y = element_blank()) +
           labs(x = "Scale 0 to 1") +
@@ -832,6 +837,8 @@ cycadas <- function() {
         ggplot(me, aes_string(x = me[, 1])) +
           geom_histogram(bins = 80) +
           labs(x = "Scale 0 to 1") +
+          theme(axis.text = element_text(size = 12),
+                axis.title = element_text(size = 18)) +
           geom_vline(
             xintercept = myTH,
             linetype = "dotted",
@@ -1016,7 +1023,10 @@ cycadas <- function() {
       ggplot(dr_umap, aes(x = u1, y = u2)) +
         geom_point(size = 1.0) +
         theme_bw() +
-        theme(legend.text=element_text(size=8)) +
+        theme(legend.text=element_text(size=8),
+              legend.title = element_text(size = 20),
+              axis.text = element_text(size = 12),
+              axis.title = element_text(size = 20)) +
         guides(color = guide_legend(override.aes = list(size = 4)))
     )
 
@@ -1061,6 +1071,10 @@ cycadas <- function() {
         )) +
           geom_point(size = 1.0) +
           theme_bw() +
+          theme(legend.text = element_text(size = 14),
+                legend.title = element_text(size = 20),
+                axis.text = element_text(size = 12),
+                axis.title = element_text(size = 20)) +
           scale_color_gradientn(input$markerSelect,
                                 colours = colorRampPalette(rev(brewer.pal(
                                   n = 11, name = "Spectral"
@@ -1262,9 +1276,16 @@ cycadas <- function() {
       names(props_table) <- c("value", "cond")
 
       ggplot(props_table, aes(x = cond, y = value, fill=cond))+
-        geom_boxplot() +
+        geom_boxplot(outlier.shape = NA) +
+        geom_jitter(width = 0.2) +
         xlab("Condition") +
-        ylab("Values") +
+        ylab("Proportion") +
+        theme(plot.title = element_text(size = 22),
+              axis.text = element_text(size = 12),
+              legend.text = element_text(size = 14),
+              legend.title = element_text(size = 20),
+              axis.title.x = element_text(size = 20),
+              axis.title.y = element_text(size = 20)) +
         ggtitle(reactVals$graph$nodes$label[myNode$selected])
 
 
