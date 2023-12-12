@@ -741,11 +741,11 @@ cycadas <- function() {
     ## update the tree after a change in the thresholds
     ## walk through the list of nodes and adjust the annotation if
     ## needed based on the filtered DF
-    updateTreeAnnotation <- function(df_row=NULL) {
+    updateTreeAnnotation <- function() {
 
-      # browser()
+      browser()
 
-      df01Tree$cell <- "Unassigned"
+      df01Tree$cell <<- "Unassigned"
 
       # for all rows in annotation table
       # get all parents for a row:
@@ -759,6 +759,7 @@ cycadas <- function() {
           negMarker <- list()
 
           nodeID <- reactVals$graph$nodes$id[i]
+          parentID <- reactVals$graph$nodes$to[i]
 
           # now for that nodeID, get all parents and collect
           # the pm and nm markers
@@ -775,8 +776,14 @@ cycadas <- function() {
           # remove the empty strings in the markers
           posMarker <- posMarker[nzchar(posMarker)]
           negMarker <- negMarker[nzchar(negMarker)]
+          
+          # receive the parent settings, resp. parent hm
+          # filter hm by parent cell name
+          parent_label <- reactVals$graph$nodes$label[reactVals$graph$nodes$id == parentID]
+          tmp_parent <- df01Tree[df01Tree$cell == parent_label, ]
+          # tmp <- filterHM(tmp,input$treePickerPos, input$treePickerNeg, reactVals$th)
 
-          tmp <- filterHM(df01Tree,unique(unlist(posMarker)), unique(unlist(negMarker)), reactVals$th)
+          tmp <- filterHM(tmp_parent,unique(unlist(posMarker)), unique(unlist(negMarker)), reactVals$th)
           # tmp <- filterHM(df01Tree,unique(unlist(posMarker)), unique(unlist(negMarker)), my_th)
 
           df01Tree[rownames(tmp), 'cell'] <<- reactVals$graph$node$label[i]
@@ -806,7 +813,7 @@ cycadas <- function() {
       marker_expr <- getMarkerDistDF(marker, "1")
       myRenderFunction(marker_expr, myTH, myCol)
 
-      updateTreeAnnotation(reactVals$th[input$table_rows_selected])
+      updateTreeAnnotation()
     })
 
     ##
