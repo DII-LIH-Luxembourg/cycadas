@@ -55,75 +55,7 @@ ui <- dashboardPage(
       # Umap Marker expression Tab --------------------------------------------
       tabItem(tabName = "UMAP_Marker_expression",UMAP_ME_UI(id="UMAP_ME")),
       # Differential Abundance Tab --------------------------------------------
-      tabItem(tabName = "DA_tab",
-              fluidRow(column(width = 6, # left column
-                              
-                              box(width = NULL,
-                                  fluidRow(
-                                    column(width = 5,
-                                           box(
-                                             width = NULL,
-                                             title = "Metadata preview",
-                                             tableOutput("md_table"))
-                                           ),
-                                    column(width = 5,
-                                           box(
-                                             width = NULL,
-                                             title = "Counts Table preview",
-                                             tableOutput("counts_table"))
-                                    )  
-                                  ),
-                              ),
-
-                              box(
-                                width = NULL,
-                                fluidRow(column(width = 6,
-                                                 box(
-                                                   width = NULL,
-                                                   selectInput("correction_method", "Select:", choices = c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY",
-                                                                                                           "fdr", "none"))
-                                                 )
-                                                ),
-                                         column(width = 6,
-                                                 box(
-                                                   width = NULL,
-                                                   title = "Do Analysis",
-                                                   actionButton("doDA", "Calculate")
-                                                 )
-                                         )
-                                
-                                )
-                              ),
-                              box(
-                                width = NULL,
-                                fluidRow(column(width = 6,
-                                                box(
-                                                  width = NULL,
-                                                  title = "Export DA Result",
-                                                  downloadButton("exportDA", "Download")
-                                                )
-                                        ),
-                                        
-                                        column(width = 6,
-                                               box(
-                                                 width = NULL,
-                                                 title = "Export Proportion Table",
-                                                 downloadButton("exportProp", "Download")
-                                               )
-                                        ),
-                                
-                                )  
-                              ),
-                              
-                              ),
-                       column(width = 6, # right column
-                              box(
-                                width = NULL,
-                                title = "DA Result",
-                                tableOutput("DA_result_table")
-                              )
-                              )
-                       )),
+      tabItem(tabName = "DA_tab",Differential_Abundance_UI(id="Differential_Abundance")),
       tabItem(tabName = "DA_tree",
               fluidRow(column(width = 8,
                               box(id="mytreebox",

@@ -26,6 +26,7 @@ source("modules/Module-Heatmap.R")
 source("modules/Module-umap.R")
 source("modules/Module-DeleteNode.R")
 source("modules/Module-umap_Marker_Expression.R")
+source("modules/Module-Differential_Abundance.R")
 source("modules/ui.R")
 # cycadas <- function() {
 
@@ -48,48 +49,6 @@ source("modules/ui.R")
     session$userData$vars <- reactiveValues(graph = NULL)
     session$userData$vars <- reactiveValues(hm = NULL)
     session$userData$vars <- reactiveValues(merged_prop_table = NULL)
-    
-
-    # Save the DA Table ----
-    output$exportDA <- downloadHandler(
-      filename = function() {
-        paste("DA_Table_", Sys.Date(), ".csv", sep="")
-      },
-      content = function(file) {
-        write.csv(session$userData$vars$DA_result_table, file)
-      }
-    )
-    
-    get_merged_prop_table <- function() {
-      
-      req(session$userData$vars$counts_table)
-      
-      countsTable <- session$userData$vars$counts_table
-      ## aggregate the clusters by name:
-      countsTable['cell'] <- df01Tree$cell
-      # merge and aggregate by cell
-      countsTable <- aggregate(. ~ cell, countsTable, sum)
-      
-      rownames(countsTable) <- countsTable$cell
-      countsTable$cell <- NULL
-      
-      props_table <- t(t(countsTable) / colSums(countsTable)) * 100
-      
-      return(props_table)
-      
-    }
-    
-    # Save the Merged Proportion Table ----
-    output$exportProp <- downloadHandler(
-      
-      filename = function() {
-        paste("Merged_Proportions_Table_", Sys.Date(), ".csv", sep="")
-      },
-      content = function(file) {
-        write.csv(get_merged_prop_table(), file)
-      }
-    )
-    
 
     # Load the marker threshold file ---------------------------------------
     observeEvent(input$fTH,{
@@ -108,20 +67,7 @@ source("modules/ui.R")
 
     })
 
-    # Load the metadata ----------------------------------------------------
-    observeEvent(input$metadata,{
-      md <<- read.csv(input$metadata$datapath)
-      md$X <- NULL
-      session$userData$vars$md<- md
-    })
-
-    # Load the counts talbe -------------------------------------------------
-    observeEvent(input$counts_table,{
-      ct <<- read.csv(input$counts_table$datapath)
-      ct$X <- NULL
-      session$userData$vars$counts_table <- ct
-    })
-
+   
     ## create Phenotype name from picker e.g. CD4+CD8+CD19 --------------------
     observeEvent(input$myPickerPos, {
       output$r1 <- renderText(setPhenotypeName(input$myPickerPos, "pos", ph_name))
@@ -244,76 +190,7 @@ source("modules/ui.R")
         )
       })
 
-    # Server - Differential Abundance Tab ----
-    output$md_table <-
-      renderTable(
-        session$userData$vars$md[1:5, ]
-      )
-
-    output$counts_table <-
-      renderTable(
-        session$userData$vars$counts_table[1:5, 1:5]
-      )
-
-    output$DA_result_table <-
-      renderTable(
-        session$userData$vars$DA_result_table
-      )
-
-    # Do the differential abundance ----
-    observeEvent(input$doDA, {
-      # browser()
-      req(session$userData$vars$counts_table, session$userData$vars$md)
-
-      countsTable <- session$userData$vars$counts_table
-      ## aggregate the clusters by name:
-      countsTable['cell'] <- df01Tree$cell
-      # merge and aggregate by cell
-      countsTable <- aggregate(. ~ cell, countsTable, sum)
-
-      rownames(countsTable) <- countsTable$cell
-      countsTable$cell <- NULL
-
-      props_table <- t(t(countsTable) / colSums(countsTable)) * 100
-
-      # mm <- match(md$sample_id, colnames(props_table))
-      mm <- match(colnames(props_table), md$sample_id)
-
-      tmp_cond <- md$condition[mm]
-
-      DA_df <- data.frame()
-      for (i in 1:nrow(props_table)) {
-        foo <- pairwise.wilcox.test(as.numeric(props_table[i,]), tmp_cond, p.adjust.method=input$correction_method)
-
-        df <- subset(melt(foo$p.value), value!=0)
-        df$cell <- rownames(countsTable)[i]
-        DA_df <- rbind(DA_df, as.data.frame(df))
-
-      }
-
-      # browser()
-      # change the name of nodes:
-      # if node has children add "_remaining"
-      my_list <- lapply(DA_df$cell, function(x) {
-            # get the id
-            nid <- session$userData$vars$graph$nodes$id[session$userData$vars$graph$nodes$label == x]
-            # check if the id has children
-            if(nid %in% session$userData$vars$graph$edges$to) {
-              return (x <- paste0(x, "_remaining"))
-            }
-            else {
-              return(x)
-            }
-          })
-
-      DA_df$list <- unlist(my_list)
-      
-      colnames(DA_df) <- c("Cond1", "Cond2", "p-value", "Cell", "Naming")
-
-      session$userData$vars$DA_result_table <- DA_df
-
-    })
-
+   
     output$interactiveTree <- renderVisNetwork({
       visNetwork(session$userData$vars$graph$nodes, session$userData$vars$graph$edges, width = "100%") %>%
         visEvents(select = "function(nodes) {
@@ -449,19 +326,23 @@ source("modules/ui.R")
 
     # children <- graph$edges$from[graph$edges$to == myNode$selected]
 
-    # observeEvent(input$btnLoadDemoData, {
-    # 
-    # })
-    
-    
-
-    
-
     
     
     
     
-   
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 # Load data based on pressing the unannotated data button
     observe({Settings_Server1(id="Settings",reactVals=reactVals)}) %>% 
       bindEvent(input$btnLoadDemoData)
@@ -494,6 +375,7 @@ source("modules/ui.R")
     
     observe({
       print("Delete Node")
+      req(exists("df01Tree"))
       DeleteNode_Server(id="DeleteNode",filter = input$parentPicker)
       updateSelectizeInput(session, ("parentPicker"),selected = NULL, choices = annotationlist, server = TRUE)
       updatePickerInput(session,inputId = "updateNodePicker",selected = NULL,choices = annotationlist)
@@ -521,9 +403,12 @@ source("modules/ui.R")
     
 # Run Marker Expression Tab ----
     observe({
-      browser()
-      print("Run Umap Marker expression Tab")
       UMAP_ME_Server(id="UMAP_ME")}) %>% 
+      bindEvent(input$btnLoadAnnoData)
+    
+# Run Differential Abundance Tab ----
+    observe({
+      Differential_Abundance_Server(id="Differential_Abundance")}) %>% 
       bindEvent(input$btnLoadAnnoData)
 
     
