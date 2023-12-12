@@ -16,8 +16,8 @@ Umap_Server <- function(id,reactVals,filter) {
       myid <- node$id
        
       print("node")
-      print(head(node))
-      print(myid)
+      # print(head(node))
+      # print(myid)
 
       if(length(myid)==0){
         output$umap_tree <-renderPlot(plot(1,1))
@@ -30,7 +30,7 @@ Umap_Server <- function(id,reactVals,filter) {
       # upwards from parent
       # go through edges until we reach one level below master node
       while (myid > 1) {
-        print(myid)
+        # print(myid)
         
         edge <- session$userData$vars$graph$edges %>% filter(from == myid)
         next_id <- edge$to

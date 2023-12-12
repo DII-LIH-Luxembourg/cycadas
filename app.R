@@ -25,6 +25,7 @@ source("modules/Module-visNetwork.R")
 source("modules/Module-Heatmap.R")
 source("modules/Module-umap.R")
 source("modules/Module-DeleteNode.R")
+source("modules/Module-umap_Marker_Expression.R")
 source("modules/ui.R")
 # cycadas <- function() {
 
@@ -243,22 +244,6 @@ source("modules/ui.R")
         )
       })
 
-    # Server - UMAP Marker Expression Tab ----
-    output$umap3 <-
-      renderPlot(
-        ggplot(dr_umap, aes_string(
-          x = "u1",
-          y = "u2",
-          color = input$markerSelect
-        )) +
-          geom_point(size = 1.0) +
-          theme_bw() +
-          scale_color_gradientn(input$markerSelect,
-                                colours = colorRampPalette(rev(brewer.pal(
-                                  n = 11, name = "Spectral"
-                                )))(50))
-      )
-
     # Server - Differential Abundance Tab ----
     output$md_table <-
       renderTable(
@@ -468,6 +453,14 @@ source("modules/ui.R")
     # 
     # })
     
+    
+
+    
+
+    
+    
+    
+    
    
 # Load data based on pressing the unannotated data button
     observe({Settings_Server1(id="Settings",reactVals=reactVals)}) %>% 
@@ -519,14 +512,22 @@ source("modules/ui.R")
     bindEvent(c(input$btnLoadAnnoData,input$btnLoadDemoData,input$deleteNodeBtn))
     
 # Update Heatmap in Tree annotation tab based on parent picker ----
-    
     observe({
       req(!is.null(session$userData$vars$hm))
       Heatmap_Server(id="Heatmap",filter=input$parentPicker)
       visNetwork_Server(id="visNetwork",filter=input$parentPicker)
       Umap_Server(id="Umap",filter=input$parentPicker)}) %>% 
       bindEvent(input$parentPicker)
-  }
+    
+# Run Marker Expression Tab ----
+    observe({
+      browser()
+      print("Run Umap Marker expression Tab")
+      UMAP_ME_Server(id="UMAP_ME")}) %>% 
+      bindEvent(input$btnLoadAnnoData)
+
+    
+    }
 
   shinyApp(
     ui = ui,

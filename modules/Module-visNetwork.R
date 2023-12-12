@@ -12,7 +12,7 @@ visNetwork_Server <- function(id,reactVals,filter) {
       nodes <- session$userData$vars$graph$nodes
       edges <- session$userData$vars$graph$edges
       
-      print (head(nodes))
+      # print (head(nodes))
       # req(nrow(session$userData$vars$graph$nodes)>0)
       
       output$mynetworkid <- renderVisNetwork({

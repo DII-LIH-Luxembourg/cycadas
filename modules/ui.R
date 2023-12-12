@@ -53,17 +53,7 @@ ui <- dashboardPage(
                                 DTOutput("umap_data")
                               )))),
       # Umap Marker expression Tab --------------------------------------------
-      tabItem(tabName = "UMAP_Marker_expression",
-              fluidRow(column(width = 10,
-                              box(
-                                width = NULL,
-                                plotOutput("umap3")
-                              )),
-                       column(width = 2,
-                              box(
-                                width = NULL,
-                                selectInput("markerSelect", "Select:", choices = NULL)
-                              )))),
+      tabItem(tabName = "UMAP_Marker_expression",UMAP_ME_UI(id="UMAP_ME")),
       # Differential Abundance Tab --------------------------------------------
       tabItem(tabName = "DA_tab",
               fluidRow(column(width = 6, # left column

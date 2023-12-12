@@ -99,42 +99,44 @@ TreeAnnotation_Server <- function(id,reactVals,df01,tab) {
         selectedMarkers <<- colnames(df)
         posPickerList <<- colnames(df)
         
-        ## load only at start to fill the picker list
-        updatePickerInput(
-          session,
-          inputId = "myPickerPos",
-          label = "Select Positive Markers",
-          choices = colnames(df01),
-          # choices = NULL,
-          options = list(
-            `actions-box` = TRUE,
-            size = 10,
-            `selected-text-format` = "count > 3"
-          )
-        )
-        updatePickerInput(
-          session,
-          inputId = "myPickerNeg",
-          label = "Select Negative Markers",
-          choices = colnames(df01),
-          options = list(
-            `actions-box` = TRUE,
-            size = 10,
-            `selected-text-format` = "count > 3"
-          )
-        )
-        updateSelectInput(session, "markerSelect", "Select:", colnames(df01))
+        
+        #### IS THIS DOING ANYTHING
+        # ## load only at start to fill the picker list
+        # updatePickerInput(
+        #   session,
+        #   inputId = "myPickerPos",
+        #   label = "Select Positive Markers",
+        #   choices = colnames(df01),
+        #   # choices = NULL,
+        #   options = list(
+        #     `actions-box` = TRUE,
+        #     size = 10,
+        #     `selected-text-format` = "count > 3"
+        #   )
+        # )
+        # updatePickerInput(
+        #   session,
+        #   inputId = "myPickerNeg",
+        #   label = "Select Negative Markers",
+        #   choices = colnames(df01),
+        #   options = list(
+        #     `actions-box` = TRUE,
+        #     size = 10,
+        #     `selected-text-format` = "count > 3"
+        #   )
+        # )
+        
         
         updateCheckboxGroupButtons(
           session,
           inputId = "treePickerPos",
-          choices = colnames(df01),
+          choices = session$userData$vars$th$cell,
           selected = NULL
         )
         updateCheckboxGroupButtons(
           session,
           inputId = "treePickerNeg",
-          choices = colnames(df01),
+          choices = session$userData$vars$th$cell,
           selected = NULL
         )
         
