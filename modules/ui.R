@@ -27,7 +27,8 @@ ui <- dashboardPage(
               fluidRow(
                  column(width = 4,
                         selectizeInput(inputId = ("parentPicker"),label = "Select Parent:",choices=NULL),
-                        TreeAnnotation_UI(id="TreeAnnotation")),
+                        TreeAnnotation_UI(id="TreeAnnotation"),
+                        box(width = NULL,title = "Delete Node",actionButton(("deleteNodeBtn"), "Delete Node"))),
                  column(width = 8,
                         box(width = NULL,title = "Annotation Tree",visNetwork_UI(id="visNetwork")),
                         box(width = NULL,title = "Heatmap",Heatmap_UI(id="Heatmap")),

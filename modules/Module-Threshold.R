@@ -48,10 +48,10 @@ threshold_Server <- function(id,reactVals) {
     id = id,
     module = function(input, output, session) {
       
-      req(reactVals$th)
+      req(session$userData$vars$th)
       print ("threshold_Server run")
       output$table = renderDataTable(
-        reactVals$th[, c("cell", "threshold", "bi_mod")],
+        session$userData$vars$th[, c("cell", "threshold", "bi_mod")],
         editable = F,
         extensions = c('Buttons', 'Scroller'),
         selection = 'single',
@@ -73,20 +73,20 @@ threshold_Server <- function(id,reactVals) {
       observeEvent(c(input$plot_click,input$table_rows_selected), {
         
         req(input$table_rows_selected)
-        req(reactVals$th)
+        req(session$userData$vars$th)
         
         TEST <<- input$plot_click
         
         if(!is.null(input$plot_click)){
           print("Threshold click")
-          reactVals$th[input$table_rows_selected, "threshold"] <- round(input$plot_click$x, 3)}
+          session$userData$vars$th[input$table_rows_selected, "threshold"] <- round(input$plot_click$x, 3)}
         
         selectedid <- input$table_rows_selected
-        selRow <- reactVals$th[selectedid,]
-        marker <- reactVals$th[selectedid, "cell"]
+        selRow <- session$userData$vars$th[selectedid,]
+        marker <- session$userData$vars$th[selectedid, "cell"]
         # threshold value for vertical line
-        myTH <- reactVals$th[selectedid, "threshold"]
-        myCol <- reactVals$th[selectedid, "color"]
+        myTH <- session$userData$vars$th[selectedid, "threshold"]
+        myCol <- session$userData$vars$th[selectedid, "color"]
         marker_expr <- getMarkerDistDF(marker, "1")
         me<-marker_expr
         
@@ -120,7 +120,7 @@ threshold_Server <- function(id,reactVals) {
         })
 
         updateTreeAnnotation_server(id="updateTreeAnnotation")
-        # updateTreeAnnotation(reactVals$th[input$table_rows_selected])
+        # updateTreeAnnotation(session$userData$vars$th[input$table_rows_selected])
         
         
         
@@ -138,25 +138,25 @@ updateTreeAnnotation_server <- function(id) {
       
       # for all rows in annotation table
       # get all parents for a row:
-      if (nrow(reactVals$graph$nodes) > 1) {
-        reactVals$graph$nodes$to <- reactVals$graph$edges$to
+      if (nrow(session$userData$vars$graph$nodes) > 1) {
+        session$userData$vars$graph$nodes$to <- session$userData$vars$graph$edges$to
         
         # Iterate through the dataframe row by row
-        for (i in 1:nrow(reactVals$graph$nodes)) {
+        for (i in 1:nrow(session$userData$vars$graph$nodes)) {
           
           posMarker <- list()
           negMarker <- list()
           
-          nodeID <- reactVals$graph$nodes$id[i]
+          nodeID <- session$userData$vars$graph$nodes$id[i]
           
           # now for that nodeID, get all parents and collect
           # the pm and nm markers
           while (nodeID > 1) {
             
-            posMarker <- c(posMarker, unlist(reactVals$graph$nodes$pm[reactVals$graph$nodes$id == nodeID]))
-            negMarker <- c(negMarker, unlist(reactVals$graph$nodes$nm[reactVals$graph$nodes$id == nodeID]))
+            posMarker <- c(posMarker, unlist(session$userData$vars$graph$nodes$pm[session$userData$vars$graph$nodes$id == nodeID]))
+            negMarker <- c(negMarker, unlist(session$userData$vars$graph$nodes$nm[session$userData$vars$graph$nodes$id == nodeID]))
             
-            nodeID <- reactVals$graph$edges$to[reactVals$graph$edges$from == nodeID]
+            nodeID <- session$userData$vars$graph$edges$to[session$userData$vars$graph$edges$from == nodeID]
             
           }
           # now we have all positive and negative marker for that type collected
@@ -165,10 +165,10 @@ updateTreeAnnotation_server <- function(id) {
           posMarker <- posMarker[nzchar(posMarker)]
           negMarker <- negMarker[nzchar(negMarker)]
           
-          tmp <- filterHM(df01Tree,unique(unlist(posMarker)), unique(unlist(negMarker)), reactVals$th)
+          tmp <- filterHM(df01Tree,unique(unlist(posMarker)), unique(unlist(negMarker)), session$userData$vars$th)
           # tmp <- filterHM(df01Tree,unique(unlist(posMarker)), unique(unlist(negMarker)), my_th)
           
-          df01Tree[rownames(tmp), 'cell'] <<- reactVals$graph$node$label[i]
+          df01Tree[rownames(tmp), 'cell'] <<- session$userData$vars$graph$node$label[i]
           
           # updateClusterLabels(tmp)
         }

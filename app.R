@@ -14,7 +14,7 @@ for (package in packages_to_install) {
 }
 
 
-session$userData$vars <- reactiveValues(hm = NULL)
+
 
 
 source("modules/utils.R")
@@ -24,6 +24,7 @@ source("modules/Module-TreeAnnotation.R")
 source("modules/Module-visNetwork.R")
 source("modules/Module-Heatmap.R")
 source("modules/Module-umap.R")
+source("modules/Module-DeleteNode.R")
 source("modules/ui.R")
 # cycadas <- function() {
 
@@ -37,32 +38,32 @@ source("modules/ui.R")
   # Server function ----
   server = function(input, output, session) {
     
-    reactVals <- reactiveValues(th = NULL,
-                                myTH = NULL,
-                                md = NULL,
-                                counts_table = NULL,
-                                DA_result_table = NULL,
-                                DA_interactive_table = NULL,
-                                graph = NULL,
-                                hm = NULL,
-                                merged_prop_table = NULL)
-
+    session$userData$vars <- reactiveValues(th = NULL)
+    session$userData$vars <- reactiveValues(myTH = NULL)
+    session$userData$vars <- reactiveValues(md = NULL)
+    session$userData$vars <- reactiveValues(counts_table = NULL)
+    session$userData$vars <- reactiveValues(DA_result_table = NULL)
+    session$userData$vars <- reactiveValues(DA_interactive_table = NULL)
+    session$userData$vars <- reactiveValues(graph = NULL)
+    session$userData$vars <- reactiveValues(hm = NULL)
+    session$userData$vars <- reactiveValues(merged_prop_table = NULL)
     
+
     # Save the DA Table ----
     output$exportDA <- downloadHandler(
       filename = function() {
         paste("DA_Table_", Sys.Date(), ".csv", sep="")
       },
       content = function(file) {
-        write.csv(reactVals$DA_result_table, file)
+        write.csv(session$userData$vars$DA_result_table, file)
       }
     )
     
     get_merged_prop_table <- function() {
       
-      req(reactVals$counts_table)
+      req(session$userData$vars$counts_table)
       
-      countsTable <- reactVals$counts_table
+      countsTable <- session$userData$vars$counts_table
       ## aggregate the clusters by name:
       countsTable['cell'] <- df01Tree$cell
       # merge and aggregate by cell
@@ -102,7 +103,7 @@ source("modules/ui.R")
 
       rownames(th) <- th$cell
 
-      reactVals$th<- th
+      session$userData$vars$th<- th
 
     })
 
@@ -110,14 +111,14 @@ source("modules/ui.R")
     observeEvent(input$metadata,{
       md <<- read.csv(input$metadata$datapath)
       md$X <- NULL
-      reactVals$md<- md
+      session$userData$vars$md<- md
     })
 
     # Load the counts talbe -------------------------------------------------
     observeEvent(input$counts_table,{
       ct <<- read.csv(input$counts_table$datapath)
       ct$X <- NULL
-      reactVals$counts_table <- ct
+      session$userData$vars$counts_table <- ct
     })
 
     ## create Phenotype name from picker e.g. CD4+CD8+CD19 --------------------
@@ -129,11 +130,11 @@ source("modules/ui.R")
     })
 
     ## Annotation Table -------------------------------------------------------
-    observeEvent(c(input$myPickerPos, input$myPickerNeg, reactVals$th),{
+    observeEvent(c(input$myPickerPos, input$myPickerNeg, session$userData$vars$th),{
       req(input$fMarkerExpr)
       req(input$cluster_freq)
 
-      tmp=filterHM(df01,input$myPickerPos, input$myPickerNeg, reactVals$th)
+      tmp=filterHM(df01,input$myPickerPos, input$myPickerNeg, session$userData$vars$th)
 
       # update myDF to the filtered HM
       myDF <<- tmp
@@ -261,25 +262,25 @@ source("modules/ui.R")
     # Server - Differential Abundance Tab ----
     output$md_table <-
       renderTable(
-        reactVals$md[1:5, ]
+        session$userData$vars$md[1:5, ]
       )
 
     output$counts_table <-
       renderTable(
-        reactVals$counts_table[1:5, 1:5]
+        session$userData$vars$counts_table[1:5, 1:5]
       )
 
     output$DA_result_table <-
       renderTable(
-        reactVals$DA_result_table
+        session$userData$vars$DA_result_table
       )
 
     # Do the differential abundance ----
     observeEvent(input$doDA, {
       # browser()
-      req(reactVals$counts_table, reactVals$md)
+      req(session$userData$vars$counts_table, session$userData$vars$md)
 
-      countsTable <- reactVals$counts_table
+      countsTable <- session$userData$vars$counts_table
       ## aggregate the clusters by name:
       countsTable['cell'] <- df01Tree$cell
       # merge and aggregate by cell
@@ -310,9 +311,9 @@ source("modules/ui.R")
       # if node has children add "_remaining"
       my_list <- lapply(DA_df$cell, function(x) {
             # get the id
-            nid <- reactVals$graph$nodes$id[reactVals$graph$nodes$label == x]
+            nid <- session$userData$vars$graph$nodes$id[session$userData$vars$graph$nodes$label == x]
             # check if the id has children
-            if(nid %in% reactVals$graph$edges$to) {
+            if(nid %in% session$userData$vars$graph$edges$to) {
               return (x <- paste0(x, "_remaining"))
             }
             else {
@@ -324,12 +325,12 @@ source("modules/ui.R")
       
       colnames(DA_df) <- c("Cond1", "Cond2", "p-value", "Cell", "Naming")
 
-      reactVals$DA_result_table <- DA_df
+      session$userData$vars$DA_result_table <- DA_df
 
     })
 
     output$interactiveTree <- renderVisNetwork({
-      visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
+      visNetwork(session$userData$vars$graph$nodes, session$userData$vars$graph$edges, width = "100%") %>%
         visEvents(select = "function(nodes) {
                 Shiny.onInputChange('current_node_id', nodes.nodes);
                 ;}")
@@ -346,16 +347,16 @@ source("modules/ui.R")
     output$DA_interactive_table <- renderTable({
 
       # browser()
-      children <- all_my_children(reactVals$graph, myNode$selected)
+      children <- all_my_children(session$userData$vars$graph, myNode$selected)
 
       if (!is.null(children)) {
-        selected_labels <- c(reactVals$graph$nodes$label[children], reactVals$graph$nodes$label[myNode$selected])
+        selected_labels <- c(session$userData$vars$graph$nodes$label[children], session$userData$vars$graph$nodes$label[myNode$selected])
       } else {
-        selected_labels <- reactVals$graph$nodes$label[myNode$selected]
+        selected_labels <- session$userData$vars$graph$nodes$label[myNode$selected]
       }
 
       # browser()
-      countsTable <- reactVals$counts_table
+      countsTable <- session$userData$vars$counts_table
       ## aggregate the clusters by name:
       countsTable['cell'] <- df01Tree$cell
       # merge and aggregate by cell
@@ -394,27 +395,27 @@ source("modules/ui.R")
       foo <- pairwise.wilcox.test(props_table, tmp_cond, p.adjust.method="none")
 
       df <- subset(melt(foo$p.value), value!=0)
-      df$cell <- reactVals$graph$nodes$label[myNode$selected]
+      df$cell <- session$userData$vars$graph$nodes$label[myNode$selected]
       DA_df <- rbind(DA_df, as.data.frame(df))
 
       colnames(DA_df) <- c("Var1", "Var2", "p-value", "Cell")
-      reactVals$DA_interactive_table <- DA_df
+      session$userData$vars$DA_interactive_table <- DA_df
 
     })
 
     output$boxplot <- renderPlot({
 
       # browser()
-      children <- all_my_children(reactVals$graph, myNode$selected)
+      children <- all_my_children(session$userData$vars$graph, myNode$selected)
 
       if (!is.null(children)) {
-        selected_labels <- c(reactVals$graph$nodes$label[children], reactVals$graph$nodes$label[myNode$selected])
+        selected_labels <- c(session$userData$vars$graph$nodes$label[children], session$userData$vars$graph$nodes$label[myNode$selected])
       } else {
-        selected_labels <- reactVals$graph$nodes$label[myNode$selected]
+        selected_labels <- session$userData$vars$graph$nodes$label[myNode$selected]
       }
 
       # browser()
-      countsTable <- reactVals$counts_table
+      countsTable <- session$userData$vars$counts_table
       ## aggregate the clusters by name:
       countsTable['cell'] <- df01Tree$cell
       # merge and aggregate by cell
@@ -456,7 +457,7 @@ source("modules/ui.R")
         geom_boxplot() +
         xlab("Condition") +
         ylab("Values") +
-        ggtitle(reactVals$graph$nodes$label[myNode$selected])
+        ggtitle(session$userData$vars$graph$nodes$label[myNode$selected])
 
 
     })
@@ -484,18 +485,30 @@ source("modules/ui.R")
 # Lead threshold Tab    ----
     
     observe({
-      req(reactVals)
-      threshold_Server(id="threshold",reactVals)})
+      req(!is.null(session$userData$vars$th))
+      threshold_Server(id="threshold")})
     
 # Run the Tree Annotation Tab based on pressing the Annotated demo button  ----
     observe({
       req(exists("cellfreq"))
       req(exists("df01"))
       TreeAnnotation_Server(id="TreeAnnotation",
-                            reactVals=reactVals,
                             df01 = df01)}) %>%
       bindEvent(c(input$btnLoadAnnoData,input$btnLoadDemoData))
 
+
+# Delete nodes ----
+    
+    observe({
+      print("Delete Node")
+      DeleteNode_Server(id="DeleteNode",filter = input$parentPicker)
+      updateSelectizeInput(session, ("parentPicker"),selected = NULL, choices = annotationlist, server = TRUE)
+      updatePickerInput(session,inputId = "updateNodePicker",selected = NULL,choices = annotationlist)
+      updateTextInput(session,inputId = "renameNode",label = NULL,value = "")
+      updateTextInput(session,inputId = "newNode",label = NULL,value = "")})  %>%
+      bindEvent(c(input$deleteNodeBtn))    
+    
+    
 # Update Parent picker based on annotation list once Annotated demo is pressed ----
     
     observe({
@@ -503,15 +516,15 @@ source("modules/ui.R")
       print("update Parent Picker")
       updateSelectizeInput(session, ("parentPicker"), choices = annotationlist, server = TRUE)
       })  %>%
-    bindEvent(c(input$btnLoadAnnoData,input$btnLoadDemoData))
+    bindEvent(c(input$btnLoadAnnoData,input$btnLoadDemoData,input$deleteNodeBtn))
     
 # Update Heatmap in Tree annotation tab based on parent picker ----
     
     observe({
-      req(!is.null(reactVals$hm))
-      Heatmap_Server(id="Heatmap",reactVals=reactVals,filter=input$parentPicker)
-      visNetwork_Server(id="visNetwork",reactVals=reactVals,filter=input$parentPicker)
-      Umap_Server(id="Umap",reactVals=reactVals,filter=input$parentPicker)}) %>% 
+      req(!is.null(session$userData$vars$hm))
+      Heatmap_Server(id="Heatmap",filter=input$parentPicker)
+      visNetwork_Server(id="visNetwork",filter=input$parentPicker)
+      Umap_Server(id="Umap",filter=input$parentPicker)}) %>% 
       bindEvent(input$parentPicker)
   }
 

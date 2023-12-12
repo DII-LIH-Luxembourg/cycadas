@@ -10,7 +10,7 @@ Umap_Server <- function(id,reactVals,filter) {
     module = function(input, output, session) {
       print("run umap Plot")
       
-      node <- reactVals$graph$nodes %>% 
+      node <- session$userData$vars$graph$nodes %>% 
         filter(label == filter)
       
       myid <- node$id
@@ -32,11 +32,11 @@ Umap_Server <- function(id,reactVals,filter) {
       while (myid > 1) {
         print(myid)
         
-        edge <- reactVals$graph$edges %>% filter(from == myid)
+        edge <- session$userData$vars$graph$edges %>% filter(from == myid)
         next_id <- edge$to
         
         myid <- next_id
-        next_node <- reactVals$graph$nodes %>% filter(id == next_id)
+        next_node <- session$userData$vars$graph$nodes %>% filter(id == next_id)
         filterPosMarkers <- append(filterPosMarkers, unlist(next_node$pm))
         filterNegMarkers <- c(filterNegMarkers, unlist(next_node$nm))
         
@@ -45,9 +45,9 @@ Umap_Server <- function(id,reactVals,filter) {
       filterPosMarkers <- filterPosMarkers[nzchar(filterPosMarkers)]
       filterNegMarkers <- filterNegMarkers[nzchar(filterNegMarkers)]
 
-      # tmp <- filterHM(df01Tree,filterPosMarkers, filterNegMarkers, reactVals$th)
+      # tmp <- filterHM(df01Tree,filterPosMarkers, filterNegMarkers, session$userData$vars$th)
 
-      tmp <- filterHM(df01Tree,unique(unlist(filterPosMarkers)), unique(unlist(filterNegMarkers)), reactVals$th)
+      tmp <- filterHM(df01Tree,unique(unlist(filterPosMarkers)), unique(unlist(filterNegMarkers)), session$userData$vars$th)
       
       tmp <- tmp[tmp$cell == node$label ,]
       
@@ -67,7 +67,7 @@ Umap_Server <- function(id,reactVals,filter) {
       
       updateClusterLabels(tmp)
       #
-      reactVals$hm <- tmp
+      session$userData$vars$hm <- tmp
 
       updateCheckboxGroupButtons(
         session,

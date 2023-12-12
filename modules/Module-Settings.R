@@ -82,7 +82,7 @@ progress$set(message = "loading Data Cluster Expression Demo Data...", value = 0
 df <- read.csv("data/demo_data/median_expr_1600.csv")
 df_global <<- df
 
-reactVals$graph <- initTree()
+session$userData$vars$graph <- initTree()
 
 annotationlist <<- list("Unassigned")
 
@@ -164,7 +164,7 @@ annotaionDF <<- data.frame("cell" = "unassigned",
                            clusterSize = cell_freq$clustering_prop)
 at <<- reactiveValues(data = annotaionDF, dr_umap = dr_umap)
 
-reactVals$th <- kmeansTH(df01)
+session$userData$vars$th <- kmeansTH(df01)
 
 
 })}
@@ -195,7 +195,7 @@ Settings_Server2 <- function(id,reactVals) {
         
         df_global <<- df
         
-        reactVals$graph <- initTree()
+        session$userData$vars$graph <- initTree()
         
         annotationlist <<- list("Unassigned")
         
@@ -246,7 +246,7 @@ Settings_Server2 <- function(id,reactVals) {
         at <<- reactiveValues(data = annotaionDF, dr_umap = dr_umap)
         
         
-        # reactVals$th <- kmeansTH(df01)
+        # session$userData$vars$th <- kmeansTH(df01)
         
         ## Load demo thresholds
         th <- read.csv("data/demo_data/MarkerThresholds.csv")
@@ -257,17 +257,17 @@ Settings_Server2 <- function(id,reactVals) {
         th[th$bi_mod < 0.555, "color"] <- "red"
         
         rownames(th) <- th$cell
-        reactVals$th<- th
+        session$userData$vars$th<- th
         
         ## Load metadata
         md <<- read.csv("data/demo_data/metadata.csv")
         md$X <- NULL
-        reactVals$md<- md
+        session$userData$vars$md<- md
         
         ## Load counts table
         ct <<- read.csv("data/demo_data/cluster_counts_1600.csv")
         ct$X <- NULL
-        reactVals$counts_table <- ct
+        session$userData$vars$counts_table <- ct
         
         ## Load annotaiton Tree
         df_nodes <- read.csv("data/demo_data/nodesTable_data.csv")
@@ -281,12 +281,12 @@ Settings_Server2 <- function(id,reactVals) {
         df_nodes$nm <- strsplit(df_nodes$nm, "\\|")
         
         # browser()
-        reactVals$graph$nodes <<- df_nodes
-        reactVals$graph$edges <<- df_edges
+        session$userData$vars$graph$nodes <- df_nodes
+        session$userData$vars$graph$edges <- df_edges
     
         df01Tree <<- df_anno
         
-        reactVals$hm <- df01Tree
+        session$userData$vars$hm <- df01Tree
         
         annotationlist <<- as.list(df_nodes$label)
 
@@ -320,8 +320,8 @@ Settings_Server3 <- function(id) {
         df_nodes$nm[is.na(df_nodes$nm)] <- ""
         df_nodes$nm <- strsplit(df_nodes$nm, "\\|")
         
-        reactVals$graph$nodes <- df_nodes
-        reactVals$graph$edges <- df_edges
+        session$userData$vars$graph$nodes <- df_nodes
+        session$userData$vars$graph$edges <- df_edges
         
         df01Tree <<- df_anno
         

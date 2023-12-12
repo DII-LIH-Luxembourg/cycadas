@@ -10,7 +10,8 @@ Heatmap_Server <- function(id,reactVals,filter) {
     module = function(input, output, session) {
       print("run heatmaps plot")
       output$hm_tree <- renderPlot({
-        heatmap_matrix <- reactVals$hm %>%
+        # heatmap_matrix <- reactVals$hm %>%
+        heatmap_matrix <- session$userData$vars$hm %>%
           filter(cell == filter) %>%
           select(-c("cell"))
         if(nrow(heatmap_matrix) > 0 & ncol(heatmap_matrix) > 0 ){

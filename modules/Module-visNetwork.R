@@ -9,12 +9,16 @@ visNetwork_Server <- function(id,reactVals,filter) {
     id = id,
     module = function(input, output, session) {
       print("run visual Network plot")
-      nodes <- reactVals$graph$nodes
-      edges <- reactVals$graph$edges
+      nodes <- session$userData$vars$graph$nodes
+      edges <- session$userData$vars$graph$edges
       
       print (head(nodes))
+      # req(nrow(session$userData$vars$graph$nodes)>0)
       
       output$mynetworkid <- renderVisNetwork({
+        
+        # browser()
+        
         
         for(i in 1:nrow(nodes)) {
           

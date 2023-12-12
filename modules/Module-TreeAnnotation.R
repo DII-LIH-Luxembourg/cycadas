@@ -20,9 +20,7 @@ TreeAnnotation_UI <- function(id) {
           textOutput(ns("progressBox2")),
           textInput(ns("newNode"), "Set Name..."),
           actionButton(ns("createNodeBtn"), "Create Node")),
-    box(width = NULL,title = "Delete Node",
-      actionButton(ns("deleteNodeBtn"), "Delete Node")
-      ),
+    
     box(width = NULL,title = "Export Annotation",
       downloadButton(ns("exportAnnotationBtn"), "Export Annotation")
       ),
@@ -57,148 +55,125 @@ TreeAnnotation_Server <- function(id,reactVals,df01,tab) {
       }
       
 
-
-
-      # set.seed(1234)
-      # my_umap <- umap(df)
-      # dr_umap <<- data.frame(
-      #   u1 = my_umap$layout[, 1],
-      #   u2 = my_umap$layout[, 2],
-      #   my_umap$data,
-      #   cluster_number = 1:length(my_umap$layout[, 1]),
-      #   check.names = FALSE
-      # )
       
-
-
-
-      
-# Function: Plot the annotation tree ----
-
-        
-      # TEST7 <<- reactVals$graph$nodes
-      # TEST8 <<- reactVals$graph$edges
-      # nodes <- TEST7
-      # edges <- TEST8
-      # 
-
-      
-  
-      
-
-
-        
-        # heatmap <- reactVals$hm
-        # heatmap_selected <- input$parentPicker
-
-         
-# Annotation heatmap plot ----
-
-        
-               
-
-# observeEvent(input$parentPicker, {Heatmap_module(id = "TreeHeatmap",df = reactVals$hm,filter = input$parentPicker)})
-        
-        
-  #       
-  # observeEvent(input$parentPicker, {
-  #       filter = input$parentPicker
-  #       df = reactVals
-  # 
-  #       print("run heatmaps plot")
-  #       print(filter)
-  #       print(head(df$hm))
-  #       # print(Sys.getenv)
-  # 
-  # 
-  #       output$hm_tree <- renderPlot({
-  #         heatmap_matrix <<- df$hm %>%
-  #           filter(cell == filter) %>%
-  #           select(-c("cell"))
-  # 
-  #         if(nrow(heatmap_matrix) > 0 & ncol(heatmap_matrix) > 0 ){
-  #           pheatmap(heatmap_matrix,cluster_cols = F,cluster_rows = T)
-  #         }
-  #       })})
-  # #
-
       
 # Upload the marker expression file ----
-      # observeEvent(c(input$fMarkerExpr, input$cluster_freq), {
+      observeEvent(c(input$fMarkerExpr, input$cluster_freq), {
         
         reactVals$graph <- initTree()
         # browser()
         
-        # req(input$fMarkerExpr)
-        # req(input$cluster_freq)
+        req(input$fMarkerExpr)
+        req(input$cluster_freq)
         
-        # df <- read.csv(input$fMarkerExpr$datapath)
-        # df_global <<- df
-        # 
-        # annotationlist <<- list("Unassigned")
-        # 
-        # cell_freq <<- read.csv(input$cluster_freq$datapath)
-        # 
-        # labels_row <-
-        #   paste0(rownames(df), " (", cell_freq$clustering_prop , "%)")
-        # 
-        # marker_names <- rownames(df)
-        # 
-        # df01 <<- df %>% normalize01()
-        # myDF <<- df %>% normalize01()
-        # 
-        # df01Tree <<- df %>% normalize01()
-        # allMarkers <<- colnames(df)
-        # df01Tree$cell <<- "Unassigned"
-        # 
-        # selectedMarkers <<- colnames(df)
-        # posPickerList <<- colnames(df)
-
+        df <- read.csv(input$fMarkerExpr$datapath)
+        df_global <<- df
         
-        # TEST2 <<- colnames(df01)
+        annotationlist <<- list("Unassigned")
+        
+        cell_freq <<- read.csv(input$cluster_freq$datapath)
+        
+        labels_row <-
+          paste0(rownames(df), " (", cell_freq$clustering_prop , "%)")
+        
+        marker_names <- rownames(df)
+        
+        set.seed(1234)
+        
+        my_umap <- umap(df)
+        dr_umap <<- data.frame(
+          u1 = my_umap$layout[, 1],
+          u2 = my_umap$layout[, 2],
+          my_umap$data,
+          cluster_number = 1:length(my_umap$layout[, 1]),
+          check.names = FALSE
+        )
+        
+        df01 <<- df %>% normalize01()
+        myDF <<- df %>% normalize01()
+        
+        df01Tree <<- df %>% normalize01()
+        allMarkers <<- colnames(df)
+        df01Tree$cell <<- "Unassigned"
+        
+        selectedMarkers <<- colnames(df)
+        posPickerList <<- colnames(df)
         
         ## load only at start to fill the picker list
-        updatePickerInput(session,inputId = "myPickerPos",label = "Select Positive Markers",choices = colnames(df01),
-          options = list(`actions-box` = TRUE,size = 10,`selected-text-format` = "count > 3"))
-        updatePickerInput(session,inputId = "myPickerNeg",label = "Select Negative Markers",choices = colnames(df01),
-          options = list(`actions-box` = TRUE,size = 10,`selected-text-format` = "count > 3"))
+        updatePickerInput(
+          session,
+          inputId = "myPickerPos",
+          label = "Select Positive Markers",
+          choices = colnames(df01),
+          # choices = NULL,
+          options = list(
+            `actions-box` = TRUE,
+            size = 10,
+            `selected-text-format` = "count > 3"
+          )
+        )
+        updatePickerInput(
+          session,
+          inputId = "myPickerNeg",
+          label = "Select Negative Markers",
+          choices = colnames(df01),
+          options = list(
+            `actions-box` = TRUE,
+            size = 10,
+            `selected-text-format` = "count > 3"
+          )
+        )
         updateSelectInput(session, "markerSelect", "Select:", colnames(df01))
         
-        updateCheckboxGroupButtons(session,inputId = "treePickerPos",choices = colnames(df01),selected = NULL)
-        updateCheckboxGroupButtons(session,inputId = "treePickerNeg",choices = colnames(df01),selected = NULL)
+        updateCheckboxGroupButtons(
+          session,
+          inputId = "treePickerPos",
+          choices = colnames(df01),
+          selected = NULL
+        )
+        updateCheckboxGroupButtons(
+          session,
+          inputId = "treePickerNeg",
+          choices = colnames(df01),
+          selected = NULL
+        )
+        
         reactVals$th <- kmeansTH(df01)
-        annotaionDF <<- data.frame("cell" = "unassigned",clusterSize = cell_freq$clustering_prop)
+        
+        annotaionDF <<- data.frame("cell" = "unassigned",
+                                   clusterSize = cell_freq$clustering_prop)
         at <<- reactiveValues(data = annotaionDF, dr_umap = dr_umap)
         
-      # })
-      
-      
-      
-      
-      
+      })
       # Observe MenutItems ----
-      # eventReactive(tab, {
-      #   
-        # if (exists("df01")) {
-        #   if(tab=="thresholds") { ## Thresholds ----
-        #     
-        #     if (is.null(reactVals$th) & !is.null(df01)) {
-        #       reactVals$th <- kmeansTH(df01)
-        #     }
-        #   }
-          # else if(tab=="treeannotation") { # Tree annotation ----
+      observeEvent(input$tabs, {
+        
+        if (exists("df01")) {
+          if(input$tabs=="thresholds") { ## Thresholds ----
             
-
-            # updatePickerInput(
-            #   session,
-            #   inputId = "updateNodePicker",
-            #   choices = annotationlist,
-            #   selected = ""
-            # )
-            # plotTree()
-          # }
-        # }
-      # })
+            if (is.null(reactVals$th) & !is.null(df01)) {
+              reactVals$th <- kmeansTH(df01)
+            }
+          }
+          else if(input$tabs=="treeannotation") { # Tree annotation ----
+            
+            updatePickerInput(
+              session,
+              inputId = "parentPicker",
+              choices = annotationlist
+            )
+            updatePickerInput(
+              session,
+              inputId = "updateNodePicker",
+              choices = annotationlist,
+              selected = ""
+            )
+            plotTree()
+          }
+        }
+      })
+      
+      
       
       observeEvent(input$treePickerPos, {
         
@@ -220,8 +195,6 @@ TreeAnnotation_Server <- function(id,reactVals,df01,tab) {
           disabledChoices = input$treePickerNeg
         )
       })
-      
-      
       
       
       
@@ -251,7 +224,7 @@ TreeAnnotation_Server <- function(id,reactVals,df01,tab) {
           name <- input$newNode
 
           # make sure name is not yet taken
-          if(name %in% reactVals$graph$nodes$label) {
+          if(name %in% session$userData$vars$graph$nodes$label) {
             showModal(modalDialog(
               title = "Naming Error!",
               "The Name for this Phenotype is already taken!",
@@ -268,7 +241,7 @@ TreeAnnotation_Server <- function(id,reactVals,df01,tab) {
           # receive the parent settings, resp. parent hm
           # filter hm by parent cell name
           tmp <- df01Tree[df01Tree$cell == parent, ]
-          tmp <- filterHM(tmp,input$treePickerPos, input$treePickerNeg, reactVals$th)
+          tmp <- filterHM(tmp,input$treePickerPos, input$treePickerNeg, session$userData$vars$th)
 
           # Make sure the selection is not empty!
           if(dim(tmp)[1] == 0) {
@@ -300,7 +273,7 @@ TreeAnnotation_Server <- function(id,reactVals,df01,tab) {
             posmarker <- list(input$treePickerPos)
             negmarker <- list(input$treePickerNeg)
 
-            reactVals$graph <- add_node(reactVals$graph,parent,name,posmarker,negmarker,"blue")
+            session$userData$vars$graph <- add_node(session$userData$vars$graph,parent,name,posmarker,negmarker,"blue")
 
             df01Tree[rownames(tmp),]$cell <<- name
 
@@ -338,224 +311,114 @@ TreeAnnotation_Server <- function(id,reactVals,df01,tab) {
       
       
 
-      # # Observe node update picker ----
-      # observeEvent(input$updateNodePicker, {
-      #   
-      #   browser()
-      #   
-      #   node <- reactVals$graph$nodes %>% filter(label == input$updateNodePicker)
-      #   myid <- node$id
-      #   
-      #   filterPosMarkers <- unlist(node$pm)
-      #   filterNegMarkers <- unlist(node$nm)
-      #   
-      #   updatePickerInput(
-      #     session,
-      #     inputId = "updatePickerPos",
-      #     label = "Select Positive Markers",
-      #     choices = colnames(df01),
-      #     selected = filterPosMarkers,
-      #     options = list(
-      #       `actions-box` = TRUE,
-      #       size = 10,
-      #       `selected-text-format` = "count > 3"
-      #     )
-      #   )
-      #   updatePickerInput(
-      #     session,
-      #     inputId = "updatePickerNeg",
-      #     label = "Select Negative Markers",
-      #     choices = colnames(df01),
-      #     selected = filterNegMarkers,
-      #     options = list(
-      #       `actions-box` = TRUE,
-      #       size = 10,
-      #       `selected-text-format` = "count > 3"
-      #     )
-      #   )
-      #   updateTextInput(
-      #     session,
-      #     inputId = "renameNode",
-      #     label = NULL,
-      #     value = node$label)
-      # })
+      # Observe node update picker ----
+      observeEvent(input$updateNodePicker, {
+
+        browser()
+
+        node <- session$userData$vars$graph$nodes %>% filter(label == input$updateNodePicker)
+        myid <- node$id
+
+        filterPosMarkers <- unlist(node$pm)
+        filterNegMarkers <- unlist(node$nm)
+
+        updatePickerInput(
+          session,
+          inputId = "updatePickerPos",
+          label = "Select Positive Markers",
+          choices = colnames(df01),
+          selected = filterPosMarkers,
+          options = list(
+            `actions-box` = TRUE,
+            size = 10,
+            `selected-text-format` = "count > 3"
+          )
+        )
+        updatePickerInput(
+          session,
+          inputId = "updatePickerNeg",
+          label = "Select Negative Markers",
+          choices = colnames(df01),
+          selected = filterNegMarkers,
+          options = list(
+            `actions-box` = TRUE,
+            size = 10,
+            `selected-text-format` = "count > 3"
+          )
+        )
+        updateTextInput(
+          session,
+          inputId = "renameNode",
+          label = NULL,
+          value = node$label)
+      })
       
      
       
-      # Delete Node ----
-      observeEvent(input$deleteNodeBtn, {
 
-        # browser()
+      
+      
+      importNodes <- function(id, label, pm, nm, parent_id, color) {
 
-        # node <- reactVals$graph$nodes %>% filter(label == input$updateNodePicker)
-        node <- reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker, ]
+        if(id == parent_id) {return()}
 
-        # check and make sure that this node is a leaf node
-        if(TRUE %in% (reactVals$graph$edges$to == node$id)) {
+        parent_row <- session$userData$vars$graph$nodes %>% filter(id == parent_id)
+        parent_name <- parent_row$label
 
-          showModal(modalDialog(
-            title = "Cannot delete Node",
-            "The selected Node is not a Leaf Node!",
-            easyClose = TRUE,
-            footer = NULL
-          ))
+        add_node(session$userData$vars$graph, parent_name, label, color)
+      }
+      
+      
+      # Export Annotation Tree ----
+      output$exportAnnotationBtn <- downloadHandler(
 
-          return()
+        filename = function(){
+          paste("cycadas_annotation_data_", Sys.Date(), ".zip", sep = "")
+        },
+        content = function(file) {
+          temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+          dir.create(temp_directory)
 
-        }
-        else {
+          export_df_nodes <- session$userData$vars$graph$nodes
+          # Use apply() to concatenate the pm column for each row of the nodes dataframe
+          pm_concatenated <- apply(export_df_nodes, 1, function(row) {
 
-          # before deleting the node, we must assign the cluster annotation
-          # name for that node back to its parent
-          parent_id <- reactVals$graph$edges$to[reactVals$graph$edges$from == node$id]
-          parent_label <- reactVals$graph$nodes$label[reactVals$graph$nodes$id == parent_id]
+            pm_vector <- unlist(row["pm"])
+            pm_vector <- paste(pm_vector, collapse = "|")
+          })
 
-          # In case there is a empty node with no the filtered clusters
-          # we do not assign any labeling
-          if( dim(df01Tree[df01Tree$cell == node$label,])[1] >0 ) {
+          nm_concatenated <- apply(export_df_nodes, 1, function(row) {
+            nm_vector <- unlist(row["nm"])
+            nm_vector <- paste(nm_vector, collapse = "|")
+          })
 
-            df01Tree[df01Tree$cell == node$label,]$cell <<- parent_label
+          # Add the concatenated pm column as a new column to the nodes dataframe
+          export_df_nodes$pm <- pm_concatenated
+          export_df_nodes$nm <- nm_concatenated
 
-          }
+          download_list <- list(annTable = df01Tree,
+                                nodesTable = export_df_nodes,
+                                edgesTable = session$userData$vars$graph$edges)
+          # download_list <- list(annTable = df01Tree["cell"],
+          #                       nodesTable = export_df_nodes,
+          #                       edgesTable = session$userData$vars$graph$edges)
 
-          annotationlist[annotationlist == node$label] <<- NULL
+          download_list %>%
+            imap(function(x,y){
+              if(!is.null(x)){
+                file_name <- glue("{y}_data.csv")
+                readr::write_csv(x, file.path(temp_directory, file_name))
+              }
+            })
 
-          updatePickerInput(
-            session,
-            inputId = "parentPicker",
-            selected = NULL,
-            choices = annotationlist
+          zip::zip(
+            zipfile = file,
+            files = dir(temp_directory),
+            root = temp_directory
           )
-          updatePickerInput(
-            session,
-            inputId = "updateNodePicker",
-            selected = NULL,
-            choices = annotationlist
-          )
-          updateTextInput(
-            session,
-            inputId = "renameNode",
-            label = NULL,
-            value = ""
-          )
-          updateTextInput(
-            session,
-            inputId = "newNode",
-            label = NULL,
-            value = ""
-          )
-
-          reactVals$graph <- delete_leaf_node(reactVals$graph, node$id)
-          plotTree()
-        }
-
-      })
-      
-      
-      # importNodes <- function(id, label, pm, nm, parent_id, color) {
-      #   
-      #   if(id == parent_id) {return()}
-      #   
-      #   parent_row <- reactVals$graph$nodes %>% filter(id == parent_id)
-      #   parent_name <- parent_row$label
-      #   
-      #   add_node(reactVals$graph, parent_name, label, color)
-      # }
-      
-      
-      # observeEvent(input$exportTreeGraphics, {
-      #   
-      #   # browser()
-      #   
-      #   # visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
-      #   #   visEdges(arrows = "from") %>%
-      #   #   visHierarchicalLayout() %>%
-      #   #   visExport(type = "png", name = "export-network",
-      #   #             float = "left", label = "Save network", background = "purple", style= "")
-      #   
-      #   
-      # })
-      
-      # # Export Annotation Tree ----
-      # output$exportAnnotationBtn <- downloadHandler(
-      #   
-      #   filename = function(){
-      #     paste("cycadas_annotation_data_", Sys.Date(), ".zip", sep = "")
-      #   },
-      #   content = function(file) {
-      #     temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-      #     dir.create(temp_directory)
-      #     
-      #     export_df_nodes <- reactVals$graph$nodes
-      #     # Use apply() to concatenate the pm column for each row of the nodes dataframe
-      #     pm_concatenated <- apply(export_df_nodes, 1, function(row) {
-      #       
-      #       pm_vector <- unlist(row["pm"])
-      #       pm_vector <- paste(pm_vector, collapse = "|")
-      #     })
-      #     
-      #     nm_concatenated <- apply(export_df_nodes, 1, function(row) {
-      #       nm_vector <- unlist(row["nm"])
-      #       nm_vector <- paste(nm_vector, collapse = "|")
-      #     })
-      #     
-      #     # Add the concatenated pm column as a new column to the nodes dataframe
-      #     export_df_nodes$pm <- pm_concatenated
-      #     export_df_nodes$nm <- nm_concatenated
-      #     
-      #     download_list <- list(annTable = df01Tree,
-      #                           nodesTable = export_df_nodes,
-      #                           edgesTable = reactVals$graph$edges)
-      #     # download_list <- list(annTable = df01Tree["cell"],
-      #     #                       nodesTable = export_df_nodes,
-      #     #                       edgesTable = reactVals$graph$edges)
-      #     
-      #     download_list %>%
-      #       imap(function(x,y){
-      #         if(!is.null(x)){
-      #           file_name <- glue("{y}_data.csv")
-      #           readr::write_csv(x, file.path(temp_directory, file_name))
-      #         }
-      #       })
-      #     
-      #     zip::zip(
-      #       zipfile = file,
-      #       files = dir(temp_directory),
-      #       root = temp_directory
-      #     )
-      #   },
-      #   contentType = "application/zip"
-      # )
-      
-      
-      # update Tree Annotation ----
-      ## update the tree after a change in the thresholds
-      ## walk through the list of nodes and adjust the annotation if
-      ## needed based on the filtered DF
-      
-      
-      ## Event on click scatter plot for setting the vertical line
-      ##
-      # observe click scatterplot -----
-      ##
-      
-      ##
-      # Thresholds plotting function ----
-      ##
-      
-      ##
-      # Server - Annotations Tab ------------------------------------------------
-      ##
-      # Load the annotation file ---------------------------------------------
-      # observeEvent(input$annTable,{
-      #   annData <<- read.csv(input$annTable$datapath)
-      #   annData$X <- NULL
-      #   at$data <- annData
-      # })
-      
-      
-      
-
+        },
+        contentType = "application/zip"
+      )
       
       
     })}
