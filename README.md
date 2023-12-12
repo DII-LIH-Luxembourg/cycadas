@@ -1,4 +1,4 @@
-![Alt text](./cycadas_logo.png)
+![Alt text](./logo4_small2.png)
 
 ## Cytometry Cluster Annotation and Differential Abundance Suite
 
