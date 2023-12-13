@@ -30,6 +30,7 @@ PD17.fcs,pd17,PD
 HC14.fcs,hc14,HC
 HC15.fcs,hc15,HC
 HC16.fcs,hc16,HC
+PD18.fcs,pd18,PD
 PD19.fcs,pd19,PD
 PD20.fcs,pd20,PD
 HC17.fcs,hc17,HC
@@ -37,9 +38,9 @@ PD21.fcs,pd21,PD
 HC18.fcs,hc18,HC
 HC19.fcs,hc19,HC
 PD22.fcs,pd22,PD
-HC100.fcs,hc_100,HC
+HC20.fcs,hc20,HC
 PD23.fcs,pd23,PD
-PD24.fcs,pc24,PD
+PD24.fcs,pd24,PD
 HC21.fcs,hc21,HC
 PD25.fcs,pd25,PD
 PD26.fcs,pd26,PD
@@ -47,4 +48,4 @@ HC22.fcs,hc22,HC
 PD27.fcs,pd27,PD
 PD29.fcs,pd29,PD
 HC23.fcs,hc23,HC
-PD28.fcs,pd28,HC
+HC24.fcs,hc24,HC
