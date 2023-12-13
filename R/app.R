@@ -367,29 +367,38 @@ cycadas <- function() {
 
       filterPosMarkers <- unlist(node$pm)
       filterNegMarkers <- unlist(node$nm)
+      
+      
+      parent <- input$parentPicker
+      
+      # receive the parent settings, resp. parent hm
+      # filter hm by parent cell name
+      tmp <- df01Tree[df01Tree$cell == parent, ]
+      tmp <- filterHM(tmp,input$treePickerPos, input$treePickerNeg, reactVals$th)
+      
 
       # collect all positive and negative markers
       # upwards from parent
       # go through edges until we reach one level below master node
-      while (myid > 1) {
-        print(myid)
-
-        edge <- reactVals$graph$edges %>% filter(from == myid)
-        next_id <- edge$to
-
-        myid <- next_id
-        next_node <- reactVals$graph$nodes %>% filter(id == next_id)
-        filterPosMarkers <- append(filterPosMarkers, unlist(next_node$pm))
-        filterNegMarkers <- c(filterNegMarkers, unlist(next_node$nm))
-
-      }
-      # remove the empty strings in the markers
-      filterPosMarkers <- filterPosMarkers[nzchar(filterPosMarkers)]
-      filterNegMarkers <- filterNegMarkers[nzchar(filterNegMarkers)]
-
-      # tmp <- filterHM(df01Tree,filterPosMarkers, filterNegMarkers, reactVals$th)
-
-      tmp <- filterHM(df01Tree,unique(unlist(filterPosMarkers)), unique(unlist(filterNegMarkers)), reactVals$th)
+      # while (myid > 1) {
+      #   print(myid)
+      # 
+      #   edge <- reactVals$graph$edges %>% filter(from == myid)
+      #   next_id <- edge$to
+      # 
+      #   myid <- next_id
+      #   next_node <- reactVals$graph$nodes %>% filter(id == next_id)
+      #   filterPosMarkers <- append(filterPosMarkers, unlist(next_node$pm))
+      #   filterNegMarkers <- c(filterNegMarkers, unlist(next_node$nm))
+      # 
+      # }
+      # # remove the empty strings in the markers
+      # filterPosMarkers <- filterPosMarkers[nzchar(filterPosMarkers)]
+      # filterNegMarkers <- filterNegMarkers[nzchar(filterNegMarkers)]
+      # 
+      # # tmp <- filterHM(df01Tree,filterPosMarkers, filterNegMarkers, reactVals$th)
+      # 
+      # tmp <- filterHM(df01Tree,unique(unlist(filterPosMarkers)), unique(unlist(filterNegMarkers)), reactVals$th)
 
       tmp <- tmp[tmp$cell == node$label ,]
 
@@ -433,7 +442,7 @@ cycadas <- function() {
     # Observe node update picker ----
     observeEvent(input$updateNodePicker, {
 
-      browser()
+      # browser()
 
       node <- reactVals$graph$nodes %>% filter(label == input$updateNodePicker)
       myid <- node$id
@@ -675,10 +684,16 @@ cycadas <- function() {
         # Add the concatenated pm column as a new column to the nodes dataframe
         export_df_nodes$pm <- pm_concatenated
         export_df_nodes$nm <- nm_concatenated
+        
+        # browser()
+        
+        export_freq <- data.frame(cluster=1:length(annotaionDF$cell),
+                                  clustering_prop = annotaionDF$clusterSize)
 
         download_list <- list(annTable = df01Tree,
                               nodesTable = export_df_nodes,
-                              edgesTable = reactVals$graph$edges)
+                              edgesTable = reactVals$graph$edges,
+                              freq = export_freq)
         # download_list <- list(annTable = df01Tree["cell"],
         #                       nodesTable = export_df_nodes,
         #                       edgesTable = reactVals$graph$edges)
@@ -763,14 +778,14 @@ cycadas <- function() {
 
           # now for that nodeID, get all parents and collect
           # the pm and nm markers
-          while (nodeID > 1) {
+          # while (nodeID > 1) {
 
-            posMarker <- c(posMarker, unlist(reactVals$graph$nodes$pm[reactVals$graph$nodes$id == nodeID]))
-            negMarker <- c(negMarker, unlist(reactVals$graph$nodes$nm[reactVals$graph$nodes$id == nodeID]))
+          posMarker <- c(posMarker, unlist(reactVals$graph$nodes$pm[reactVals$graph$nodes$id == nodeID]))
+          negMarker <- c(negMarker, unlist(reactVals$graph$nodes$nm[reactVals$graph$nodes$id == nodeID]))
 
-            nodeID <- reactVals$graph$edges$to[reactVals$graph$edges$from == nodeID]
-
-          }
+          #   nodeID <- reactVals$graph$edges$to[reactVals$graph$edges$from == nodeID]
+          # 
+          # }
           # now we have all positive and negative marker for that type collected
           # and we can start filtering the df
           # remove the empty strings in the markers
@@ -796,7 +811,7 @@ cycadas <- function() {
 
     ## Event on click scatter plot for setting the vertical line
     ##
-    # observe click scatterplot -----
+    # Observe click scatterplot -----
     ##
     observeEvent(input$plot_click, {
 
@@ -813,6 +828,7 @@ cycadas <- function() {
       marker_expr <- getMarkerDistDF(marker, "1")
       myRenderFunction(marker_expr, myTH, myCol)
 
+      # updateTreeAnnotation(reactVals$th[input$table_rows_selected])
       updateTreeAnnotation()
     })
 
@@ -1320,7 +1336,7 @@ cycadas <- function() {
 
       annotationlist <<- list("Unassigned")
 
-      cell_freq <- read.csv("data/demo_data/cluster_freq_1600.csv")
+      cell_freq <<- read.csv("data/demo_data/cluster_freq_1600.csv")
 
       labels_row <-
         paste0(rownames(df), " (", cell_freq$clustering_prop , "%)")
@@ -1397,7 +1413,7 @@ cycadas <- function() {
     ## -------------------------------------------------------------------
     # Upload All Annotation Demo Data ----
     observeEvent(input$btnLoadAnnoData, {
-      # browser()
+      browser()
 
       # Create a Progress object
       progress <- shiny::Progress$new()

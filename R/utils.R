@@ -21,6 +21,8 @@ kmeansTH <- function(df) {
     if (bi_mod_value < 0.555) {
       th[th$cell == m, "color"] <- "red"
     }
+    
+    set.seed(42)
 
     z <- Ckmeans.1d.dp(df[, m], 2)
     th[th$cell == m, "threshold"] <- round(ahist(z, style="midpoints", data=df[, m], plot=FALSE)$breaks[2:2], 3)
@@ -61,7 +63,7 @@ filterHM <- function(DF,posList, negList, th) {
     posTH <- th$threshold[th$cell %in% posList]
     for (i in 1:length(posList)) {
       marker <- posList[i]
-      DF <- DF[DF[marker] > posTH[i], ]
+      DF <- DF[DF[marker] >= posTH[i], ]
     }
     return(as.data.frame(DF))
 
@@ -75,7 +77,7 @@ filterHM <- function(DF,posList, negList, th) {
 
     for (i in 1:length(posList)) {
       marker <- posList[i]
-      DF <- DF[DF[marker] > posTH[i], ]
+      DF <- DF[DF[marker] >= posTH[i], ]
       # DF <- DF[DF[marker] > th[marker,]$threshold, ]
     }
     # next reduce by the negative markers
