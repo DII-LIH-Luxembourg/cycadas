@@ -1429,7 +1429,7 @@ cycadas <- function() {
 
       # !----------- TEST bimodal check !-----------------
       #
-      df$testCol <- rnorm(nrow(df), 5.0, 1.0)
+      # df$testCol <- rnorm(nrow(df), 5.0, 1.0)
 
       df_global <<- df
 
@@ -1543,13 +1543,6 @@ cycadas <- function() {
       df_nodes$nm[is.na(df_nodes$nm)] <- ""
       df_nodes$nm <- strsplit(df_nodes$nm, "\\|")
 
-      # browser()
-      reactVals$graph$nodes <- df_nodes
-      reactVals$graph$edges <- df_edges
-      
-      
-      
-      
       reactVals$graph$nodes <- df_nodes
       reactVals$graph$edges <- df_edges
       
@@ -1563,7 +1556,7 @@ cycadas <- function() {
 
       reactVals$hm <- df01Tree
 
-      annotationlist <<- as.list(df_nodes$label)
+      # annotationlist <<- as.list(df_nodes$label)
 
     })
 
