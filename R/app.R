@@ -1413,7 +1413,7 @@ cycadas <- function() {
     ## -------------------------------------------------------------------
     # Upload All Annotation Demo Data ----
     observeEvent(input$btnLoadAnnoData, {
-      browser()
+      # browser()
 
       # Create a Progress object
       progress <- shiny::Progress$new()
