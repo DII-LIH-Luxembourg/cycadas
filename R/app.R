@@ -1546,8 +1546,20 @@ cycadas <- function() {
       # browser()
       reactVals$graph$nodes <- df_nodes
       reactVals$graph$edges <- df_edges
+      
+      
+      
+      
+      reactVals$graph$nodes <- df_nodes
+      reactVals$graph$edges <- df_edges
+      
+      updateTreeAnnotation()
+      
+      # df01Tree <<- df_anno
+      
+      annotationlist <<- as.list(df_nodes$label)
 
-      df01Tree <<- df_anno
+      # df01Tree <<- df_anno
 
       reactVals$hm <- df01Tree
 
