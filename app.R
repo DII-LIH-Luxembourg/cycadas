@@ -368,7 +368,7 @@ source("modules/ui.R")
       req(exists("df01"))
       TreeAnnotation_Server(id="TreeAnnotation",
                             df01 = df01)}) %>%
-      bindEvent(c(input$btnLoadAnnoData,input$btnLoadDemoData))
+      bindEvent(c(input$btnLoadAnnoData,input$btnLoadDemoData,input$tabBox_id))
 
 
 # Delete nodes ----
@@ -391,7 +391,7 @@ source("modules/ui.R")
       print("update Parent Picker")
       updateSelectizeInput(session, ("parentPicker"), choices = annotationlist, server = TRUE)
       })  %>%
-    bindEvent(c(input$btnLoadAnnoData,input$btnLoadDemoData,input$deleteNodeBtn))
+    bindEvent(c(input$btnLoadAnnoData,input$btnLoadDemoData,input$deleteNodeBtn,input$tabBox_id))
     
 # Update Heatmap in Tree annotation tab based on parent picker ----
     observe({
@@ -399,7 +399,7 @@ source("modules/ui.R")
       Heatmap_Server(id="Heatmap",filter=input$parentPicker)
       visNetwork_Server(id="visNetwork",filter=input$parentPicker)
       Umap_Server(id="Umap",filter=input$parentPicker)}) %>% 
-      bindEvent(input$parentPicker)
+      bindEvent(input$parentPicker,input$tabBox_id)
     
 # Run Marker Expression Tab ----
     observe({
