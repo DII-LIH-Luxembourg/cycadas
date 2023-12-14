@@ -117,7 +117,7 @@ mapping = gather_array(mapping_di)
 # get the cluster frequencies
 clusterFreq = dcount(mc, mapping_di)
 df = DataFrame(cluster = 1:length(df), clustering_prop = clusterFreq)
-df.clustering_proportion = df.clustering_proportion ./ sum(df.clustering_proportion)
+df.clustering_prop = df.clustering_prop ./ sum(df.clustering_prop)
 CSV.write("cluster_freq_$mc.csv", df)
 
 files = distributeFCSFileVector(:fileIDs, md[:, :file_name])
