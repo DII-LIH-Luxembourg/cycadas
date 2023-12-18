@@ -59,23 +59,13 @@ ui <- dashboardPage(
       tabItem(tabName = "DA_tree",
               fluidRow(column(width = 8,
                               box(id="mytreebox",
-                                width = NULL,
-                                title = "Interactive DA Tree",
-                                visNetworkOutput("interactiveTree", width = "100%", height = "700px")
+                                  width = NULL,
+                                  title = "Interactive DA Tree",
+                                  visNetworkOutput("interactiveTree", width = "100%", height = "700px")
                               )
-                              ),
-                       column(width = 4,
-                              box(
-                                width = NULL,
-                                tableOutput("DA_interactive_table")
-                              ),
-                              box(
-                                width = NULL,
-                                plotOutput("boxplot")
-                              )
-                              )
-
-                       ))# tabItem
+              ),DA_interactive_UI(id="DA_interactive")))
+              
+              
     ) # tabItems
   ) # dashboardBody
 )
