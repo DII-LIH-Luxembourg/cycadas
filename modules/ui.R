@@ -36,22 +36,7 @@ ui <- dashboardPage(
                  )
               ),
       # umap Reactive  Tab ----------------------------------------------------
-      tabItem(tabName = "umap_reactive",
-              fluidRow(column(width = 6,
-                              box(
-                                width = NULL,
-                                plotOutput("umap2", brush = "umap2_brush")
-                              )),
-                       column(width = 6,
-                              box(
-                                width = NULL,
-                                plotOutput("hm2")
-                              ))),
-              fluidRow(column(width = 12,
-                              box(
-                                width = NULL,
-                                DTOutput("umap_data")
-                              )))),
+      tabItem(tabName = "umap_reactive",umap_interactive_UI(id="umap_interactive")),
       # Umap Marker expression Tab --------------------------------------------
       tabItem(tabName = "UMAP_Marker_expression",UMAP_ME_UI(id="UMAP_ME")),
       # Differential Abundance Tab --------------------------------------------

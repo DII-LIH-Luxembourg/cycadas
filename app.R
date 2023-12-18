@@ -28,6 +28,7 @@ source("modules/Module-DeleteNode.R")
 source("modules/Module-umap_Marker_Expression.R")
 source("modules/Module-Differential_Abundance.R")
 source("modules/Module-DA_intreractive.R")
+source("modules/Module-umap_interactive.R")
 source("modules/ui.R")
 # cycadas <- function() {
 
@@ -151,45 +152,7 @@ source("modules/ui.R")
       }
     })
 
-    # Server - UMAP interactive Tab -------------------------------------------
-    output$umap2 <- renderPlot(
-      ggplot(dr_umap, aes(x = u1, y = u2)) +
-        geom_point(size = 1.0) +
-        theme_bw() +
-        theme(legend.text=element_text(size=8)) +
-        guides(color = guide_legend(override.aes = list(size = 4)))
-    )
 
-    output$hm2 <- renderPlot({
-      my_new_hm <- round(brushedPoints(dr_umap, input$umap2_brush), 2)
-
-      if (dim(my_new_hm)[1] > 0) {
-
-        pheatmap(my_new_hm %>% select(-c("cluster_number", "u1", "u2")), cluster_cols = F)
-      } else {
-        ggplot() + theme_void() + ggtitle("Select area on Umap to plot Heatmap")
-      }
-    })
-
-    output$umap_data <-
-      DT::renderDT(server = FALSE, {
-        DT::datatable(
-          round(brushedPoints(dr_umap, input$umap2_brush), 2),
-          filter = 'top',
-          extensions = 'Buttons',
-          options = list(
-            scrollY = 600,
-            scrollX = TRUE,
-            dom = '<"float-left"l><"float-right"f>rt<"row"<"col-sm-4"B><"col-sm-4"i><"col-sm-4"p>>',
-            lengthMenu =  list(c(10, 25, 50,-1),
-                               c('10', '25', '50', 'All')),
-            scrollCollapse = TRUE,
-            lengthChange = TRUE,
-            widthChange = TRUE,
-            rownames = TRUE
-          )
-        )
-      })
 
 
     
@@ -277,7 +240,13 @@ source("modules/ui.R")
       print(input$current_node_id)
       DA_interactive_Server(id="DA_interactive",current_node_id=input$current_node_id)}) %>% 
       bindEvent(input$current_node_id)
-    }  
+    
+# Run umap interactive Tab ----
+  observe({
+    umap_interactive_Server(id="umap_interactive")}) %>% 
+    bindEvent(input$btnLoadAnnoData)
+  }
+  
   
   shinyApp(
     ui = ui,
