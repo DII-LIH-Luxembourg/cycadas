@@ -1,10 +1,3 @@
-# TreeHeatmapUI <- function(id) {
-#   ns <- NS(id)
-#   plotOutput(ns("hm_tree"))
-# }
-
-
-
 TreeAnnotation_UI <- function(id) {
   ns <- NS(id)
     c(box(width = NULL,
@@ -20,15 +13,9 @@ TreeAnnotation_UI <- function(id) {
           textOutput(ns("progressBox2")),
           textInput(ns("newNode"), "Set Name..."),
           actionButton(ns("createNodeBtn"), "Create Node")),
-    
-    box(width = NULL,title = "Export Annotation",
-      downloadButton(ns("exportAnnotationBtn"), "Export Annotation")
-      ),
-    box(width = NULL,title = "Export Tree as Image",
-      actionButton(ns("exportTreeGraphics"), "Export Tree Image")
+      box(width = NULL,title = "Export Annotation",
+          downloadButton(ns("exportAnnotationBtn"), "Export Annotation")
       ))
-    
-  
   }
 
 TreeAnnotation_Server <- function(id,reactVals,df01,tab) {
@@ -36,7 +23,7 @@ TreeAnnotation_Server <- function(id,reactVals,df01,tab) {
     id = id,
     module = function(input, output, session) {
       
-      req(exists("df01"))
+      # req(exists("df01"))
  
       # TEST5 <<- reactVals
       print("Run Tree Annotation")
@@ -54,17 +41,14 @@ TreeAnnotation_Server <- function(id,reactVals,df01,tab) {
         })
       }
       
-
-      
-      
 # Upload the marker expression file ----
-      observeEvent(c(input$fMarkerExpr, input$cluster_freq), {
+      # observeEvent(c(input$fMarkerExpr, input$cluster_freq), {
         
-        reactVals$graph <- initTree()
+        session$userData$vars$graph <- initTree()
         # browser()
         
-        req(input$fMarkerExpr)
-        req(input$cluster_freq)
+        # req(input$fMarkerExpr)
+        # req(input$cluster_freq)
         
         df <- read.csv(input$fMarkerExpr$datapath)
         df_global <<- df
@@ -126,6 +110,8 @@ TreeAnnotation_Server <- function(id,reactVals,df01,tab) {
         #   )
         # )
         
+        print( getDefaultReactiveDomain())
+        browser()
         
         updateCheckboxGroupButtons(
           session,
@@ -140,21 +126,21 @@ TreeAnnotation_Server <- function(id,reactVals,df01,tab) {
           selected = NULL
         )
         
-        reactVals$th <- kmeansTH(df01)
+        session$userData$vars$th <- kmeansTH(df01)
         
         annotaionDF <<- data.frame("cell" = "unassigned",
                                    clusterSize = cell_freq$clustering_prop)
         at <<- reactiveValues(data = annotaionDF, dr_umap = dr_umap)
         
-      })
+      # })
       # Observe MenutItems ----
       observeEvent(input$tabs, {
         
         if (exists("df01")) {
           if(input$tabs=="thresholds") { ## Thresholds ----
             
-            if (is.null(reactVals$th) & !is.null(df01)) {
-              reactVals$th <- kmeansTH(df01)
+            if (is.null(session$userData$vars$th) & !is.null(df01)) {
+              session$userData$vars$th <- kmeansTH(df01)
             }
           }
           else if(input$tabs=="treeannotation") { # Tree annotation ----
@@ -279,6 +265,8 @@ TreeAnnotation_Server <- function(id,reactVals,df01,tab) {
 
             df01Tree[rownames(tmp),]$cell <<- name
 
+            
+            
             updateCheckboxGroupButtons(
               session,
               inputId = "treePickerPos",
