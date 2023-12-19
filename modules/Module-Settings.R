@@ -84,7 +84,7 @@ df_global <<- df
 
 session$userData$vars$graph <- initTree()
 
-annotationlist <<- list("Unassigned")
+session$userData$vars$annotationlist <- list("Unassigned")
 
 cell_freq <- read.csv("data/demo_data/cluster_freq_1600.csv")
 
@@ -197,7 +197,7 @@ Settings_Server2 <- function(id,reactVals) {
         
         session$userData$vars$graph <- initTree()
         
-        annotationlist <<- list("Unassigned")
+        session$userData$vars$annotationlist <- list("Unassigned")
         
         progress$set(message = "loading Data Annotation Demo Data...", value = 0.1)
         
@@ -288,7 +288,7 @@ Settings_Server2 <- function(id,reactVals) {
         
         session$userData$vars$hm <- df01Tree
         
-        annotationlist <<- as.list(df_nodes$label)
+        session$userData$vars$annotationlist <- as.list(df_nodes$label)
 
         
         # Settings_Server3(id="Settings")
@@ -325,6 +325,6 @@ Settings_Server3 <- function(id) {
         
         df01Tree <<- df_anno
         
-        annotationlist <<- as.list(df_nodes$label)
+        session$userData$vars$annotationlist <- as.list(df_nodes$label)
         
     })}

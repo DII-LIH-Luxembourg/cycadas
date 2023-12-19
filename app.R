@@ -14,13 +14,13 @@ for (package in packages_to_install) {
 }
 
 
-
-
-
 source("modules/utils.R")
 source("modules/Module-Settings.R")
 source("modules/Module-Threshold.R")
-source("modules/Module-TreeAnnotation.R")
+# source("modules/Module-TreeAnnotation.R")
+source("modules/Module-TreeAnnotation_picker.R")
+source("modules/Module-TreeAnnotation_createNode.R")
+source("modules/Module-TreeAnnotation_annotationdownload.R")
 source("modules/Module-visNetwork.R")
 source("modules/Module-Heatmap.R")
 source("modules/Module-umap.R")
@@ -51,7 +51,18 @@ source("modules/ui.R")
     session$userData$vars <- reactiveValues(graph = NULL)
     session$userData$vars <- reactiveValues(hm = NULL)
     session$userData$vars <- reactiveValues(merged_prop_table = NULL)
+    session$userData$vars <- reactiveValues(treePickerPos = NULL)
+    session$userData$vars <- reactiveValues(treePickerNeg = NULL)
+    session$userData$vars <- reactiveValues(annotationlist = NULL)
 
+    
+    ###############################################################################################################
+    ###############################################################################################################
+    ###############################################################################################################
+    ###############################################################################################################
+    ###############################################################################################################
+    
+        
     # Load the marker threshold file ---------------------------------------
     observeEvent(input$fTH,{
 
@@ -152,8 +163,11 @@ source("modules/ui.R")
       }
     })
 
-
-
+    ###############################################################################################################
+    ###############################################################################################################
+    ###############################################################################################################
+    ###############################################################################################################
+    ###############################################################################################################
 
     
     
@@ -176,44 +190,64 @@ source("modules/ui.R")
       req(!is.null(session$userData$vars$th))
       threshold_Server(id="threshold")})
     
-# Run the Tree Annotation Tab based on pressing the Annotated demo button  ----
+# # Run the Tree Annotation Tab based on pressing the Annotated demo button  ----
+#     observe({
+#       # req(exists("cellfreq"))
+#       # req(exists("df01"))
+#       TreeAnnotation_Server(id="TreeAnnotation",df01 = df01)}) %>%
+#       bindEvent(c(input$btnLoadAnnoData))
+
+    
+# Create nodes ----
+    
     observe({
-      req(exists("cellfreq"))
-      req(exists("df01"))
-      TreeAnnotation_Server(id="TreeAnnotation",
-                            df01 = df01)}) %>%
-      bindEvent(c(input$btnLoadAnnoData,input$btnLoadDemoData,input$tabBox_id))
-
-
+      print("Create Nodes")
+      TreeAnnotation_createNode_Server(id="TreeAnnotation_createNode",parent = input$parentPicker,newNodeName=input$newNode)
+      updateSelectizeInput(session, ("parentPicker"),selected = NULL, choices =      session$userData$vars$annotationlist, server = TRUE)}) %>% 
+      bindEvent(c(input$createNodeBtn))  
+    
+    
 # Delete nodes ----
     
     observe({
-      print("Delete Node")
       req(exists("df01Tree"))
       DeleteNode_Server(id="DeleteNode",filter = input$parentPicker)
-      updateSelectizeInput(session, ("parentPicker"),selected = NULL, choices = annotationlist, server = TRUE)
-      updatePickerInput(session,inputId = "updateNodePicker",selected = NULL,choices = annotationlist)
+      updateSelectizeInput(session, ("parentPicker"),selected = NULL, choices = session$userData$vars$annotationlist, server = TRUE)
+      updatePickerInput(session,inputId = "updateNodePicker",selected = NULL,choices = session$userData$vars$annotationlist)
       updateTextInput(session,inputId = "renameNode",label = NULL,value = "")
       updateTextInput(session,inputId = "newNode",label = NULL,value = "")})  %>%
       bindEvent(c(input$deleteNodeBtn))    
+ 
     
+# Run the Tree Annotation Tab picker  ----
+    observe({
+      # browser()
+      TreeAnnotation_picker_Server(id="TreeAnnotation_picker")}) %>%
+      bindEvent(c(input$btnLoadAnnoData,input$createNodeBtn))   
     
 # Update Parent picker based on annotation list once Annotated demo is pressed ----
     
     observe({
-      req(exists("annotationlist"))
+      req(!is.null("annotationlist"))
       print("update Parent Picker")
-      updateSelectizeInput(session, ("parentPicker"), choices = annotationlist, server = TRUE)
+      updateSelectizeInput(session, ("parentPicker"), choices = session$userData$vars$annotationlist, server = TRUE)
       })  %>%
-    bindEvent(c(input$btnLoadAnnoData,input$btnLoadDemoData,input$deleteNodeBtn,input$tabBox_id))
+    bindEvent(c(input$btnLoadAnnoData,input$btnLoadDemoData,input$deleteNodeBtn,input$createNodeBtn))
     
-# Update Heatmap in Tree annotation tab based on parent picker ----
+# Update TreeAnnotation_annotationdownload  ----
+    observe({
+      TreeAnnotation_annotationdownload_Server(id="TreeAnnotation_annotationdownload")}) %>% 
+      bindEvent(input$btnLoadAnnoData,input$btnLoadDemoData,input$deleteNodeBtn,input$createNodeBtn)   
+    
+    
+    
+# Update Tree annotation visuals based on parent picker ----
     observe({
       req(!is.null(session$userData$vars$hm))
       Heatmap_Server(id="Heatmap",filter=input$parentPicker)
       visNetwork_Server(id="visNetwork",filter=input$parentPicker)
       Umap_Server(id="Umap",filter=input$parentPicker)}) %>% 
-      bindEvent(input$parentPicker,input$tabBox_id)
+      bindEvent(input$parentPicker)
     
 # Run Marker Expression Tab ----
     observe({
@@ -224,7 +258,6 @@ source("modules/ui.R")
     observe({
       Differential_Abundance_Server(id="Differential_Abundance")}) %>% 
       bindEvent(input$btnLoadAnnoData)
-
   
 # Run DA_interactive Tab ----
     observe({
