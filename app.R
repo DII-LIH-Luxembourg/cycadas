@@ -95,7 +95,7 @@ source("modules/ui.R")
     observe({
       # browser()
       TreeAnnotation_picker_Server(id="TreeAnnotation_picker")}) %>%
-      bindEvent(c(input$btnLoadAnnoData,input$createNodeBtn))   
+      bindEvent(c(input$btnLoadDemoData,input$btnLoadAnnoData,input$createNodeBtn))   
     
 # Update Parent picker based on annotation list once Annotated demo is pressed ----
     
@@ -124,12 +124,12 @@ source("modules/ui.R")
 # Run Marker Expression Tab ----
     observe({
       UMAP_ME_Server(id="UMAP_ME")}) %>% 
-      bindEvent(input$btnLoadAnnoData)
+      bindEvent(input$btnLoadDemoData,input$btnLoadAnnoData)
     
 # Run Differential Abundance Tab ----
     observe({
       Differential_Abundance_Server(id="Differential_Abundance")}) %>% 
-      bindEvent(input$btnLoadAnnoData)
+      bindEvent(input$btnLoadDemoData,input$btnLoadAnnoData)
   
 # Run DA_interactive Tab ----
     observe({
@@ -139,7 +139,7 @@ source("modules/ui.R")
                 Shiny.onInputChange('current_node_id', nodes.nodes);
                 ;}")
       })}) %>% 
-      bindEvent(input$btnLoadAnnoData)
+      bindEvent(input$btnLoadDemoData,input$btnLoadAnnoData)
     
     observe({
       print(input$current_node_id)
@@ -149,7 +149,7 @@ source("modules/ui.R")
 # Run umap interactive Tab ----
   observe({
     umap_interactive_Server(id="umap_interactive")}) %>% 
-    bindEvent(input$btnLoadAnnoData)
+    bindEvent(input$btnLoadDemoData,input$btnLoadAnnoData)
   }
   
   
