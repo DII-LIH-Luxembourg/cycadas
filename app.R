@@ -51,6 +51,7 @@ source("modules/ui.R")
                                             annotationlist = NULL)
 
 # Load data based on pressing the unannotated data button
+    #TODO:remove the reactVals and check it runs still
     observe({Settings_Server1(id="Settings",reactVals=reactVals)}) %>% 
       bindEvent(input$btnLoadDemoData)
 
