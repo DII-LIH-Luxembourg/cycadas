@@ -73,6 +73,7 @@ source("modules/ui.R")
 # Create nodes ----
     
     observe({
+      req(!is.null(session$userData$vars$median_expr))
       print("Create Nodes")
       TreeAnnotation_createNode_Server(id="TreeAnnotation_createNode",parent = input$parentPicker,newNodeName=input$newNode)
       updateSelectizeInput(session, ("parentPicker"),selected = NULL, choices =      session$userData$vars$annotationlist, server = TRUE)}) %>% 

@@ -11,7 +11,7 @@ Heatmap_Server <- function(id,filter) {
       print("run heatmaps plot")
       output$hm_tree <- renderPlot({
         heatmap_matrix <- session$userData$vars$hm %>%
-          # filter(cell == filter) %>%
+          filter(cell == filter) %>%
           select(-c("cell"))
         if(nrow(heatmap_matrix) > 0 & ncol(heatmap_matrix) > 0 ){
           pheatmap(heatmap_matrix,cluster_cols = F,cluster_rows = T)
