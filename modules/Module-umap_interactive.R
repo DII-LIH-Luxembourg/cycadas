@@ -1,7 +1,7 @@
 umap_interactive_UI <- function(id) {
   ns <- NS(id)
-  c(
-  fluidRow(column(width = 6,
+  column(width = 12,
+         fluidRow(column(width = 6,
                   box(
                     width = NULL,
                     plotOutput(ns("umap2"), brush = ns("umap2_brush"))
@@ -11,7 +11,7 @@ umap_interactive_UI <- function(id) {
                     width = NULL,
                     plotOutput(ns("hm2"))
                   ))),
-  fluidRow(column(width = 12,
+         fluidRow(column(width = 12,
                   box(
                     width = NULL,
                     DTOutput(ns("umap_data"))

@@ -69,20 +69,20 @@ Umap_Server <- function(id,reactVals,filter) {
       #
       session$userData$vars$hm <- tmp
 
-      updateCheckboxGroupButtons(
-        session,
-        inputId = "treePickerPos",
-        choices = colnames(df01),
-        selected = NULL,
-        disabledChoices = filterPosMarkers
-      )
-      updateCheckboxGroupButtons(
-        session,
-        inputId = "treePickerNeg",
-        choices = colnames(df01),
-        selected = NULL,
-        disabledChoices = filterNegMarkers
-      )
+      # updateCheckboxGroupButtons(
+      #   session,
+      #   inputId = "treePickerPos",
+      #   choices = colnames(df01),
+      #   selected = NULL,
+      #   disabledChoices = filterPosMarkers
+      # )
+      # updateCheckboxGroupButtons(
+      #   session,
+      #   inputId = "treePickerNeg",
+      #   choices = colnames(df01),
+      #   selected = NULL,
+      #   disabledChoices = filterNegMarkers
+      # )
       
       # update umap plot for Tree ----
       
@@ -95,7 +95,7 @@ Umap_Server <- function(id,reactVals,filter) {
         
       }
       
-      ClusterSelection <<- filterColor(df_global,tmp)
+      ClusterSelection <<- filterColor(session$userData$vars$median_expr,tmp)
 
             output$umap_tree <-
         renderPlot(

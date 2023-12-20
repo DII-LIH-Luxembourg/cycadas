@@ -30,124 +30,31 @@ source("modules/Module-Differential_Abundance.R")
 source("modules/Module-DA_intreractive.R")
 source("modules/Module-umap_interactive.R")
 source("modules/ui.R")
+
 # cycadas <- function() {
-
-  # browser()
-
-
-
-  # constructs a string of positive or negative markers
-  ph_name <<- ""
 
   # Server function ----
   server = function(input, output, session) {
     
-    session$userData$vars <- reactiveValues(th = NULL)
-    session$userData$vars <- reactiveValues(myTH = NULL)
-    session$userData$vars <- reactiveValues(md = NULL)
-    session$userData$vars <- reactiveValues(counts_table = NULL)
-    session$userData$vars <- reactiveValues(DA_result_table = NULL)
-    session$userData$vars <- reactiveValues(DA_interactive_table = NULL)
-    session$userData$vars <- reactiveValues(graph = NULL)
-    session$userData$vars <- reactiveValues(hm = NULL)
-    session$userData$vars <- reactiveValues(merged_prop_table = NULL)
-    session$userData$vars <- reactiveValues(treePickerPos = NULL)
-    session$userData$vars <- reactiveValues(treePickerNeg = NULL)
-    session$userData$vars <- reactiveValues(annotationlist = NULL)
+    session$userData$vars <- reactiveValues(median_expr = NULL,
+                                            th = NULL,
+                                            myTH = NULL,
+                                            md = NULL,
+                                            counts_table = NULL,
+                                            DA_result_table = NULL,
+                                            DA_interactive_table = NULL,
+                                            graph = NULL,
+                                            hm = NULL,
+                                            merged_prop_table = NULL,
+                                            treePickerPos = NULL,
+                                            treePickerNeg = NULL,
+                                            annotationlist = NULL)
 
-    
-    ###############################################################################################################
-    ###############################################################################################################
-    ###############################################################################################################
-    ###############################################################################################################
-    ###############################################################################################################
-    
-        
-
-
-   
-    # ## create Phenotype name from picker e.g. CD4+CD8+CD19 --------------------
-    # observeEvent(input$myPickerPos, {
-    #   output$r1 <- renderText(setPhenotypeName(input$myPickerPos, "pos", ph_name))
-    # })
-    # observeEvent(input$myPickerNeg, {
-    #   output$r2 <- renderText(setPhenotypeName(input$myPickerNeg, "neg", ph_name))
-    # })
-
-    # ## Annotation Table -------------------------------------------------------
-    # observeEvent(c(input$myPickerPos, input$myPickerNeg, session$userData$vars$th),{
-    #   req(input$fMarkerExpr)
-    #   req(input$cluster_freq)
-    # 
-    #   
-    #   
-    #   # update heatmap plot ----
-    #   output$hm <- renderPlot({
-    #     if (dim(tmp)[1] < 2) {
-    #       pheatmap(tmp, cluster_cols = F, cluster_rows = F)
-    #     } else {
-    #       message(dim(tmp)[1])
-    #       pheatmap(tmp, cluster_cols = F)
-    #     }
-    #   })
-    # 
-    #   # update umap plot ----
-    #   myColor <- filterColor(df_global,tmp)
-    #   Temp1<<-myColor
-    #   Temp2<<-dr_umap
-    # 
-    #   output$umap <-
-    #     renderPlot(
-    #       ggplot(dr_umap, aes(
-    #         x = u1, y = u2, color = myColor
-    #       )) +
-    #         geom_point(size = 1.0) +
-    #         theme_bw() +
-    #         theme(legend.text = element_text(size =
-    #                                            8)) +
-    #         guides(color = guide_legend(override.aes = list(size = 4)))
-    #     )
-    #   # update table ----
-    #   output$tableAnnotation <- DT::renderDT(
-    #     at$data,
-    #     extensions = c('Buttons', 'Scroller'),
-    #     options = list(
-    #       dom = 'Bfrtip',
-    #       buttons = c('csv'),
-    #       paging = FALSE
-    #     )
-    #   )
-    # 
-    # 
-    # })
-
-    # # Set Phenotype names -----------------------------------------------------
-    # observeEvent(input$btnSetType, {
-    # 
-    #   # if cluster has already been assigned, add the new name after
-    #   for (n in rownames(myDF)) {
-    #     if (at$data[n, "cell"] == "unassigned") {
-    #       at$data[n, "cell"] <- input$phenotype
-    #     } else(
-    #       at$data[n, "cell"] <- paste0(at$data[n, "cell"], "_", input$phenotype)
-    #     )
-    # 
-    #   }
-    # })
-
-    ###############################################################################################################
-    ###############################################################################################################
-    ###############################################################################################################
-    ###############################################################################################################
-    ###############################################################################################################
-
-    
-    
 # Load data based on pressing the unannotated data button
     observe({Settings_Server1(id="Settings",reactVals=reactVals)}) %>% 
       bindEvent(input$btnLoadDemoData)
 
-# Load data based on pressing the annotated data button ----
+# Load annotated dataset ----
     
     observe({Settings_Server2(id="Settings",reactVals=reactVals)}) %>% 
       bindEvent(input$btnLoadAnnoData)
@@ -155,21 +62,14 @@ source("modules/ui.R")
 # Load data based on pressing the Import Tree button  ----
     
     observeEvent(input$btnImportTree, {Settings_Server3(id="Settings")})
-    
-# Lead threshold Tab    ----
+
+# Load threshold Tab    ----
     
     observe({
       req(!is.null(session$userData$vars$th))
       threshold_Server(id="threshold")})
     
-# # Run the Tree Annotation Tab based on pressing the Annotated demo button  ----
-#     observe({
-#       # req(exists("cellfreq"))
-#       # req(exists("df01"))
-#       TreeAnnotation_Server(id="TreeAnnotation",df01 = df01)}) %>%
-#       bindEvent(c(input$btnLoadAnnoData))
 
-    
 # Create nodes ----
     
     observe({

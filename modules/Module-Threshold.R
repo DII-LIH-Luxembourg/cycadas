@@ -74,9 +74,7 @@ threshold_Server <- function(id,reactVals) {
         
         req(input$table_rows_selected)
         req(session$userData$vars$th)
-        
-        TEST <<- input$plot_click
-        
+
         if(!is.null(input$plot_click)){
           print("Threshold click")
           session$userData$vars$th[input$table_rows_selected, "threshold"] <- round(input$plot_click$x, 3)}

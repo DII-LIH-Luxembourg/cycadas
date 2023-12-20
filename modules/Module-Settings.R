@@ -166,23 +166,6 @@ at <<- reactiveValues(data = annotaionDF, dr_umap = dr_umap)
 
 session$userData$vars$th <- kmeansTH(df01)
 
-# Load the marker threshold file ---------------------------------------
-observeEvent(input$fTH,{
-  
-  # browser()
-  
-  th <<- read.csv(input$fTH$datapath)
-  th$X <- NULL
-  th$color <- "blue"
-  
-  th[th$bi_mod < 0.555, "color"] <- "red"
-  
-  rownames(th) <- th$cell
-  
-  session$userData$vars$th<- th
-  
-})
-
 })}
 Settings_Server2 <- function(id,reactVals) {
   moduleServer(
@@ -204,7 +187,9 @@ Settings_Server2 <- function(id,reactVals) {
         # browser()
         
         ## Load median expression and cell frequencies
-        df <- read.csv("data/demo_data/median_expr_1600.csv")
+        session$userData$vars$median_expr <- read.csv("data/demo_data/median_expr_1600.csv")
+        df <- session$userData$vars$median_expr
+        
         # !----------- TEST bimodal check !-----------------
         #
         df$testCol <- rnorm(nrow(df), 5.0, 1.0)
@@ -239,14 +224,14 @@ Settings_Server2 <- function(id,reactVals) {
         progress$set(message = "loading Data Annotation Demo Data...", value = 0.4)
         
         df01 <<- df %>% normalize01()
-        myDF <<- df %>% normalize01()
+        myDF <- df %>% normalize01()
         
-        df01Tree <<- df %>% normalize01()
-        allMarkers <<- colnames(df)
-        df01Tree$cell <<- "Unassigned"
+        df01Tree <- df %>% normalize01()
+        allMarkers <- colnames(df)
+        df01Tree$cell <- "Unassigned"
         
-        selectedMarkers <<- colnames(df)
-        posPickerList <<- colnames(df)
+        selectedMarkers <- colnames(df)
+        posPickerList <- colnames(df)
         
         progress$set(message = "loading Data Annotation Demo Data...", value = 0.6)
         ## load only at start to fill the picker list
@@ -259,7 +244,7 @@ Settings_Server2 <- function(id,reactVals) {
         updateCheckboxGroupButtons(session,inputId = "treePickerNeg",choices = colnames(df01),selected = NULL)
         
         annotaionDF <<- data.frame("cell" = "unassigned",clusterSize = cell_freq$clustering_prop)
-        at <<- reactiveValues(data = annotaionDF, dr_umap = dr_umap)
+        at <- reactiveValues(data = annotaionDF, dr_umap = dr_umap)
         
         
         # session$userData$vars$th <- kmeansTH(df01)
@@ -276,12 +261,12 @@ Settings_Server2 <- function(id,reactVals) {
         session$userData$vars$th<- th
         
         ## Load metadata
-        md <<- read.csv("data/demo_data/metadata.csv")
+        md <- read.csv("data/demo_data/metadata.csv")
         md$X <- NULL
         session$userData$vars$md<- md
         
         ## Load counts table
-        ct <<- read.csv("data/demo_data/cluster_counts_1600.csv")
+        ct <- read.csv("data/demo_data/cluster_counts_1600.csv")
         ct$X <- NULL
         session$userData$vars$counts_table <- ct
         
@@ -342,5 +327,22 @@ Settings_Server3 <- function(id) {
         df01Tree <<- df_anno
         
         session$userData$vars$annotationlist <- as.list(df_nodes$label)
-        
+       
+        # Load the marker threshold file ---------------------------------------
+        observeEvent(input$fTH,{
+          
+          # browser()
+          
+          th <<- read.csv(input$fTH$datapath)
+          th$X <- NULL
+          th$color <- "blue"
+          
+          th[th$bi_mod < 0.555, "color"] <- "red"
+          
+          rownames(th) <- th$cell
+          
+          session$userData$vars$th<- th
+          
+        })
+         
     })}

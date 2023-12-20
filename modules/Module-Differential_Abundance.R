@@ -71,9 +71,9 @@ Differential_Abundance_Server <- function(id) {
       props_table <- t(t(countsTable) / colSums(countsTable)) * 100
 
       # mm <- match(md$sample_id, colnames(props_table))
-      mm <- match(colnames(props_table), md$sample_id)
+      mm <- match(colnames(props_table), session$userData$vars$md$sample_id)
 
-      tmp_cond <- md$condition[mm]
+      tmp_cond <- session$userData$vars$md$condition[mm]
 
       DA_df <- data.frame()
       for (i in 1:nrow(props_table)) {

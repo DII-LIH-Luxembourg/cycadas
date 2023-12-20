@@ -61,9 +61,9 @@ DA_interactive_Server <- function(id,current_node_id) {
         props_table <- t(as.data.frame(colSums(props_table)))
         
         # mm <- match(md$sample_id, colnames(props_table))
-        mm <- match(colnames(props_table), md$sample_id)
+        mm <- match(colnames(props_table), session$userData$vars$md$sample_id)
         
-        tmp_cond <- md$condition[mm]
+        tmp_cond <- session$userData$vars$md$condition[mm]
         
         DA_df <- data.frame()
         
@@ -122,9 +122,9 @@ DA_interactive_Server <- function(id,current_node_id) {
 
 
         # mm <- match(md$sample_id, rownames(props_table))
-        mm <- match(rownames(props_table), md$sample_id)
+        mm <- match(rownames(props_table), session$userData$vars$md$sample_id)
 
-        props_table$cond <- md$condition[mm]
+        props_table$cond <- session$userData$vars$md$condition[mm]
 
         names(props_table) <- c("value", "cond")
 
