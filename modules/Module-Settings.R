@@ -166,6 +166,22 @@ at <<- reactiveValues(data = annotaionDF, dr_umap = dr_umap)
 
 session$userData$vars$th <- kmeansTH(df01)
 
+# Load the marker threshold file ---------------------------------------
+observeEvent(input$fTH,{
+  
+  # browser()
+  
+  th <<- read.csv(input$fTH$datapath)
+  th$X <- NULL
+  th$color <- "blue"
+  
+  th[th$bi_mod < 0.555, "color"] <- "red"
+  
+  rownames(th) <- th$cell
+  
+  session$userData$vars$th<- th
+  
+})
 
 })}
 Settings_Server2 <- function(id,reactVals) {

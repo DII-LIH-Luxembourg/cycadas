@@ -42,32 +42,32 @@ DeleteNode_Server <- function(id,reactVals,filter) {
           
         }
         
-        annotationlist[annotationlist == node$label] <<- NULL
+        session$userData$vars$annotationlist[session$userData$vars$annotationlist == node$label] <- NULL
         
-        updatePickerInput(
-          session,
-          inputId = "parentPicker",
-          selected = NULL,
-          choices = annotationlist
-        )
-        updatePickerInput(
-          session,
-          inputId = "updateNodePicker",
-          selected = NULL,
-          choices = annotationlist
-        )
-        updateTextInput(
-          session,
-          inputId = "renameNode",
-          label = NULL,
-          value = ""
-        )
-        updateTextInput(
-          session,
-          inputId = "newNode",
-          label = NULL,
-          value = ""
-        )
+        # updatePickerInput(
+        #   session,
+        #   inputId = "parentPicker",
+        #   selected = NULL,
+        #   choices = annotationlist
+        # )
+        # updatePickerInput(
+        #   session,
+        #   inputId = "updateNodePicker",
+        #   selected = NULL,
+        #   choices = annotationlist
+        # )
+        # updateTextInput(
+        #   session,
+        #   inputId = "renameNode",
+        #   label = NULL,
+        #   value = ""
+        # )
+        # updateTextInput(
+        #   session,
+        #   inputId = "newNode",
+        #   label = NULL,
+        #   value = ""
+        # )
         
         session$userData$vars$graph <- delete_leaf_node(session$userData$vars$graph, node$id)
         # plotTree()

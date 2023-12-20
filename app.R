@@ -17,7 +17,7 @@ for (package in packages_to_install) {
 source("modules/utils.R")
 source("modules/Module-Settings.R")
 source("modules/Module-Threshold.R")
-# source("modules/Module-TreeAnnotation.R")
+source("modules/Module-TreeAnnotation_valuebox.R")
 source("modules/Module-TreeAnnotation_picker.R")
 source("modules/Module-TreeAnnotation_createNode.R")
 source("modules/Module-TreeAnnotation_annotationdownload.R")
@@ -63,105 +63,77 @@ source("modules/ui.R")
     ###############################################################################################################
     
         
-    # Load the marker threshold file ---------------------------------------
-    observeEvent(input$fTH,{
 
-      # browser()
-
-      th <<- read.csv(input$fTH$datapath)
-      th$X <- NULL
-      th$color <- "blue"
-
-      th[th$bi_mod < 0.555, "color"] <- "red"
-
-      rownames(th) <- th$cell
-
-      session$userData$vars$th<- th
-
-    })
 
    
-    ## create Phenotype name from picker e.g. CD4+CD8+CD19 --------------------
-    observeEvent(input$myPickerPos, {
-      output$r1 <- renderText(setPhenotypeName(input$myPickerPos, "pos", ph_name))
-    })
-    observeEvent(input$myPickerNeg, {
-      output$r2 <- renderText(setPhenotypeName(input$myPickerNeg, "neg", ph_name))
-    })
+    # ## create Phenotype name from picker e.g. CD4+CD8+CD19 --------------------
+    # observeEvent(input$myPickerPos, {
+    #   output$r1 <- renderText(setPhenotypeName(input$myPickerPos, "pos", ph_name))
+    # })
+    # observeEvent(input$myPickerNeg, {
+    #   output$r2 <- renderText(setPhenotypeName(input$myPickerNeg, "neg", ph_name))
+    # })
 
-    ## Annotation Table -------------------------------------------------------
-    observeEvent(c(input$myPickerPos, input$myPickerNeg, session$userData$vars$th),{
-      req(input$fMarkerExpr)
-      req(input$cluster_freq)
+    # ## Annotation Table -------------------------------------------------------
+    # observeEvent(c(input$myPickerPos, input$myPickerNeg, session$userData$vars$th),{
+    #   req(input$fMarkerExpr)
+    #   req(input$cluster_freq)
+    # 
+    #   
+    #   
+    #   # update heatmap plot ----
+    #   output$hm <- renderPlot({
+    #     if (dim(tmp)[1] < 2) {
+    #       pheatmap(tmp, cluster_cols = F, cluster_rows = F)
+    #     } else {
+    #       message(dim(tmp)[1])
+    #       pheatmap(tmp, cluster_cols = F)
+    #     }
+    #   })
+    # 
+    #   # update umap plot ----
+    #   myColor <- filterColor(df_global,tmp)
+    #   Temp1<<-myColor
+    #   Temp2<<-dr_umap
+    # 
+    #   output$umap <-
+    #     renderPlot(
+    #       ggplot(dr_umap, aes(
+    #         x = u1, y = u2, color = myColor
+    #       )) +
+    #         geom_point(size = 1.0) +
+    #         theme_bw() +
+    #         theme(legend.text = element_text(size =
+    #                                            8)) +
+    #         guides(color = guide_legend(override.aes = list(size = 4)))
+    #     )
+    #   # update table ----
+    #   output$tableAnnotation <- DT::renderDT(
+    #     at$data,
+    #     extensions = c('Buttons', 'Scroller'),
+    #     options = list(
+    #       dom = 'Bfrtip',
+    #       buttons = c('csv'),
+    #       paging = FALSE
+    #     )
+    #   )
+    # 
+    # 
+    # })
 
-      tmp=filterHM(df01,input$myPickerPos, input$myPickerNeg, session$userData$vars$th)
-
-      # update myDF to the filtered HM
-      myDF <<- tmp
-
-      mydf=annotaionDF[rownames(tmp),]
-      rownames(mydf)=rownames(tmp)
-
-      # update heatmap plot ----
-      output$hm <- renderPlot({
-        if (dim(tmp)[1] < 2) {
-          pheatmap(tmp, cluster_cols = F, cluster_rows = F)
-        } else {
-          message(dim(tmp)[1])
-          pheatmap(tmp, cluster_cols = F)
-        }
-      })
-
-      # update umap plot ----
-      myColor <- filterColor(df_global,tmp)
-      Temp1<<-myColor
-      Temp2<<-dr_umap
-
-      output$umap <-
-        renderPlot(
-          ggplot(dr_umap, aes(
-            x = u1, y = u2, color = myColor
-          )) +
-            geom_point(size = 1.0) +
-            theme_bw() +
-            theme(legend.text = element_text(size =
-                                               8)) +
-            guides(color = guide_legend(override.aes = list(size = 4)))
-        )
-      # update table ----
-      output$tableAnnotation <- DT::renderDT(
-        at$data,
-        extensions = c('Buttons', 'Scroller'),
-        options = list(
-          dom = 'Bfrtip',
-          buttons = c('csv'),
-          paging = FALSE
-        )
-      )
-
-      # update valueboxes ----
-      mysum <- sum(mydf$clusterSize)
-      output$progressBox <- renderValueBox({
-        valueBox(paste0(mysum, "%"), "Selected", icon = icon("list"),color = "purple")
-      })
-      output$progressBox2 <- renderValueBox({
-        valueBox(dim(mydf)[1], "Cluster", icon = icon("list"),color = "purple")
-      })
-    })
-
-    # Set Phenotype names -----------------------------------------------------
-    observeEvent(input$btnSetType, {
-
-      # if cluster has already been assigned, add the new name after
-      for (n in rownames(myDF)) {
-        if (at$data[n, "cell"] == "unassigned") {
-          at$data[n, "cell"] <- input$phenotype
-        } else(
-          at$data[n, "cell"] <- paste0(at$data[n, "cell"], "_", input$phenotype)
-        )
-
-      }
-    })
+    # # Set Phenotype names -----------------------------------------------------
+    # observeEvent(input$btnSetType, {
+    # 
+    #   # if cluster has already been assigned, add the new name after
+    #   for (n in rownames(myDF)) {
+    #     if (at$data[n, "cell"] == "unassigned") {
+    #       at$data[n, "cell"] <- input$phenotype
+    #     } else(
+    #       at$data[n, "cell"] <- paste0(at$data[n, "cell"], "_", input$phenotype)
+    #     )
+    # 
+    #   }
+    # })
 
     ###############################################################################################################
     ###############################################################################################################
@@ -228,7 +200,6 @@ source("modules/ui.R")
 # Update Parent picker based on annotation list once Annotated demo is pressed ----
     
     observe({
-      req(!is.null("annotationlist"))
       print("update Parent Picker")
       updateSelectizeInput(session, ("parentPicker"), choices = session$userData$vars$annotationlist, server = TRUE)
       })  %>%
@@ -244,6 +215,7 @@ source("modules/ui.R")
 # Update Tree annotation visuals based on parent picker ----
     observe({
       req(!is.null(session$userData$vars$hm))
+      TreeAnnotation_valuebox_Server(id="TreeAnnotation_valuebox")
       Heatmap_Server(id="Heatmap",filter=input$parentPicker)
       visNetwork_Server(id="visNetwork",filter=input$parentPicker)
       Umap_Server(id="Umap",filter=input$parentPicker)}) %>% 
