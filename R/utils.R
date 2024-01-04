@@ -198,6 +198,23 @@ all_my_children <- function(graph_data, node_id) {
 
 }
 
+
+# Build UMAP and return as DF ----
+buildUMAP <- function(df_expr) {
+  
+  my_umap <- umap(df_expr)
+  
+  df_umap <- data.frame(
+    u1 = my_umap$layout[, 1],
+    u2 = my_umap$layout[, 2],
+    my_umap$data,
+    cluster_number = 1:length(my_umap$layout[, 1]),
+    check.names = FALSE
+  )
+  
+  return(df_umap)
+}
+
 # define recursive function to delete a node and all its children
 delete_leaf_node <- function(graph_data, node_id) {
   # find the children nodes
