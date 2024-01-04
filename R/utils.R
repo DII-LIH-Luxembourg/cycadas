@@ -226,6 +226,63 @@ delete_leaf_node <- function(graph_data, node_id) {
 
 }
 
+# Rebuild Tree ----
+# rebuilt the annotation tree if threshold values are changed, or
+# if a tree is loaded
+rebuiltTree <- function(se) {
+  
+  # browser()
+  
+  # my_df <-  se$userData$vars$df_expr[, lineage_marker_01]
+  
+  se$userData$vars$df_expr$cell <- "Unassigned"
+  
+  # for all rows in annotation table
+  # get all parents for a row:
+  if (nrow(se$userData$vars$graph$nodes) > 1) {
+    se$userData$vars$graph$nodes$to <- se$userData$vars$graph$edges$to
+    
+    # Iterate through the dataframe row by row
+    for (i in 1:nrow(se$userData$vars$graph$nodes)) {
+      
+      posMarker <- list()
+      negMarker <- list()
+      
+      nodeID <- se$userData$vars$graph$nodes$id[i]
+      parentID <- se$userData$vars$graph$nodes$to[i]
+      
+      # now for that nodeID, get all parents and collect
+      # the pm and nm markers
+      posMarker <- c(posMarker, unlist(se$userData$vars$graph$nodes$pm[se$userData$vars$graph$nodes$id == nodeID]))
+      negMarker <- c(negMarker, unlist(se$userData$vars$graph$nodes$nm[se$userData$vars$graph$nodes$id == nodeID]))
+      
+      # now we have all positive and negative marker for that type collected
+      # and we can start filtering the df
+      # remove the empty strings in the markers
+      posMarker <- posMarker[nzchar(posMarker)]
+      negMarker <- negMarker[nzchar(negMarker)]
+      
+      # receive the parent settings, resp. parent hm
+      # filter hm by parent cell name
+      parent_label <- se$userData$vars$graph$nodes$label[se$userData$vars$graph$nodes$id == parentID]
+      
+      tmp_parent <- se$userData$vars$df_expr[se$userData$vars$df_expr$cell == parent_label, ]
+      
+      # browser()
+      tmp <- filterHM(tmp_parent[, lineage_marker],unique(unlist(posMarker)), unique(unlist(negMarker)), se$userData$vars$th)
+      
+      se$userData$vars$df_expr[rownames(tmp), 'cell'] <- se$userData$vars$graph$node$label[i]
+      # updateClusterLabels(tmp)
+      
+      se$userData$vars$annotationlist <- unique(se$userData$vars$df_expr$cell)
+      # for debug:
+      x<-1
+    }
+  }
+  
+}
+
+
 # Function for the creation of the oveerall expression DF
 createExpressionDF <- function(df_expr, cell_freq) {
   
