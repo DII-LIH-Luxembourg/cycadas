@@ -226,6 +226,22 @@ delete_leaf_node <- function(graph_data, node_id) {
 
 }
 
+# Function for the creation of the oveerall expression DF
+createExpressionDF <- function(df_expr, cell_freq) {
+  
+  df01_expr <- df_expr %>% normalize01()
+  colnames(df01_expr) <- lineage_marker
+  colnames(df_expr) <- lineage_marker_raw
+  
+  df_expr <- cbind(df_expr, df01_expr)
+  
+  ## Add frequencies and annotation
+  df_expr$freq <- cell_freq$clustering_prop
+  df_expr$cell <- "Unassigned"
+  
+  return(df_expr)
+}
+
 
 
 # deleteChildNodes <- function(graph, node) {
