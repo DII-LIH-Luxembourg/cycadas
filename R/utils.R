@@ -194,8 +194,22 @@ all_my_children <- function(graph_data, node_id) {
     return (c())
   }
 
+}
 
-
+initTree <- function() {
+  
+  # create initial master node of all Unassigned clusters
+  nodes <- tibble(id = 1,
+                  label = "Unassigned",
+                  pm = list(""),
+                  nm = list(""),
+                  color = "blue"
+  )
+  
+  edges <- data.frame(from = c(1), to = c(1))
+  
+  return (list(nodes = nodes, edges = edges))
+  
 }
 
 
