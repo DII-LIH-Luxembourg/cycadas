@@ -32,6 +32,7 @@ cycadas <- function() {
   # Global static values
   lineage_marker <<- character(0)
   df_expr <<- NULL
+  dr_umap <<- NULL
 
   # Server function -----------------------------------------------------------
   server = function(input, output, session) {
@@ -218,6 +219,8 @@ cycadas <- function() {
 
     # Create new node ---------------------------------------------------------
     observeEvent(input$createNodeBtn, {
+      
+      # browser()
 
       if (is.null(input$treePickerPos) & is.null(input$treePickerNeg)) {
         print("no selection")
@@ -1224,116 +1227,14 @@ cycadas <- function() {
 
 
     })
-
-    # children <- graph$edges$from[graph$edges$to == myNode$selected]
-
-    # Upload expression Demo Data ---------------------------------------------
-    observeEvent(input$btnLoadDemoData, {
-
-      # browser()
-      # Create a Progress object
-      progress <- shiny::Progress$new()
-      # Make sure it closes when we exit this reactive, even if there's an error
-      on.exit(progress$close())
-
-      progress$set(message = "loading Data...", value = 0)
-
-      # browser()
-
-      ## Load median expression and cell frequencies
-      df <- read.csv("data/demo_data/median_expr_1600.csv")
-      df_global <<- df
-
-      reactVals$graph <- initTree()
-
-      annotationlist <<- list("Unassigned")
-
-      cell_freq <<- read.csv("data/demo_data/cluster_freq_1600.csv")
-
-      labels_row <-
-        paste0(rownames(df), " (", cell_freq$clustering_prop , "%)")
-
-      marker_names <- rownames(df)
-
-      set.seed(1234)
-
-      my_umap <- umap(df)
-      dr_umap <<- data.frame(
-        u1 = my_umap$layout[, 1],
-        u2 = my_umap$layout[, 2],
-        my_umap$data,
-        cluster_number = 1:length(my_umap$layout[, 1]),
-        check.names = FALSE
-      )
-
-      df01 <<- df %>% normalize01()
-      myDF <<- df %>% normalize01()
-
-      df01Tree <<- df %>% normalize01()
-      allMarkers <<- colnames(df)
-      df01Tree$cell <<- "Unassigned"
-
-      selectedMarkers <<- colnames(df)
-      posPickerList <<- colnames(df)
-
-      ## load only at start to fill the picker list
-      # updatePickerInput(
-      #   session,
-      #   inputId = "myPickerPos",
-      #   label = "Select Positive Markers",
-      #   choices = colnames(df01),
-      #   # choices = NULL,
-      #   options = list(
-      #     `actions-box` = TRUE,
-      #     size = 10,
-      #     `selected-text-format` = "count > 3"
-      #   )
-      # )
-      # updatePickerInput(
-      #   session,
-      #   inputId = "myPickerNeg",
-      #   label = "Select Negative Markers",
-      #   choices = colnames(df01),
-      #   options = list(
-      #     `actions-box` = TRUE,
-      #     size = 10,
-      #     `selected-text-format` = "count > 3"
-      #   )
-      # )
-      
-      updateSelectInput(session, "markerSelect", "Select:", colnames(df01))
-
-      updateCheckboxGroupButtons(
-        session,
-        inputId = "treePickerPos",
-        choices = colnames(df01),
-        selected = NULL
-      )
-      updateCheckboxGroupButtons(
-        session,
-        inputId = "treePickerNeg",
-        choices = colnames(df01),
-        selected = NULL
-      )
-
-      annotaionDF <<- data.frame("cell" = "unassigned",
-                                 clusterSize = cell_freq$clustering_prop)
-      at <<- reactiveValues(data = annotaionDF, dr_umap = dr_umap)
-
-      reactVals$th <- kmeansTH(df01)
-
-    })
     
-    # Upload Annotated Expr Demo Data -----------------------------------------
-    observeEvent(input$btnLoadAnnoData, {
+    loadDemoData <- function(path_expr, path_freq) {
       
-      # browser()
-
       # Create a Progress object
       progress <- shiny::Progress$new()
       # Make sure it closes when we exit this reactive, even if there's an error
       on.exit(progress$close())
-
+      
       progress$set(message = "loading Data...", value = 0)
       
       ## Load median expression and cell frequencies
@@ -1348,13 +1249,56 @@ cycadas <- function() {
       reactVals$graph <- initTree()
       
       progress$set(message = "loading Data Cluster Expression Demo Data...", value = 0.2)
-
+      
       reactVals$graph <- initTree()
-
+      
       set.seed(1234)
       progress$set(message = "Building the UMAP...", value = 0.3)
       dr_umap <<- buildUMAP(df_expr[, lineage_marker_raw]) 
+      
+    }
 
+    # Upload expression Demo Data ---------------------------------------------
+    observeEvent(input$btnLoadDemoData, {
+
+      pathExpr <- "data/demo_data/median_expr_1600.csv"
+      pathFreq <- "data/demo_data/cluster_freq_1600.csv"
+      
+      loadDemoData(pathExpr, pathFreq)
+      
+      
+      updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
+
+      updateCheckboxGroupButtons(
+        session,
+        inputId = "treePickerPos",
+        choices = lineage_marker,
+        selected = NULL
+      )
+      updateCheckboxGroupButtons(
+        session,
+        inputId = "treePickerNeg",
+        choices = lineage_marker,
+        selected = NULL
+      )
+      
+      posPickerList <<- lineage_marker
+      
+      updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
+
+      reactVals$th <- kmeansTH(df_expr[, lineage_marker])
+      reactVals$annotationlist <- c("Unassigned")
+
+    })
+    
+    # Upload Annotated Expr Demo Data -----------------------------------------
+    observeEvent(input$btnLoadAnnoData, {
+      
+      
+      pathExpr <- "data/demo_data/median_expr_1600.csv"
+      pathFreq <- "data/demo_data/cluster_freq_1600.csv"
+      
+      loadDemoData(pathExpr, pathFreq)
       posPickerList <<- lineage_marker
 
       updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
@@ -1396,7 +1340,6 @@ cycadas <- function() {
       ## Load annotaiton Tree
       df_nodes <- read.csv("data/demo_data/nodesTable_data.csv")
       df_edges <- read.csv("data/demo_data/edgesTable_data.csv")
-      # df_anno <- read.csv("data/demo_data/annTable_data.csv")
 
       df_nodes$pm[is.na(df_nodes$pm)] <- ""
       df_nodes$pm <- strsplit(df_nodes$pm, "\\|")
@@ -1407,7 +1350,6 @@ cycadas <- function() {
       reactVals$graph$nodes <- df_nodes
       reactVals$graph$edges <- df_edges
       
-      # browser()
       df_expr$cell <<- rebuiltTree(reactVals$graph, df_expr, reactVals$th)
       reactVals$annotationlist <- df_nodes$label
 
