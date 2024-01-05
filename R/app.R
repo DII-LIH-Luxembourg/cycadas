@@ -37,6 +37,63 @@ cycadas <- function() {
   # Server function -------------------------
   server = function(input, output, session) {
     
+    # Load Expression Data and UMAP -------------------------------------------------
+    loadExprData <- function(path_expr, path_freq) {
+      
+      # Create a Progress object
+      progress <- shiny::Progress$new()
+      # Make sure it closes when we exit this reactive, even if there's an error
+      on.exit(progress$close())
+      
+      progress$set(message = "loading Data...", value = 0)
+      
+      ## Load median expression and cell frequencies
+      ## add the 0-1 scaled columns to the DF
+      df_expr <<- read.csv(path_expr)
+      cell_freq <<- read.csv(path_freq)
+      
+      lineage_marker <<- colnames(df_expr)
+      lineage_marker_raw <<- paste0(lineage_marker, "_raw")
+      
+      df_expr <<- createExpressionDF(df_expr, cell_freq)
+      reactVals$graph <- initTree()
+      
+      progress$set(message = "loading Data Cluster Expression Demo Data...", value = 0.2)
+      
+      reactVals$graph <- initTree()
+      
+      set.seed(1234)
+      progress$set(message = "Building the UMAP...", value = 0.3)
+      dr_umap <<- buildUMAP(df_expr[, lineage_marker_raw]) 
+      
+    }
+    
+    # Init the checkboxes and generate the Thresholds -------------------------
+    initExprData <- function() {
+      
+      updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
+      
+      updateCheckboxGroupButtons(
+        session,
+        inputId = "treePickerPos",
+        choices = lineage_marker,
+        selected = NULL
+      )
+      updateCheckboxGroupButtons(
+        session,
+        inputId = "treePickerNeg",
+        choices = lineage_marker,
+        selected = NULL
+      )
+      
+      posPickerList <<- lineage_marker
+      
+      updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
+      
+      reactVals$th <- kmeansTH(df_expr[, lineage_marker])
+      reactVals$annotationlist <- c("Unassigned")
+    }
+    
     # Function: Update cluster labels -----------------------------------------
     updateClusterLabels <- function(mydf) {
 
@@ -79,91 +136,37 @@ cycadas <- function() {
     # Upload the marker expression file ---------------------------------------
     observeEvent(c(input$fMarkerExpr, input$cluster_freq), {
 
-      reactVals$graph <- initTree()
-      # browser()
-
       req(input$fMarkerExpr)
       req(input$cluster_freq)
 
-      df <- read.csv(input$fMarkerExpr$datapath)
-      df_global <<- df
-
-      annotationlist <<- list("Unassigned")
-
-      cell_freq <<- read.csv(input$cluster_freq$datapath)
-
-      labels_row <-
-        paste0(rownames(df), " (", cell_freq$clustering_prop , "%)")
-
-      marker_names <- rownames(df)
-
-      set.seed(1234)
-
-      my_umap <- umap(df)
-      dr_umap <<- data.frame(
-        u1 = my_umap$layout[, 1],
-        u2 = my_umap$layout[, 2],
-        my_umap$data,
-        cluster_number = 1:length(my_umap$layout[, 1]),
-        check.names = FALSE
-      )
-
-      df01 <<- df %>% normalize01()
-      myDF <<- df %>% normalize01()
-
-      df01Tree <<- df %>% normalize01()
-      allMarkers <<- colnames(df)
-      df01Tree$cell <<- "Unassigned"
-
-      selectedMarkers <<- colnames(df)
-      posPickerList <<- colnames(df)
-
-      ## load only at start to fill the picker list
-      # updatePickerInput(
-      #   session,
-      #   inputId = "myPickerPos",
-      #   label = "Select Positive Markers",
-      #   choices = colnames(df01),
-      #   # choices = NULL,
-      #   options = list(
-      #     `actions-box` = TRUE,
-      #     size = 10,
-      #     `selected-text-format` = "count > 3"
-      #   )
-      # )
-      # updatePickerInput(
-      #   session,
-      #   inputId = "myPickerNeg",
-      #   label = "Select Negative Markers",
-      #   choices = colnames(df01),
-      #   options = list(
-      #     `actions-box` = TRUE,
-      #     size = 10,
-      #     `selected-text-format` = "count > 3"
-      #   )
-      # )
+      pathExpr <- input$fMarkerExpr$datapath
+      pathFreq <- input$cluster_freq$datapath
       
-      updateSelectInput(session, "markerSelect", "Select:", colnames(df01))
-
-      updateCheckboxGroupButtons(
-        session,
-        inputId = "treePickerPos",
-        choices = colnames(df01),
-        selected = NULL
-      )
-      updateCheckboxGroupButtons(
-        session,
-        inputId = "treePickerNeg",
-        choices = colnames(df01),
-        selected = NULL
-      )
-
-      reactVals$th <- kmeansTH(df01)
-
-      annotaionDF <<- data.frame("cell" = "unassigned",
-                                 clusterSize = cell_freq$clustering_prop)
-      at <<- reactiveValues(data = annotaionDF, dr_umap = dr_umap)
-
+      loadExprData(pathExpr, pathFreq)
+      
+      initExprData()
+      # 
+      # updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
+      # 
+      # updateCheckboxGroupButtons(
+      #   session,
+      #   inputId = "treePickerPos",
+      #   choices = lineage_marker,
+      #   selected = NULL
+      # )
+      # updateCheckboxGroupButtons(
+      #   session,
+      #   inputId = "treePickerNeg",
+      #   choices = lineage_marker,
+      #   selected = NULL
+      # )
+      # 
+      # posPickerList <<- lineage_marker
+      # 
+      # updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
+      # 
+      # reactVals$th <- kmeansTH(df_expr[, lineage_marker])
+      # reactVals$annotationlist <- c("Unassigned")
     })
     
     # Observe MenutItems ------------------------------------------------------
@@ -1212,7 +1215,8 @@ cycadas <- function() {
 
     })
     
-    loadDemoData <- function(path_expr, path_freq) {
+    # Load Expression Data and UMAP -------------------------------------------------
+    loadExprData <- function(path_expr, path_freq) {
       
       # Create a Progress object
       progress <- shiny::Progress$new()
@@ -1223,8 +1227,8 @@ cycadas <- function() {
       
       ## Load median expression and cell frequencies
       ## add the 0-1 scaled columns to the DF
-      df_expr <<- read.csv("data/demo_data/median_expr_1600.csv")
-      cell_freq <<- read.csv("data/demo_data/cluster_freq_1600.csv")
+      df_expr <<- read.csv(path_expr)
+      cell_freq <<- read.csv(path_freq)
       
       lineage_marker <<- colnames(df_expr)
       lineage_marker_raw <<- paste0(lineage_marker, "_raw")
@@ -1248,29 +1252,31 @@ cycadas <- function() {
       pathExpr <- "data/demo_data/median_expr_1600.csv"
       pathFreq <- "data/demo_data/cluster_freq_1600.csv"
       
-      loadDemoData(pathExpr, pathFreq)
+      loadExprData(pathExpr, pathFreq)
       
-      updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
-
-      updateCheckboxGroupButtons(
-        session,
-        inputId = "treePickerPos",
-        choices = lineage_marker,
-        selected = NULL
-      )
-      updateCheckboxGroupButtons(
-        session,
-        inputId = "treePickerNeg",
-        choices = lineage_marker,
-        selected = NULL
-      )
+      initExprData()
       
-      posPickerList <<- lineage_marker
-      
-      updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
-
-      reactVals$th <- kmeansTH(df_expr[, lineage_marker])
-      reactVals$annotationlist <- c("Unassigned")
+      # updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
+      # 
+      # updateCheckboxGroupButtons(
+      #   session,
+      #   inputId = "treePickerPos",
+      #   choices = lineage_marker,
+      #   selected = NULL
+      # )
+      # updateCheckboxGroupButtons(
+      #   session,
+      #   inputId = "treePickerNeg",
+      #   choices = lineage_marker,
+      #   selected = NULL
+      # )
+      # 
+      # posPickerList <<- lineage_marker
+      # 
+      # updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
+      # 
+      # reactVals$th <- kmeansTH(df_expr[, lineage_marker])
+      # reactVals$annotationlist <- c("Unassigned")
 
     })
     
@@ -1280,7 +1286,7 @@ cycadas <- function() {
       pathExpr <- "data/demo_data/median_expr_1600.csv"
       pathFreq <- "data/demo_data/cluster_freq_1600.csv"
       
-      loadDemoData(pathExpr, pathFreq)
+      loadExprData(pathExpr, pathFreq)
       posPickerList <<- lineage_marker
 
       updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
