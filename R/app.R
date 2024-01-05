@@ -25,30 +25,17 @@ cycadas <- function() {
                               DA_interactive_table = NULL,
                               graph = NULL,
                               hm = NULL,
-                              merged_prop_table = NULL)
+                              merged_prop_table = NULL,
+                              annotationlist = NULL
+                              )
+  
+  # Global static values
+  lineage_marker <<- character(0)
+  df_expr <<- NULL
 
-  initTree <- function() {
-
-    # create initial master node of all Unassigned clusters
-    nodes <- tibble(id = 1,
-                    label = "Unassigned",
-                    pm = list(""),
-                    nm = list(""),
-                    color = "blue"
-    )
-
-    edges <- data.frame(from = c(1), to = c(1))
-
-    return (list(nodes = nodes, edges = edges))
-
-  }
-
-  # constructs a string of positive or negative markers
-  ph_name <<- ""
-
-  # Server function ----
+  # Server function -----------------------------------------------------------
   server = function(input, output, session) {
-
+    
     # Function: Update cluster labels ----
     updateClusterLabels <- function(mydf) {
 
@@ -62,40 +49,33 @@ cycadas <- function() {
       })
     }
 
-    # Function: Plot the annotation tree ----
+    # Function: Plot the annotation tree --------------------------------------
     plotTree <- function() {
 
-      # browser()
-
       # before plotting the tree, update its properties
-      # based on the annotated DF
       for(i in 1:nrow(reactVals$graph$nodes)) {
+        
         l <- reactVals$graph$nodes$label[i]
-
         # get the number of clusters with that label
-        nLabel <- sum(df01Tree$cell == l)
-        # mysum <- sum(cell_freq[rownames(df01Tree),]$clustering_prop)
+        nLabel <- sum(df_expr$cell == l)
 
         if (nLabel == 0) {
           reactVals$graph$nodes[i,]$color <- "grey"
         } else {
           reactVals$graph$nodes[i,]$color <- "blue"
         }
-
       }
+      
+      # browser()
 
       output$mynetworkid <- renderVisNetwork({
         visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
           visEdges(arrows = "from") %>%
-          visHierarchicalLayout() %>%
-          visExport(type = "png", name = "export-network",
-                    float = "left", label = "Save network", background = "white", style= "")
+          visHierarchicalLayout()
       })
-
-
     }
 
-    # Upload the marker expression file ----
+    # Upload the marker expression file ---------------------------------------
     observeEvent(c(input$fMarkerExpr, input$cluster_freq), {
 
       reactVals$graph <- initTree()
@@ -138,29 +118,30 @@ cycadas <- function() {
       posPickerList <<- colnames(df)
 
       ## load only at start to fill the picker list
-      updatePickerInput(
-        session,
-        inputId = "myPickerPos",
-        label = "Select Positive Markers",
-        choices = colnames(df01),
-        # choices = NULL,
-        options = list(
-          `actions-box` = TRUE,
-          size = 10,
-          `selected-text-format` = "count > 3"
-        )
-      )
-      updatePickerInput(
-        session,
-        inputId = "myPickerNeg",
-        label = "Select Negative Markers",
-        choices = colnames(df01),
-        options = list(
-          `actions-box` = TRUE,
-          size = 10,
-          `selected-text-format` = "count > 3"
-        )
-      )
+      # updatePickerInput(
+      #   session,
+      #   inputId = "myPickerPos",
+      #   label = "Select Positive Markers",
+      #   choices = colnames(df01),
+      #   # choices = NULL,
+      #   options = list(
+      #     `actions-box` = TRUE,
+      #     size = 10,
+      #     `selected-text-format` = "count > 3"
+      #   )
+      # )
+      # updatePickerInput(
+      #   session,
+      #   inputId = "myPickerNeg",
+      #   label = "Select Negative Markers",
+      #   choices = colnames(df01),
+      #   options = list(
+      #     `actions-box` = TRUE,
+      #     size = 10,
+      #     `selected-text-format` = "count > 3"
+      #   )
+      # )
+      
       updateSelectInput(session, "markerSelect", "Select:", colnames(df01))
 
       updateCheckboxGroupButtons(
@@ -185,27 +166,30 @@ cycadas <- function() {
     })
     # Observe MenutItems ----
     observeEvent(input$tabs, {
+      
+      # browser()
 
-      if (exists("df01")) {
+      if (exists("df_expr")) {
         if(input$tabs=="thresholds") { ## Thresholds ----
 
-          if (is.null(reactVals$th) & !is.null(df01)) {
-            reactVals$th <- kmeansTH(df01)
+          if (is.null(reactVals$th) & !is.null(df_expr)) {
+            reactVals$th <- kmeansTH(df_expr)
           }
         }
         else if(input$tabs=="treeannotation") { # Tree annotation ----
 
+          # browser()
           updatePickerInput(
             session,
             inputId = "parentPicker",
-            choices = annotationlist
+            choices = reactVals$annotationlist
           )
-          updatePickerInput(
-            session,
-            inputId = "updateNodePicker",
-            choices = annotationlist,
-            selected = ""
-          )
+          # updatePickerInput(
+          #   session,
+          #   inputId = "updateNodePicker",
+          #   choices = reactVals$annotationlist,
+          #   selected = ""
+          # )
           plotTree()
         }
       }
@@ -216,7 +200,7 @@ cycadas <- function() {
       updateCheckboxGroupButtons(
         session,
         inputId = "treePickerNeg",
-        choices = colnames(df01),
+        choices = lineage_marker,
         selected = input$treePickerNeg,
         disabledChoices = input$treePickerPos
       )
@@ -226,13 +210,13 @@ cycadas <- function() {
       updateCheckboxGroupButtons(
         session,
         inputId = "treePickerPos",
-        choices = colnames(df01),
+        choices = lineage_marker,
         selected = input$treePickerPos,
         disabledChoices = input$treePickerNeg
       )
     })
 
-    # Create new node ----
+    # Create new node ---------------------------------------------------------
     observeEvent(input$createNodeBtn, {
 
       if (is.null(input$treePickerPos) & is.null(input$treePickerNeg)) {
@@ -274,7 +258,7 @@ cycadas <- function() {
 
         # receive the parent settings, resp. parent hm
         # filter hm by parent cell name
-        tmp <- df01Tree[df01Tree$cell == parent, ]
+        tmp <- df_expr[df_expr$cell == parent, ]
         tmp <- filterHM(tmp,input$treePickerPos, input$treePickerNeg, reactVals$th)
 
         # Make sure the selection is not empty!
@@ -290,17 +274,17 @@ cycadas <- function() {
 
         } else {
 
-          annotationlist <<- append(annotationlist, name)
+          reactVals$annotationlist <- append(reactVals$annotationlist, name)
 
           updatePickerInput(
             session,
             inputId = "parentPicker",
-            choices = annotationlist
+            choices = reactVals$annotationlist
           )
           updatePickerInput(
             session,
             inputId = "updateNodePicker",
-            choices = annotationlist,
+            choices = reactVals$annotationlist,
             selected = ""
           )
 
@@ -309,12 +293,12 @@ cycadas <- function() {
 
           reactVals$graph <- add_node(reactVals$graph,parent,name,posmarker,negmarker,"blue")
 
-          df01Tree[rownames(tmp),]$cell <<- name
+          df_expr[rownames(tmp),]$cell <<- name
 
           updateCheckboxGroupButtons(
             session,
             inputId = "treePickerPos",
-            choices = colnames(df01),
+            choices = lineage_marker,
             selected = NULL,
             disabledChoices = input$treePickerPos
 
@@ -322,7 +306,7 @@ cycadas <- function() {
           updateCheckboxGroupButtons(
             session,
             inputId = "treePickerNeg",
-            choices = colnames(df01),
+            choices = lineage_marker,
             selected = NULL,
             disabledChoices = input$treePickerNeg
 
@@ -342,22 +326,26 @@ cycadas <- function() {
       }
     })
 
-    # Annotation heatmap plot ----
+    # Annotation heatmap plot -------------------------------------------------
     output$hm_tree <- renderPlot({
+      
+      # browser()
 
-      if (dim(reactVals$hm)[1] < 2) {
+      if (nrow(reactVals$hm) < 2) {
         # browser()
-        pheatmap(reactVals$hm %>% select(-c("cell")), cluster_cols = F, cluster_rows = F)
+        # pheatmap(reactVals$hm %>% select(-c("cell")), cluster_cols = F, cluster_rows = F)
+        pheatmap(reactVals$hm, cluster_cols = F, cluster_rows = F)
       } else {
-        message(dim(reactVals$hm)[1])
+        message(nrow(reactVals$hm))
         # browser()
 
-        pheatmap(reactVals$hm %>% select(-c("cell")), cluster_cols = F)
+        # pheatmap(reactVals$hm %>% select(-c("cell")), cluster_cols = F)
+        pheatmap(reactVals$hm, cluster_cols = F)
       }
     })
 
 
-    # Observe Parent Node selection ----
+    # Observe Parent Node selection -------------------------------------------
     observeEvent(input$parentPicker, {
 
       # browser()
@@ -368,39 +356,14 @@ cycadas <- function() {
       filterPosMarkers <- unlist(node$pm)
       filterNegMarkers <- unlist(node$nm)
       
-      
       parent <- input$parentPicker
       
       # receive the parent settings, resp. parent hm
       # filter hm by parent cell name
-      tmp <- df01Tree[df01Tree$cell == parent, ]
-      tmp <- filterHM(tmp,input$treePickerPos, input$treePickerNeg, reactVals$th)
-      
+      tmp <- df_expr[df_expr$cell == parent, lineage_marker]
+      tmp <- filterHM(tmp, input$treePickerPos, input$treePickerNeg, reactVals$th)
 
-      # collect all positive and negative markers
-      # upwards from parent
-      # go through edges until we reach one level below master node
-      # while (myid > 1) {
-      #   print(myid)
-      # 
-      #   edge <- reactVals$graph$edges %>% filter(from == myid)
-      #   next_id <- edge$to
-      # 
-      #   myid <- next_id
-      #   next_node <- reactVals$graph$nodes %>% filter(id == next_id)
-      #   filterPosMarkers <- append(filterPosMarkers, unlist(next_node$pm))
-      #   filterNegMarkers <- c(filterNegMarkers, unlist(next_node$nm))
-      # 
-      # }
-      # # remove the empty strings in the markers
-      # filterPosMarkers <- filterPosMarkers[nzchar(filterPosMarkers)]
-      # filterNegMarkers <- filterNegMarkers[nzchar(filterNegMarkers)]
-      # 
-      # # tmp <- filterHM(df01Tree,filterPosMarkers, filterNegMarkers, reactVals$th)
-      # 
-      # tmp <- filterHM(df01Tree,unique(unlist(filterPosMarkers)), unique(unlist(filterNegMarkers)), reactVals$th)
-
-      tmp <- tmp[tmp$cell == node$label ,]
+      # tmp <- tmp[tmp$cell == node$label ,]
 
       updateClusterLabels(tmp)
 
@@ -409,20 +372,20 @@ cycadas <- function() {
       updateCheckboxGroupButtons(
         session,
         inputId = "treePickerPos",
-        choices = colnames(df01),
+        choices = lineage_marker,
         selected = NULL,
         disabledChoices = filterPosMarkers
       )
       updateCheckboxGroupButtons(
         session,
         inputId = "treePickerNeg",
-        choices = colnames(df01),
+        choices = lineage_marker,
         selected = NULL,
         disabledChoices = filterNegMarkers
       )
 
       # update umap plot for Tree ----
-      ClusterSelection <- filterColor(df_global,tmp)
+      ClusterSelection <- filterColor(df_expr,tmp)
 
       output$umap_tree <-
         renderPlot(
@@ -454,7 +417,7 @@ cycadas <- function() {
         session,
         inputId = "updatePickerPos",
         label = "Select Positive Markers",
-        choices = colnames(df01),
+        choices = lineage_marker,
         selected = filterPosMarkers,
         options = list(
           `actions-box` = TRUE,
@@ -466,7 +429,7 @@ cycadas <- function() {
         session,
         inputId = "updatePickerNeg",
         label = "Select Negative Markers",
-        choices = colnames(df01),
+        choices = lineage_marker,
         selected = filterNegMarkers,
         options = list(
           `actions-box` = TRUE,
@@ -493,9 +456,9 @@ cycadas <- function() {
       reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker,]$nm <-
         list(c(reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker,]$nm[[1]], input$treePickerNeg))
 
-      updateTreeAnnotation()
+      reactVals <- rebuiltTree(reactVals)
 
-      reactVals$hm <- df01Tree[df01Tree$cell == input$parentPicker, ]
+      reactVals$hm <- reactVals[reactVals$cell == input$parentPicker, ]
 
       # if "newNode" textfield is ot empty, update the node name
       if (input$newNode != "") {
@@ -515,8 +478,8 @@ cycadas <- function() {
         )
 
         # replace name in heatmap
-        df01Tree$cell[df01Tree$cell == old_name] <<- new_name
-        reactVals$hm <- df01Tree[df01Tree$cell == new_name, ]
+        reactVals$cell[reactVals$cell == old_name] <<- new_name
+        reactVals$hm <- reactVals[reactVals$cell == new_name, ]
 
         updateTextInput(
           session,
@@ -561,25 +524,25 @@ cycadas <- function() {
 
         # In case there is a empty node with no the filtered clusters
         # we do not assign any labeling
-        if( dim(df01Tree[df01Tree$cell == node$label,])[1] >0 ) {
+        if( dim(reactVals[reactVals$cell == node$label,])[1] >0 ) {
 
-          df01Tree[df01Tree$cell == node$label,]$cell <<- parent_label
+          reactVals[reactVals$cell == node$label,]$cell <<- parent_label
 
         }
 
-        annotationlist[annotationlist == node$label] <<- NULL
+        reactVals$annotationlist[reactVals$annotationlist == node$label] <<- NULL
 
         updatePickerInput(
           session,
           inputId = "parentPicker",
           selected = NULL,
-          choices = annotationlist
+          choices = reactVals$annotationlist
         )
         updatePickerInput(
           session,
           inputId = "updateNodePicker",
           selected = NULL,
-          choices = annotationlist
+          choices = reactVals$annotationlist
         )
         updateTextInput(
           session,
@@ -636,7 +599,7 @@ cycadas <- function() {
       reactVals$graph$nodes <- df_nodes
       reactVals$graph$edges <- df_edges
       
-      updateTreeAnnotation()
+      reactVals <- rebuiltTree(reactVals)
 
       # df01Tree <<- df_anno
 
@@ -690,7 +653,7 @@ cycadas <- function() {
         export_freq <- data.frame(cluster=1:length(annotaionDF$cell),
                                   clustering_prop = annotaionDF$clusterSize)
 
-        download_list <- list(annTable = df01Tree,
+        download_list <- list(annTable = reactVals,
                               nodesTable = export_df_nodes,
                               edgesTable = reactVals$graph$edges,
                               freq = export_freq)
@@ -742,76 +705,19 @@ cycadas <- function() {
       # browser()
 
       selRow <- reactVals$th[input$table_rows_selected,]
-      marker <- reactVals$th[input$table_rows_selected, "cell"]
-      # threshold value for vertical line
       myTH <- reactVals$th[input$table_rows_selected, "threshold"]
-      myCol <- reactVals$th[input$table_rows_selected, "color"]
+      myColor <- reactVals$th[input$table_rows_selected, "color"]
 
-      # marker_expr <- getMarkerDistDF(marker, input$radio)
-      marker_expr <- getMarkerDistDF(marker, "1")
-      myRenderFunction(marker_expr, myTH, myCol)
+      marker_expr <- as.data.frame(df_expr[, selRow$cell])
+      marker_expr <- cbind(marker_expr, rnorm(1:nrow(marker_expr)))
+      
+      PlottingThreshold(marker_expr, myTH, myColor)
+
+      # myRenderFunction(marker_expr, selRow$threshold, selRow$color)
     })
-
-    # update Tree Annotation ----
-    ## update the tree after a change in the thresholds
-    ## walk through the list of nodes and adjust the annotation if
-    ## needed based on the filtered DF
-    updateTreeAnnotation <- function() {
-
-      # browser()
-
-      df01Tree$cell <<- "Unassigned"
-
-      # for all rows in annotation table
-      # get all parents for a row:
-      if (nrow(reactVals$graph$nodes) > 1) {
-        reactVals$graph$nodes$to <- reactVals$graph$edges$to
-
-        # Iterate through the dataframe row by row
-        for (i in 1:nrow(reactVals$graph$nodes)) {
-
-          posMarker <- list()
-          negMarker <- list()
-
-          nodeID <- reactVals$graph$nodes$id[i]
-          parentID <- reactVals$graph$nodes$to[i]
-
-          # now for that nodeID, get all parents and collect
-          # the pm and nm markers
-          # while (nodeID > 1) {
-
-          posMarker <- c(posMarker, unlist(reactVals$graph$nodes$pm[reactVals$graph$nodes$id == nodeID]))
-          negMarker <- c(negMarker, unlist(reactVals$graph$nodes$nm[reactVals$graph$nodes$id == nodeID]))
-
-          #   nodeID <- reactVals$graph$edges$to[reactVals$graph$edges$from == nodeID]
-          # 
-          # }
-          # now we have all positive and negative marker for that type collected
-          # and we can start filtering the df
-          # remove the empty strings in the markers
-          posMarker <- posMarker[nzchar(posMarker)]
-          negMarker <- negMarker[nzchar(negMarker)]
-          
-          # receive the parent settings, resp. parent hm
-          # filter hm by parent cell name
-          parent_label <- reactVals$graph$nodes$label[reactVals$graph$nodes$id == parentID]
-          tmp_parent <- df01Tree[df01Tree$cell == parent_label, ]
-          # tmp <- filterHM(tmp,input$treePickerPos, input$treePickerNeg, reactVals$th)
-
-          tmp <- filterHM(tmp_parent,unique(unlist(posMarker)), unique(unlist(negMarker)), reactVals$th)
-          # tmp <- filterHM(df01Tree,unique(unlist(posMarker)), unique(unlist(negMarker)), my_th)
-
-          df01Tree[rownames(tmp), 'cell'] <<- reactVals$graph$node$label[i]
-
-          updateClusterLabels(tmp)
-        }
-      }
-
-    }
-
-    ## Event on click scatter plot for setting the vertical line
+    
     ##
-    # Observe click scatterplot -----
+    # Observe click scatterplot -----------------------------------------------
     ##
     observeEvent(input$plot_click, {
 
@@ -819,23 +725,23 @@ cycadas <- function() {
 
       req(input$table_rows_selected)
       selRow <- reactVals$th[input$table_rows_selected,]
-      marker <- reactVals$th[input$table_rows_selected, "cell"]
 
       reactVals$th[input$table_rows_selected, "threshold"] <- round(input$plot_click$x, 3)
+      
       myTH <- reactVals$th[input$table_rows_selected, "threshold"]
-      myCol <- reactVals$th[input$table_rows_selected, "color"]
-      # marker_expr <- getMarkerDistDF(marker, input$radio)
-      marker_expr <- getMarkerDistDF(marker, "1")
-      myRenderFunction(marker_expr, myTH, myCol)
+      myColor <- reactVals$th[input$table_rows_selected, "color"]
+      marker_expr <- as.data.frame(df_expr[, selRow$cell])
+      marker_expr <- cbind(marker_expr, rnorm(1:nrow(marker_expr)))
+      
+      PlottingThreshold(marker_expr, myTH, myColor)
 
-      # updateTreeAnnotation(reactVals$th[input$table_rows_selected])
-      updateTreeAnnotation()
+      df_expr$cell <<- rebuiltTree(reactVals$graph, df_expr, reactVals$th)
     })
 
     ##
-    # Thresholds plotting function ----
+    # PlottingThreshold  function ---------------------------------------------
     ##
-    myRenderFunction <- function(me, myTH, myCol){
+    PlottingThreshold <- function(me, myTH, myCol){
 
       output$plot <- renderPlot({
         set.seed(1)
@@ -850,8 +756,10 @@ cycadas <- function() {
                 panel.grid.major.y = element_blank(),
                 panel.grid.minor.y = element_blank()) +
           labs(x = "Scale 0 to 1") +
-          geom_vline(xintercept = myTH, linetype="dotted",
-                     color = myCol, size=1.5)
+          geom_vline(xintercept = myTH, 
+                     linetype="dotted",
+                     color = myCol, 
+                     size=1.5)
 
       })
       #
@@ -871,17 +779,15 @@ cycadas <- function() {
       })
     }
 
-    ##
-    # Server - Annotations Tab ------------------------------------------------
-    ##
-    # Load the annotation file ---------------------------------------------
-    observeEvent(input$annTable,{
-      annData <<- read.csv(input$annTable$datapath)
-      annData$X <- NULL
-      at$data <- annData
-    })
+
+    # Load the annotation file ------------------------------------------------
+    # observeEvent(input$annTable,{
+    #   annData <<- read.csv(input$annTable$datapath)
+    #   annData$X <- NULL
+    #   at$data <- annData
+    # })
     
-    # Save the DA Table ----
+    # Save the DA Table -------------------------------------------------------
     output$exportDA <- downloadHandler(
       filename = function() {
         paste("DA_Table_", Sys.Date(), ".csv", sep="")
@@ -891,13 +797,14 @@ cycadas <- function() {
       }
     )
     
+    # get_merged_prop_table ---------------------------------------------------
     get_merged_prop_table <- function() {
       
       req(reactVals$counts_table)
       
       countsTable <- reactVals$counts_table
       ## aggregate the clusters by name:
-      countsTable['cell'] <- df01Tree$cell
+      countsTable['cell'] <- df_expr$cell
       # merge and aggregate by cell
       countsTable <- aggregate(. ~ cell, countsTable, sum)
       
@@ -910,7 +817,7 @@ cycadas <- function() {
       
     }
     
-    # Save the Merged Proportion Table ----
+    # Save the Merged Proportion Table ----------------------------------------
     output$exportProp <- downloadHandler(
       
       filename = function() {
@@ -940,7 +847,7 @@ cycadas <- function() {
       # re-calculate the tree after threshold upload
       req(input$fMarkerExpr)
       
-      updateTreeAnnotation()
+      reactVals <- rebuiltTree(reactVals)
       
 
     })
@@ -960,88 +867,88 @@ cycadas <- function() {
     })
 
     ## create Phenotype name from picker e.g. CD4+CD8+CD19 --------------------
-    observeEvent(input$myPickerPos, {
-      output$r1 <- renderText(setPhenotypeName(input$myPickerPos, "pos", ph_name))
-    })
-    observeEvent(input$myPickerNeg, {
-      output$r2 <- renderText(setPhenotypeName(input$myPickerNeg, "neg", ph_name))
-    })
+    # observeEvent(input$myPickerPos, {
+    #   output$r1 <- renderText(setPhenotypeName(input$myPickerPos, "pos", ph_name))
+    # })
+    # observeEvent(input$myPickerNeg, {
+    #   output$r2 <- renderText(setPhenotypeName(input$myPickerNeg, "neg", ph_name))
+    # })
 
     ## Annotation Table -------------------------------------------------------
-    observeEvent(c(input$myPickerPos, input$myPickerNeg, reactVals$th),{
-      req(input$fMarkerExpr)
-      req(input$cluster_freq)
-
-      tmp=filterHM(df01,input$myPickerPos, input$myPickerNeg, reactVals$th)
-
-      # update myDF to the filtered HM
-      myDF <<- tmp
-
-      mydf=annotaionDF[rownames(tmp),]
-      rownames(mydf)=rownames(tmp)
-
-      # update heatmap plot ----
-      output$hm <- renderPlot({
-        if (dim(tmp)[1] < 2) {
-          pheatmap(tmp, cluster_cols = F, cluster_rows = F)
-        } else {
-          message(dim(tmp)[1])
-          pheatmap(tmp, cluster_cols = F)
-        }
-      })
-
-      # update umap plot ----
-      myColor <- filterColor(df_global,tmp)
-      Temp1<<-myColor
-      Temp2<<-dr_umap
-
-      output$umap <-
-        renderPlot(
-          ggplot(dr_umap, aes(
-            x = u1, y = u2, color = myColor
-          )) +
-            geom_point(size = 1.0) +
-            theme_bw() +
-            theme(legend.text = element_text(size =
-                                               8)) +
-            guides(color = guide_legend(override.aes = list(size = 4)))
-        )
-      # update table ----
-      output$tableAnnotation <- DT::renderDT(
-        at$data,
-        extensions = c('Buttons', 'Scroller'),
-        options = list(
-          dom = 'Bfrtip',
-          buttons = c('csv'),
-          paging = FALSE
-        )
-      )
-
-      # update valueboxes ----
-      mysum <- sum(mydf$clusterSize)
-      output$progressBox <- renderValueBox({
-        valueBox(paste0(mysum, "%"), "Selected", icon = icon("list"),color = "purple")
-      })
-      output$progressBox2 <- renderValueBox({
-        valueBox(dim(mydf)[1], "Cluster", icon = icon("list"),color = "purple")
-      })
-    })
+    # observeEvent(c(input$myPickerPos, input$myPickerNeg, reactVals$th),{
+    #   req(input$fMarkerExpr)
+    #   req(input$cluster_freq)
+    # 
+    #   tmp=filterHM(df01,input$myPickerPos, input$myPickerNeg, reactVals$th)
+    # 
+    #   # update myDF to the filtered HM
+    #   myDF <<- tmp
+    # 
+    #   mydf=annotaionDF[rownames(tmp),]
+    #   rownames(mydf)=rownames(tmp)
+    # 
+    #   # update heatmap plot ----
+    #   output$hm <- renderPlot({
+    #     if (dim(tmp)[1] < 2) {
+    #       pheatmap(tmp, cluster_cols = F, cluster_rows = F)
+    #     } else {
+    #       message(dim(tmp)[1])
+    #       pheatmap(tmp, cluster_cols = F)
+    #     }
+    #   })
+    # 
+    #   # update umap plot ----
+    #   myColor <- filterColor(df_global,tmp)
+    #   Temp1<<-myColor
+    #   Temp2<<-dr_umap
+    # 
+    #   output$umap <-
+    #     renderPlot(
+    #       ggplot(dr_umap, aes(
+    #         x = u1, y = u2, color = myColor
+    #       )) +
+    #         geom_point(size = 1.0) +
+    #         theme_bw() +
+    #         theme(legend.text = element_text(size =
+    #                                            8)) +
+    #         guides(color = guide_legend(override.aes = list(size = 4)))
+    #     )
+    #   # update table ----
+    #   output$tableAnnotation <- DT::renderDT(
+    #     at$data,
+    #     extensions = c('Buttons', 'Scroller'),
+    #     options = list(
+    #       dom = 'Bfrtip',
+    #       buttons = c('csv'),
+    #       paging = FALSE
+    #     )
+    #   )
+    # 
+    #   # update valueboxes ----
+    #   mysum <- sum(mydf$clusterSize)
+    #   output$progressBox <- renderValueBox({
+    #     valueBox(paste0(mysum, "%"), "Selected", icon = icon("list"),color = "purple")
+    #   })
+    #   output$progressBox2 <- renderValueBox({
+    #     valueBox(dim(mydf)[1], "Cluster", icon = icon("list"),color = "purple")
+    #   })
+    # })
 
     # Set Phenotype names -----------------------------------------------------
-    observeEvent(input$btnSetType, {
+    # observeEvent(input$btnSetType, {
+    # 
+    #   # if cluster has already been assigned, add the new name after
+    #   for (n in rownames(myDF)) {
+    #     if (at$data[n, "cell"] == "unassigned") {
+    #       at$data[n, "cell"] <- input$phenotype
+    #     } else(
+    #       at$data[n, "cell"] <- paste0(at$data[n, "cell"], "_", input$phenotype)
+    #     )
+    # 
+    #   }
+    # })
 
-      # if cluster has already been assigned, add the new name after
-      for (n in rownames(myDF)) {
-        if (at$data[n, "cell"] == "unassigned") {
-          at$data[n, "cell"] <- input$phenotype
-        } else(
-          at$data[n, "cell"] <- paste0(at$data[n, "cell"], "_", input$phenotype)
-        )
-
-      }
-    })
-
-    # Server - UMAP interactive Tab -------------------------------------------
+    # UMAP interactive Tab ----------------------------------------------------
     output$umap2 <- renderPlot(
       ggplot(dr_umap, aes(x = u1, y = u2)) +
         geom_point(size = 1.0) +
@@ -1053,6 +960,7 @@ cycadas <- function() {
         guides(color = guide_legend(override.aes = list(size = 4)))
     )
 
+    # Heatmap from UMAP selection ---------------------------------------------
     output$hm2 <- renderPlot({
       my_new_hm <- round(brushedPoints(dr_umap, input$umap2_brush), 2)
 
@@ -1064,6 +972,7 @@ cycadas <- function() {
       }
     })
 
+    # Data Table from UMAP selection ------------------------------------------
     output$umap_data <-
       DT::renderDT(server = FALSE, {
         DT::datatable(
@@ -1084,7 +993,7 @@ cycadas <- function() {
         )
       })
 
-    # Server - UMAP Marker Expression Tab ----
+    # UMAP Marker Expression Tab ----------------------------------------------
     output$umap3 <-
       renderPlot(
         ggplot(dr_umap, aes_string(
@@ -1104,7 +1013,7 @@ cycadas <- function() {
                                 )))(50))
       )
 
-    # Server - Differential Abundance Tab ----
+    # Differential Abundance Tab ----------------------------------------------
     output$md_table <-
       renderTable(
         reactVals$md[1:5, ]
@@ -1120,14 +1029,14 @@ cycadas <- function() {
         reactVals$DA_result_table
       )
 
-    # Do the differential abundance ----
+    ## Do the differential abundance ------------------------------------------
     observeEvent(input$doDA, {
       # browser()
       req(reactVals$counts_table, reactVals$md)
 
       countsTable <- reactVals$counts_table
-      ## aggregate the clusters by name:
-      countsTable['cell'] <- df01Tree$cell
+      # aggregate the clusters by name:
+      countsTable['cell'] <- df_expr$cell
       # merge and aggregate by cell
       countsTable <- aggregate(. ~ cell, countsTable, sum)
 
@@ -1174,6 +1083,7 @@ cycadas <- function() {
 
     })
 
+    # Render interactive Tree
     output$interactiveTree <- renderVisNetwork({
       visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
         visEvents(select = "function(nodes) {
@@ -1203,7 +1113,7 @@ cycadas <- function() {
       # browser()
       countsTable <- reactVals$counts_table
       ## aggregate the clusters by name:
-      countsTable['cell'] <- df01Tree$cell
+      countsTable['cell'] <- df_expr$cell
       # merge and aggregate by cell
       countsTable <- aggregate(. ~ cell, countsTable, sum)
 
@@ -1248,6 +1158,7 @@ cycadas <- function() {
 
     })
 
+    # Boxplot of interactive DA selection -------------------------------------
     output$boxplot <- renderPlot({
 
       # browser()
@@ -1262,7 +1173,7 @@ cycadas <- function() {
       # browser()
       countsTable <- reactVals$counts_table
       ## aggregate the clusters by name:
-      countsTable['cell'] <- df01Tree$cell
+      countsTable['cell'] <- df_expr$cell
       # merge and aggregate by cell
       countsTable <- aggregate(. ~ cell, countsTable, sum)
 
@@ -1316,6 +1227,7 @@ cycadas <- function() {
 
     # children <- graph$edges$from[graph$edges$to == myNode$selected]
 
+    # Upload expression Demo Data ---------------------------------------------
     observeEvent(input$btnLoadDemoData, {
 
       # browser()
@@ -1365,29 +1277,30 @@ cycadas <- function() {
       posPickerList <<- colnames(df)
 
       ## load only at start to fill the picker list
-      updatePickerInput(
-        session,
-        inputId = "myPickerPos",
-        label = "Select Positive Markers",
-        choices = colnames(df01),
-        # choices = NULL,
-        options = list(
-          `actions-box` = TRUE,
-          size = 10,
-          `selected-text-format` = "count > 3"
-        )
-      )
-      updatePickerInput(
-        session,
-        inputId = "myPickerNeg",
-        label = "Select Negative Markers",
-        choices = colnames(df01),
-        options = list(
-          `actions-box` = TRUE,
-          size = 10,
-          `selected-text-format` = "count > 3"
-        )
-      )
+      # updatePickerInput(
+      #   session,
+      #   inputId = "myPickerPos",
+      #   label = "Select Positive Markers",
+      #   choices = colnames(df01),
+      #   # choices = NULL,
+      #   options = list(
+      #     `actions-box` = TRUE,
+      #     size = 10,
+      #     `selected-text-format` = "count > 3"
+      #   )
+      # )
+      # updatePickerInput(
+      #   session,
+      #   inputId = "myPickerNeg",
+      #   label = "Select Negative Markers",
+      #   choices = colnames(df01),
+      #   options = list(
+      #     `actions-box` = TRUE,
+      #     size = 10,
+      #     `selected-text-format` = "count > 3"
+      #   )
+      # )
+      
       updateSelectInput(session, "markerSelect", "Select:", colnames(df01))
 
       updateCheckboxGroupButtons(
@@ -1410,9 +1323,10 @@ cycadas <- function() {
       reactVals$th <- kmeansTH(df01)
 
     })
-    ## -------------------------------------------------------------------
-    # Upload All Annotation Demo Data ----
+    
+    # Upload Annotated Expr Demo Data -----------------------------------------
     observeEvent(input$btnLoadAnnoData, {
+      
       # browser()
 
       # Create a Progress object
@@ -1421,95 +1335,42 @@ cycadas <- function() {
       on.exit(progress$close())
 
       progress$set(message = "loading Data...", value = 0)
-
-      # browser()
-
+      
       ## Load median expression and cell frequencies
-      df <- read.csv("data/demo_data/median_expr_1600.csv")
-
-      # !----------- TEST bimodal check !-----------------
-      #
-      # df$testCol <- rnorm(nrow(df), 5.0, 1.0)
-
-      df_global <<- df
+      ## add the 0-1 scaled columns to the DF
+      df_expr <<- read.csv("data/demo_data/median_expr_1600.csv")
+      cell_freq <<- read.csv("data/demo_data/cluster_freq_1600.csv")
+      
+      lineage_marker <<- colnames(df_expr)
+      lineage_marker_raw <<- paste0(lineage_marker, "_raw")
+      
+      df_expr <<- createExpressionDF(df_expr, cell_freq)
+      reactVals$graph <- initTree()
+      
+      progress$set(message = "loading Data Cluster Expression Demo Data...", value = 0.2)
 
       reactVals$graph <- initTree()
 
-      annotationlist <<- list("Unassigned")
-
-      cell_freq <<- read.csv("data/demo_data/cluster_freq_1600.csv")
-
-      labels_row <-
-        paste0(rownames(df), " (", cell_freq$clustering_prop , "%)")
-
-      marker_names <- rownames(df)
-
       set.seed(1234)
+      progress$set(message = "Building the UMAP...", value = 0.3)
+      dr_umap <<- buildUMAP(df_expr[, lineage_marker_raw]) 
 
-      my_umap <- umap(df)
-      dr_umap <<- data.frame(
-        u1 = my_umap$layout[, 1],
-        u2 = my_umap$layout[, 2],
-        my_umap$data,
-        cluster_number = 1:length(my_umap$layout[, 1]),
-        check.names = FALSE
-      )
+      posPickerList <<- lineage_marker
 
-      df01 <<- df %>% normalize01()
-      myDF <<- df %>% normalize01()
-
-      df01Tree <<- df %>% normalize01()
-      allMarkers <<- colnames(df)
-      df01Tree$cell <<- "Unassigned"
-
-      selectedMarkers <<- colnames(df)
-      posPickerList <<- colnames(df)
-
-      ## load only at start to fill the picker list
-      updatePickerInput(
-        session,
-        inputId = "myPickerPos",
-        label = "Select Positive Markers",
-        choices = colnames(df01),
-        # choices = NULL,
-        options = list(
-          `actions-box` = TRUE,
-          size = 10,
-          `selected-text-format` = "count > 3"
-        )
-      )
-      updatePickerInput(
-        session,
-        inputId = "myPickerNeg",
-        label = "Select Negative Markers",
-        choices = colnames(df01),
-        options = list(
-          `actions-box` = TRUE,
-          size = 10,
-          `selected-text-format` = "count > 3"
-        )
-      )
-      updateSelectInput(session, "markerSelect", "Select:", colnames(df01))
+      updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
 
       updateCheckboxGroupButtons(
         session,
         inputId = "treePickerPos",
-        choices = colnames(df01),
+        choices = lineage_marker,
         selected = NULL
       )
       updateCheckboxGroupButtons(
         session,
         inputId = "treePickerNeg",
-        choices = colnames(df01),
+        choices = lineage_marker,
         selected = NULL
       )
-
-      annotaionDF <<- data.frame("cell" = "unassigned",
-                                 clusterSize = cell_freq$clustering_prop)
-      at <<- reactiveValues(data = annotaionDF, dr_umap = dr_umap)
-
-      
-      # reactVals$th <- kmeansTH(df01)
       
       ## Load demo thresholds
       th <- read.csv("data/demo_data/MarkerThresholds.csv")
@@ -1535,7 +1396,7 @@ cycadas <- function() {
       ## Load annotaiton Tree
       df_nodes <- read.csv("data/demo_data/nodesTable_data.csv")
       df_edges <- read.csv("data/demo_data/edgesTable_data.csv")
-      df_anno <- read.csv("data/demo_data/annTable_data.csv")
+      # df_anno <- read.csv("data/demo_data/annTable_data.csv")
 
       df_nodes$pm[is.na(df_nodes$pm)] <- ""
       df_nodes$pm <- strsplit(df_nodes$pm, "\\|")
@@ -1546,20 +1407,13 @@ cycadas <- function() {
       reactVals$graph$nodes <- df_nodes
       reactVals$graph$edges <- df_edges
       
-      updateTreeAnnotation()
-      
-      # df01Tree <<- df_anno
-      
-      annotationlist <<- as.list(df_nodes$label)
+      # browser()
+      df_expr$cell <<- rebuiltTree(reactVals$graph, df_expr, reactVals$th)
+      reactVals$annotationlist <- df_nodes$label
 
-      # df01Tree <<- df_anno
-
-      reactVals$hm <- df01Tree
-
-      # annotationlist <<- as.list(df_nodes$label)
+      reactVals$hm <- df_expr[, lineage_marker]
 
     })
-
   }
 
   shinyApp(
