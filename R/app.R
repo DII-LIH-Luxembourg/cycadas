@@ -34,10 +34,10 @@ cycadas <- function() {
   df_expr <<- NULL
   dr_umap <<- NULL
 
-  # Server function -----------------------------------------------------------
+  # Server function -------------------------
   server = function(input, output, session) {
     
-    # Function: Update cluster labels ----
+    # Function: Update cluster labels -----------------------------------------
     updateClusterLabels <- function(mydf) {
 
       mysum <- sum(cell_freq[rownames(mydf),]$clustering_prop)
@@ -67,7 +67,7 @@ cycadas <- function() {
         }
       }
       
-      browser()
+      # browser()
 
       output$mynetworkid <- renderVisNetwork({
         visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
@@ -169,32 +169,31 @@ cycadas <- function() {
     # Observe MenutItems ------------------------------------------------------
     observeEvent(input$tabs, {
       
-      # browser()
+      # browser()    
 
       if (exists("df_expr")) {
-        if(input$tabs=="thresholds") { ## Thresholds ----
+        if(input$tabs=="thresholds") { 
 
           if (is.null(reactVals$th) & !is.null(df_expr)) {
             reactVals$th <- kmeansTH(df_expr)
           }
         }
-        else if(input$tabs=="treeannotation") { # Tree annotation ----
+        else if(input$tabs=="treeannotation") { 
 
-          if (exists("reactVals$annotationlist")) {
+          if (!is.null(reactVals$graph)) {
             updatePickerInput(
               session,
               inputId = "parentPicker",
               choices = reactVals$annotationlist
             )
-            
-            
           }
-          if (exists("reactVals$graph"))
+          if (!is.null(reactVals$graph))
             plotTree()  
         }
       }
     })
 
+    # Observe Tree picker -----------------------------------------------------
     observeEvent(input$treePickerPos, {
 
       updateCheckboxGroupButtons(
@@ -218,8 +217,6 @@ cycadas <- function() {
 
     # Create new node ---------------------------------------------------------
     observeEvent(input$createNodeBtn, {
-      
-      # browser()
 
       if (is.null(input$treePickerPos) & is.null(input$treePickerNeg)) {
         print("no selection")
@@ -242,7 +239,6 @@ cycadas <- function() {
       else {
 
         name <- input$newNode
-
         # make sure name is not yet taken
         if(name %in% reactVals$graph$nodes$label) {
           showModal(modalDialog(
@@ -255,7 +251,6 @@ cycadas <- function() {
           return()
         }
 
-        # browser()
         parent <- input$parentPicker
 
         # receive the parent settings, resp. parent hm
@@ -324,7 +319,6 @@ cycadas <- function() {
           plotTree()
 
         }
-
       }
     })
 
@@ -334,33 +328,21 @@ cycadas <- function() {
       # browser()
       
       if (is.null(reactVals$hm)) {
-
-        m <- matrix(0, 6, 6)
-        # pheatmap(m, cluster_cols = F, cluster_rows = F)
         plot(1, type = "n", main = "No Data Available")
-
       }
       else if (nrow(reactVals$hm) == 0) {
         plot(1, type = "n", main = "Node is empty!")
       }
       else if (nrow(reactVals$hm) < 2) {
-        # browser()
-        # pheatmap(reactVals$hm %>% select(-c("cell")), cluster_cols = F, cluster_rows = F)
         pheatmap(reactVals$hm, cluster_cols = F, cluster_rows = F)
       } else {
         message(nrow(reactVals$hm))
-        # browser()
-
-        # pheatmap(reactVals$hm %>% select(-c("cell")), cluster_cols = F)
         pheatmap(reactVals$hm, cluster_cols = F)
       }
     })
 
-
     # Observe Parent Node selection -------------------------------------------
     observeEvent(input$parentPicker, {
-
-      # browser()
 
       node <- reactVals$graph$nodes %>% filter(label == input$parentPicker)
       myid <- node$id
@@ -374,8 +356,6 @@ cycadas <- function() {
       # filter hm by parent cell name
       tmp <- df_expr[df_expr$cell == parent, lineage_marker]
       tmp <- filterHM(tmp, input$treePickerPos, input$treePickerNeg, reactVals$th)
-
-      # tmp <- tmp[tmp$cell == node$label ,]
 
       updateClusterLabels(tmp)
 
@@ -396,7 +376,7 @@ cycadas <- function() {
         disabledChoices = filterNegMarkers
       )
 
-      # update umap plot for Tree ----
+      # update umap plot for Tree
       ClusterSelection <- filterColor(df_expr,tmp)
 
       output$umap_tree <-
@@ -415,9 +395,8 @@ cycadas <- function() {
     })
 
     # Observe node update picker ----------------------------------------------
+    ## Function currently not ins use!
     observeEvent(input$updateNodePicker, {
-
-      # browser()
 
       node <- reactVals$graph$nodes %>% filter(label == input$updateNodePicker)
       myid <- node$id
@@ -472,9 +451,8 @@ cycadas <- function() {
 
       reactVals$hm <- reactVals[reactVals$cell == input$parentPicker, ]
 
-      # if "newNode" textfield is ot empty, update the node name
+      # if "newNode" text-field is not empty, update the node name
       if (input$newNode != "") {
-        # browser()
 
         old_name <- input$parentPicker
         new_name <- input$newNode
@@ -500,7 +478,6 @@ cycadas <- function() {
           value = "",
           placeholder = NULL
         )
-
       }
 
       plotTree()
@@ -509,11 +486,7 @@ cycadas <- function() {
     # Delete Node -------------------------------------------------------------
     observeEvent(input$deleteNodeBtn, {
 
-      # browser()
-
-      # node <- reactVals$graph$nodes %>% filter(label == input$updateNodePicker)
       node <- reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker, ]
-
       # check and make sure that this node is a leaf node
       if(TRUE %in% (reactVals$graph$edges$to == node$id)) {
 
@@ -525,7 +498,6 @@ cycadas <- function() {
         ))
 
         return()
-
       }
       else {
 
@@ -537,20 +509,14 @@ cycadas <- function() {
         # In case there is a empty node with no the filtered clusters
         # we do not assign any labeling
         if( dim(df_expr[df_expr$cell == node$label,])[1] >0 ) {
-
+          
           df_expr[df_expr$cell == node$label,]$cell <<- parent_label
-
         }
 
-        browser()
-        
+        # Remove label form annotation list
         tmplist <- reactVals$annotationlist 
-        
         tmplist <- tmplist[!tmplist == node$label]
-        
         reactVals$annotationlist <- tmplist
-        
-        # reactVals$annotationlist[reactVals$annotationlist == node$label] <- NULL
 
         updatePickerInput(
           session,
@@ -580,7 +546,6 @@ cycadas <- function() {
         reactVals$graph <- delete_leaf_node(reactVals$graph, node$id)
         plotTree()
       }
-
     })
 
 
@@ -610,14 +575,16 @@ cycadas <- function() {
       df_edges <- read.csv(input$fEdges$datapath)
       # df_anno <- read.csv(input$fAnno$datapath)
 
-      df_nodes$pm[is.na(df_nodes$pm)] <- ""
-      df_nodes$pm <- strsplit(df_nodes$pm, "\\|")
-
-      df_nodes$nm[is.na(df_nodes$nm)] <- ""
-      df_nodes$nm <- strsplit(df_nodes$nm, "\\|")
-
-      reactVals$graph$nodes <- df_nodes
-      reactVals$graph$edges <- df_edges
+      # df_nodes$pm[is.na(df_nodes$pm)] <- ""
+      # df_nodes$pm <- strsplit(df_nodes$pm, "\\|")
+      # 
+      # df_nodes$nm[is.na(df_nodes$nm)] <- ""
+      # df_nodes$nm <- strsplit(df_nodes$nm, "\\|")
+      # 
+      # reactVals$graph$nodes <- df_nodes
+      # reactVals$graph$edges <- df_edges
+      
+      reactVals$graph <- getGraphFromLoad(df_nodes, df_edges)
       
       reactVals <- rebuiltTree(reactVals)
 
@@ -1283,7 +1250,6 @@ cycadas <- function() {
       
       loadDemoData(pathExpr, pathFreq)
       
-      
       updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
 
       updateCheckboxGroupButtons(
@@ -1310,7 +1276,6 @@ cycadas <- function() {
     
     # Upload Annotated Expr Demo Data -----------------------------------------
     observeEvent(input$btnLoadAnnoData, {
-      
       
       pathExpr <- "data/demo_data/median_expr_1600.csv"
       pathFreq <- "data/demo_data/cluster_freq_1600.csv"
@@ -1358,15 +1323,8 @@ cycadas <- function() {
       df_nodes <- read.csv("data/demo_data/nodesTable_data.csv")
       df_edges <- read.csv("data/demo_data/edgesTable_data.csv")
 
-      df_nodes$pm[is.na(df_nodes$pm)] <- ""
-      df_nodes$pm <- strsplit(df_nodes$pm, "\\|")
+      reactVals$graph <- getGraphFromLoad(df_nodes, df_edges)
 
-      df_nodes$nm[is.na(df_nodes$nm)] <- ""
-      df_nodes$nm <- strsplit(df_nodes$nm, "\\|")
-
-      reactVals$graph$nodes <- df_nodes
-      reactVals$graph$edges <- df_edges
-      
       df_expr$cell <<- rebuiltTree(reactVals$graph, df_expr, reactVals$th)
       reactVals$annotationlist <- df_nodes$label
 

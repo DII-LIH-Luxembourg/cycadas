@@ -209,7 +209,17 @@ initTree <- function() {
   edges <- data.frame(from = c(1), to = c(1))
   
   return (list(nodes = nodes, edges = edges))
+}
+
+getGraphFromLoad <- function(df_nodes, df_edges) {
   
+  df_nodes$pm[is.na(df_nodes$pm)] <- ""
+  df_nodes$pm <- strsplit(df_nodes$pm, "\\|")
+  
+  df_nodes$nm[is.na(df_nodes$nm)] <- ""
+  df_nodes$nm <- strsplit(df_nodes$nm, "\\|")
+  
+  return (list(nodes = df_nodes, edges = df_edges))
 }
 
 
