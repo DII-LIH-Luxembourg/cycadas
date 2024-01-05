@@ -18,7 +18,7 @@ cycadas <- function() {
   # browser()
 
   reactVals <- reactiveValues(th = NULL,
-                              myTH = NULL,
+                              myTH = NULL, # user selected threshold
                               md = NULL,
                               counts_table = NULL,
                               DA_result_table = NULL,
@@ -67,7 +67,7 @@ cycadas <- function() {
         }
       }
       
-      # browser()
+      browser()
 
       output$mynetworkid <- renderVisNetwork({
         visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
@@ -165,7 +165,8 @@ cycadas <- function() {
       at <<- reactiveValues(data = annotaionDF, dr_umap = dr_umap)
 
     })
-    # Observe MenutItems ----
+    
+    # Observe MenutItems ------------------------------------------------------
     observeEvent(input$tabs, {
       
       # browser()
@@ -179,19 +180,17 @@ cycadas <- function() {
         }
         else if(input$tabs=="treeannotation") { # Tree annotation ----
 
-          # browser()
-          updatePickerInput(
-            session,
-            inputId = "parentPicker",
-            choices = reactVals$annotationlist
-          )
-          # updatePickerInput(
-          #   session,
-          #   inputId = "updateNodePicker",
-          #   choices = reactVals$annotationlist,
-          #   selected = ""
-          # )
-          plotTree()
+          if (exists("reactVals$annotationlist")) {
+            updatePickerInput(
+              session,
+              inputId = "parentPicker",
+              choices = reactVals$annotationlist
+            )
+            
+            
+          }
+          if (exists("reactVals$graph"))
+            plotTree()  
         }
       }
     })
@@ -333,8 +332,18 @@ cycadas <- function() {
     output$hm_tree <- renderPlot({
       
       # browser()
+      
+      if (is.null(reactVals$hm)) {
 
-      if (nrow(reactVals$hm) < 2) {
+        m <- matrix(0, 6, 6)
+        # pheatmap(m, cluster_cols = F, cluster_rows = F)
+        plot(1, type = "n", main = "No Data Available")
+
+      }
+      else if (nrow(reactVals$hm) == 0) {
+        plot(1, type = "n", main = "Node is empty!")
+      }
+      else if (nrow(reactVals$hm) < 2) {
         # browser()
         # pheatmap(reactVals$hm %>% select(-c("cell")), cluster_cols = F, cluster_rows = F)
         pheatmap(reactVals$hm, cluster_cols = F, cluster_rows = F)
@@ -405,7 +414,7 @@ cycadas <- function() {
         )
     })
 
-    # Observe node update picker ----
+    # Observe node update picker ----------------------------------------------
     observeEvent(input$updateNodePicker, {
 
       # browser()
@@ -447,7 +456,7 @@ cycadas <- function() {
         value = node$label)
     })
 
-    # Update Node ----
+    # Update Node -------------------------------------------------------------
     observeEvent(input$updateNodeBtn, {
 
       node <- reactVals$graph$nodes %>% filter(label == input$parentPicker)
@@ -472,12 +481,12 @@ cycadas <- function() {
 
         reactVals$graph$nodes[reactVals$graph$nodes$label == old_name,]$label <- new_name
 
-        annotationlist[annotationlist == old_name] <<- new_name
+        reactVals$annotationlist[reactVals$annotationlist == old_name] <<- new_name
         updatePickerInput(
           session,
           inputId = "parentPicker",
           selected = new_name,
-          choices = annotationlist
+          choices = reactVals$annotationlist
         )
 
         # replace name in heatmap
@@ -497,7 +506,7 @@ cycadas <- function() {
       plotTree()
     })
 
-    # Delete Node ----
+    # Delete Node -------------------------------------------------------------
     observeEvent(input$deleteNodeBtn, {
 
       # browser()
@@ -527,13 +536,21 @@ cycadas <- function() {
 
         # In case there is a empty node with no the filtered clusters
         # we do not assign any labeling
-        if( dim(reactVals[reactVals$cell == node$label,])[1] >0 ) {
+        if( dim(df_expr[df_expr$cell == node$label,])[1] >0 ) {
 
-          reactVals[reactVals$cell == node$label,]$cell <<- parent_label
+          df_expr[df_expr$cell == node$label,]$cell <<- parent_label
 
         }
 
-        reactVals$annotationlist[reactVals$annotationlist == node$label] <<- NULL
+        browser()
+        
+        tmplist <- reactVals$annotationlist 
+        
+        tmplist <- tmplist[!tmplist == node$label]
+        
+        reactVals$annotationlist <- tmplist
+        
+        # reactVals$annotationlist[reactVals$annotationlist == node$label] <- NULL
 
         updatePickerInput(
           session,
@@ -1356,6 +1373,7 @@ cycadas <- function() {
       reactVals$hm <- df_expr[, lineage_marker]
 
     })
+    
   }
 
   shinyApp(
