@@ -15,17 +15,16 @@ for (package in packages_to_install) {
 
 cycadas <- function() {
 
-  # browser()
-
   reactVals <- reactiveValues(th = NULL,
                               myTH = NULL, # user selected threshold
                               md = NULL,
                               counts_table = NULL,
                               DA_result_table = NULL,
                               DA_interactive_table = NULL,
+                              myNode = "", # selected node for interactive DA
                               graph = NULL,
                               hm = NULL,
-                              merged_prop_table = NULL,
+                              # merged_prop_table = NULL,
                               annotationlist = NULL
                               )
   
@@ -37,6 +36,7 @@ cycadas <- function() {
   # Server function -------------------------
   server = function(input, output, session) {
     
+
     # Load Expression Data and UMAP -------------------------------------------------
     loadExprData <- function(path_expr, path_freq) {
       
@@ -68,6 +68,8 @@ cycadas <- function() {
       
     }
     
+    # This initializes the checkboxes and thresholds at start of a new 
+    # Project or for the non-annotated demo data
     # Init the checkboxes and generate the Thresholds -------------------------
     initExprData <- function() {
       
@@ -123,8 +125,6 @@ cycadas <- function() {
           reactVals$graph$nodes[i,]$color <- "blue"
         }
       }
-      
-      # browser()
 
       output$mynetworkid <- renderVisNetwork({
         visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
@@ -145,28 +145,6 @@ cycadas <- function() {
       loadExprData(pathExpr, pathFreq)
       
       initExprData()
-      # 
-      # updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
-      # 
-      # updateCheckboxGroupButtons(
-      #   session,
-      #   inputId = "treePickerPos",
-      #   choices = lineage_marker,
-      #   selected = NULL
-      # )
-      # updateCheckboxGroupButtons(
-      #   session,
-      #   inputId = "treePickerNeg",
-      #   choices = lineage_marker,
-      #   selected = NULL
-      # )
-      # 
-      # posPickerList <<- lineage_marker
-      # 
-      # updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
-      # 
-      # reactVals$th <- kmeansTH(df_expr[, lineage_marker])
-      # reactVals$annotationlist <- c("Unassigned")
     })
     
     # Observe MenutItems ------------------------------------------------------
@@ -240,7 +218,6 @@ cycadas <- function() {
         ))
       }
       else {
-
         name <- input$newNode
         # make sure name is not yet taken
         if(name %in% reactVals$graph$nodes$label) {
@@ -250,7 +227,6 @@ cycadas <- function() {
             easyClose = TRUE,
             footer = NULL
           ))
-
           return()
         }
 
@@ -271,7 +247,7 @@ cycadas <- function() {
             footer = NULL
           ))
           return()
-
+          
         } else {
 
           reactVals$annotationlist <- append(reactVals$annotationlist, name)
@@ -320,16 +296,13 @@ cycadas <- function() {
           updateClusterLabels(tmp)
 
           plotTree()
-
         }
       }
     })
 
     # Annotation heatmap plot -------------------------------------------------
     output$hm_tree <- renderPlot({
-      
-      # browser()
-      
+
       if (is.null(reactVals$hm)) {
         plot(1, type = "n", main = "No Data Available")
       }
@@ -439,6 +412,7 @@ cycadas <- function() {
     })
 
     # Update Node -------------------------------------------------------------
+    ## Function currently not ins use!
     observeEvent(input$updateNodeBtn, {
 
       node <- reactVals$graph$nodes %>% filter(label == input$parentPicker)
@@ -551,53 +525,26 @@ cycadas <- function() {
       }
     })
 
-
-    importNodes <- function(id, label, pm, nm, parent_id, color) {
-
-      if(id == parent_id) {return()}
-
-      parent_row <- reactVals$graph$nodes %>% filter(id == parent_id)
-      parent_name <- parent_row$label
-
-      add_node(reactVals$graph, parent_name, label, color)
-    }
-
-    # Load Annotation Tree ----
+    # Load Annotation Tree ----------------------------------------------------
     observeEvent(input$btnImportTree, {
-
-      # browser()
 
       req(input$fNodes)
       req(input$fEdges)
-      # req(input$fAnno)
-
       req(input$fMarkerExpr)
       req(input$cluster_freq)
 
       df_nodes <- read.csv(input$fNodes$datapath)
       df_edges <- read.csv(input$fEdges$datapath)
-      # df_anno <- read.csv(input$fAnno$datapath)
-
-      # df_nodes$pm[is.na(df_nodes$pm)] <- ""
-      # df_nodes$pm <- strsplit(df_nodes$pm, "\\|")
-      # 
-      # df_nodes$nm[is.na(df_nodes$nm)] <- ""
-      # df_nodes$nm <- strsplit(df_nodes$nm, "\\|")
-      # 
-      # reactVals$graph$nodes <- df_nodes
-      # reactVals$graph$edges <- df_edges
       
       reactVals$graph <- getGraphFromLoad(df_nodes, df_edges)
       
-      reactVals <- rebuiltTree(reactVals)
-
-      # df01Tree <<- df_anno
-
-      annotationlist <<- as.list(df_nodes$label)
-
+      df_expr$cell <<- rebuiltTree(reactVals$graph, df_expr, reactVals$th)
+      
+      reactVals$annotationlist <<- as.list(df_nodes$label)
     })
 
 
+    # TODO: find a method to get a good resolution output
     observeEvent(input$exportTreeGraphics, {
 
       # browser()
@@ -611,7 +558,7 @@ cycadas <- function() {
 
     })
 
-    # Export Annotation Tree ----
+    # Export Annotation Tree --------------------------------------------------
     output$exportAnnotationBtn <- downloadHandler(
 
       filename = function(){
@@ -624,7 +571,6 @@ cycadas <- function() {
         export_df_nodes <- reactVals$graph$nodes
         # Use apply() to concatenate the pm column for each row of the nodes dataframe
         pm_concatenated <- apply(export_df_nodes, 1, function(row) {
-
           pm_vector <- unlist(row["pm"])
           pm_vector <- paste(pm_vector, collapse = "|")
         })
@@ -637,9 +583,7 @@ cycadas <- function() {
         # Add the concatenated pm column as a new column to the nodes dataframe
         export_df_nodes$pm <- pm_concatenated
         export_df_nodes$nm <- nm_concatenated
-        
-        # browser()
-        
+
         export_freq <- data.frame(cluster=1:length(annotaionDF$cell),
                                   clustering_prop = annotaionDF$clusterSize)
 
@@ -647,9 +591,6 @@ cycadas <- function() {
                               nodesTable = export_df_nodes,
                               edgesTable = reactVals$graph$edges,
                               freq = export_freq)
-        # download_list <- list(annTable = df01Tree["cell"],
-        #                       nodesTable = export_df_nodes,
-        #                       edgesTable = reactVals$graph$edges)
 
         download_list %>%
           imap(function(x,y){
@@ -668,9 +609,8 @@ cycadas <- function() {
       contentType = "application/zip"
     )
 
-    ##
-    # Server - Thresholds Tab -------------------------------------------------
-    ##
+    # Output Thresholds Tab ---------------------------------------------------
+
     output$table = renderDataTable(
       reactVals$th[, c("cell", "threshold", "bi_mod")],
       editable = F,
@@ -688,11 +628,9 @@ cycadas <- function() {
       )
     )
 
-    ## react to selected rows in thresholds list: -----------------------------
-    ## from marker, plot the expression in scatterplot or histogram
+    # Observe marker selection in Thresholds Table ---------------------------
+    # from marker, plot the expression in scatterplot or histogram
     observeEvent(input$table_rows_selected, {
-
-      # browser()
 
       selRow <- reactVals$th[input$table_rows_selected,]
       myTH <- reactVals$th[input$table_rows_selected, "threshold"]
@@ -702,16 +640,10 @@ cycadas <- function() {
       marker_expr <- cbind(marker_expr, rnorm(1:nrow(marker_expr)))
       
       PlottingThreshold(marker_expr, myTH, myColor)
-
-      # myRenderFunction(marker_expr, selRow$threshold, selRow$color)
     })
     
-    ##
     # Observe click scatterplot -----------------------------------------------
-    ##
     observeEvent(input$plot_click, {
-
-      # browser()
 
       req(input$table_rows_selected)
       selRow <- reactVals$th[input$table_rows_selected,]
@@ -728,11 +660,10 @@ cycadas <- function() {
       df_expr$cell <<- rebuiltTree(reactVals$graph, df_expr, reactVals$th)
     })
 
-    ##
-    # PlottingThreshold  function ---------------------------------------------
-    ##
+    # Plotting Threshold  function --------------------------------------------
     PlottingThreshold <- function(me, myTH, myCol){
 
+      # Scatterplot
       output$plot <- renderPlot({
         set.seed(1)
 
@@ -752,7 +683,8 @@ cycadas <- function() {
                      size=1.5)
 
       })
-      #
+      
+      # Histogram
       output$plot2 <- renderPlot({
 
         ggplot(me, aes_string(x = me[, 1])) +
@@ -769,14 +701,6 @@ cycadas <- function() {
       })
     }
 
-
-    # Load the annotation file ------------------------------------------------
-    # observeEvent(input$annTable,{
-    #   annData <<- read.csv(input$annTable$datapath)
-    #   annData$X <- NULL
-    #   at$data <- annData
-    # })
-    
     # Save the DA Table -------------------------------------------------------
     output$exportDA <- downloadHandler(
       filename = function() {
@@ -787,7 +711,7 @@ cycadas <- function() {
       }
     )
     
-    # get_merged_prop_table ---------------------------------------------------
+    # Get the merged phenotypes as proportion table  --------------------------
     get_merged_prop_table <- function() {
       
       req(reactVals$counts_table)
@@ -818,11 +742,8 @@ cycadas <- function() {
       }
     )
     
-
     # Load the marker threshold file ---------------------------------------
     observeEvent(input$fTH,{
-
-      # browser()
 
       th <<- read.csv(input$fTH$datapath)
       th$X <- NULL
@@ -831,15 +752,11 @@ cycadas <- function() {
       th[th$bi_mod < 0.555, "color"] <- "red"
 
       rownames(th) <- th$cell
-
       reactVals$th<- th
       
       # re-calculate the tree after threshold upload
       req(input$fMarkerExpr)
-      
-      reactVals <- rebuiltTree(reactVals)
-      
-
+      df_expr$cell <<- rebuiltTree(reactVals$graph, df_expr, reactVals$th)
     })
 
     # Load the metadata ----------------------------------------------------
@@ -856,88 +773,6 @@ cycadas <- function() {
       reactVals$counts_table <- ct
     })
 
-    ## create Phenotype name from picker e.g. CD4+CD8+CD19 --------------------
-    # observeEvent(input$myPickerPos, {
-    #   output$r1 <- renderText(setPhenotypeName(input$myPickerPos, "pos", ph_name))
-    # })
-    # observeEvent(input$myPickerNeg, {
-    #   output$r2 <- renderText(setPhenotypeName(input$myPickerNeg, "neg", ph_name))
-    # })
-
-    ## Annotation Table -------------------------------------------------------
-    # observeEvent(c(input$myPickerPos, input$myPickerNeg, reactVals$th),{
-    #   req(input$fMarkerExpr)
-    #   req(input$cluster_freq)
-    # 
-    #   tmp=filterHM(df01,input$myPickerPos, input$myPickerNeg, reactVals$th)
-    # 
-    #   # update myDF to the filtered HM
-    #   myDF <<- tmp
-    # 
-    #   mydf=annotaionDF[rownames(tmp),]
-    #   rownames(mydf)=rownames(tmp)
-    # 
-    #   # update heatmap plot ----
-    #   output$hm <- renderPlot({
-    #     if (dim(tmp)[1] < 2) {
-    #       pheatmap(tmp, cluster_cols = F, cluster_rows = F)
-    #     } else {
-    #       message(dim(tmp)[1])
-    #       pheatmap(tmp, cluster_cols = F)
-    #     }
-    #   })
-    # 
-    #   # update umap plot ----
-    #   myColor <- filterColor(df_global,tmp)
-    #   Temp1<<-myColor
-    #   Temp2<<-dr_umap
-    # 
-    #   output$umap <-
-    #     renderPlot(
-    #       ggplot(dr_umap, aes(
-    #         x = u1, y = u2, color = myColor
-    #       )) +
-    #         geom_point(size = 1.0) +
-    #         theme_bw() +
-    #         theme(legend.text = element_text(size =
-    #                                            8)) +
-    #         guides(color = guide_legend(override.aes = list(size = 4)))
-    #     )
-    #   # update table ----
-    #   output$tableAnnotation <- DT::renderDT(
-    #     at$data,
-    #     extensions = c('Buttons', 'Scroller'),
-    #     options = list(
-    #       dom = 'Bfrtip',
-    #       buttons = c('csv'),
-    #       paging = FALSE
-    #     )
-    #   )
-    # 
-    #   # update valueboxes ----
-    #   mysum <- sum(mydf$clusterSize)
-    #   output$progressBox <- renderValueBox({
-    #     valueBox(paste0(mysum, "%"), "Selected", icon = icon("list"),color = "purple")
-    #   })
-    #   output$progressBox2 <- renderValueBox({
-    #     valueBox(dim(mydf)[1], "Cluster", icon = icon("list"),color = "purple")
-    #   })
-    # })
-
-    # Set Phenotype names -----------------------------------------------------
-    # observeEvent(input$btnSetType, {
-    # 
-    #   # if cluster has already been assigned, add the new name after
-    #   for (n in rownames(myDF)) {
-    #     if (at$data[n, "cell"] == "unassigned") {
-    #       at$data[n, "cell"] <- input$phenotype
-    #     } else(
-    #       at$data[n, "cell"] <- paste0(at$data[n, "cell"], "_", input$phenotype)
-    #     )
-    # 
-    #   }
-    # })
-
     # UMAP interactive Tab ----------------------------------------------------
     output$umap2 <- renderPlot(
       ggplot(dr_umap, aes(x = u1, y = u2)) +
@@ -952,6 +787,7 @@ cycadas <- function() {
 
     # Heatmap from UMAP selection ---------------------------------------------
     output$hm2 <- renderPlot({
+      
       my_new_hm <- round(brushedPoints(dr_umap, input$umap2_brush), 2)
 
       if (dim(my_new_hm)[1] > 0) {
@@ -1019,9 +855,9 @@ cycadas <- function() {
         reactVals$DA_result_table
       )
 
-    ## Do the differential abundance ------------------------------------------
+    # Do the differential abundance ------------------------------------------
     observeEvent(input$doDA, {
-      # browser()
+      
       req(reactVals$counts_table, reactVals$md)
 
       countsTable <- reactVals$counts_table
@@ -1035,12 +871,12 @@ cycadas <- function() {
 
       props_table <- t(t(countsTable) / colSums(countsTable)) * 100
 
-      # mm <- match(md$sample_id, colnames(props_table))
       mm <- match(colnames(props_table), md$sample_id)
 
       tmp_cond <- md$condition[mm]
 
       DA_df <- data.frame()
+      
       for (i in 1:nrow(props_table)) {
         foo <- pairwise.wilcox.test(as.numeric(props_table[i,]), tmp_cond, p.adjust.method=input$correction_method)
 
@@ -1050,7 +886,6 @@ cycadas <- function() {
 
       }
 
-      # browser()
       # change the name of nodes:
       # if node has children add "_remaining"
       my_list <- lapply(DA_df$cell, function(x) {
@@ -1073,7 +908,7 @@ cycadas <- function() {
 
     })
 
-    # Render interactive Tree
+    # Render interactive Tree -------------------------------------------------
     output$interactiveTree <- renderVisNetwork({
       visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
         visEvents(select = "function(nodes) {
@@ -1081,23 +916,33 @@ cycadas <- function() {
                 ;}")
     })
 
-    myNode <- reactiveValues(selected = '')
+    # myNode <- reactiveValues(selected = '')
 
     observeEvent(input$current_node_id, {
-      myNode$selected <<- input$current_node_id
+      reactVals$myNode <- input$current_node_id
     })
 
-    output$selectedNode <- renderText({myNode$selected})
+    output$selectedNode <- renderText({reactVals$myNode})
 
     output$DA_interactive_table <- renderTable({
+      
+      # first check if a node is selected:
+      # TODO:
+      # reactVals$myNode != ""
+      # if (reactVals$myNode == "") {
+      #   
+      #   
+      # }
 
       # browser()
-      children <- all_my_children(reactVals$graph, myNode$selected)
+      children <- all_my_children(reactVals$graph, reactVals$myNode)
 
       if (!is.null(children)) {
-        selected_labels <- c(reactVals$graph$nodes$label[children], reactVals$graph$nodes$label[myNode$selected])
+        selected_labels <- c(reactVals$graph$nodes$label[children], reactVals$graph$nodes$label[reactVals$myNode])
       } else {
-        selected_labels <- reactVals$graph$nodes$label[myNode$selected]
+        selected_labels <- reactVals$graph$nodes$label[reactVals$myNode]
+        # TODO: find a better method 
+        # selected_labels <- "Unassigned"
       }
 
       # browser()
@@ -1140,7 +985,7 @@ cycadas <- function() {
       foo <- pairwise.wilcox.test(props_table, tmp_cond, p.adjust.method="none")
 
       df <- subset(melt(foo$p.value), value!=0)
-      df$cell <- reactVals$graph$nodes$label[myNode$selected]
+      df$cell <- reactVals$graph$nodes$label[reactVals$myNode]
       DA_df <- rbind(DA_df, as.data.frame(df))
 
       colnames(DA_df) <- c("Var1", "Var2", "p-value", "Cell")
@@ -1150,68 +995,77 @@ cycadas <- function() {
 
     # Boxplot of interactive DA selection -------------------------------------
     output$boxplot <- renderPlot({
-
-      # browser()
-      children <- all_my_children(reactVals$graph, myNode$selected)
-
-      if (!is.null(children)) {
-        selected_labels <- c(reactVals$graph$nodes$label[children], reactVals$graph$nodes$label[myNode$selected])
+      
+      # first check if a node is selected:
+      # TODO:
+      # reactVals$myNode != ""
+      if (reactVals$myNode == "") {
+        
+        plot(1, type = "n", main = "No Data Available")
       } else {
-        selected_labels <- reactVals$graph$nodes$label[myNode$selected]
+        
+        
+        # browser()
+        children <- all_my_children(reactVals$graph, reactVals$myNode)
+        
+        if (!is.null(children)) {
+          selected_labels <- c(reactVals$graph$nodes$label[children], reactVals$graph$nodes$label[reactVals$myNode])
+        } else {
+          selected_labels <- reactVals$graph$nodes$label[reactVals$myNode]
+        }
+        
+        # browser()
+        countsTable <- reactVals$counts_table
+        ## aggregate the clusters by name:
+        countsTable['cell'] <- df_expr$cell
+        # merge and aggregate by cell
+        countsTable <- aggregate(. ~ cell, countsTable, sum)
+        
+        rownames(countsTable) <- countsTable$cell
+        countsTable$cell <- NULL
+        
+        # countsTable <- countsTable[selected_labels,]
+        
+        props_table <- t(t(countsTable) / colSums(countsTable)) * 100
+        
+        # check if any of the nodes is empty and therefore not in the props table
+        # this cause the
+        # make sure that sleecte labels are larger than on, otherwise it is
+        # not a vector and treat it as single value
+        if (length(selected_labels) > 1) {
+          filter_vec <- selected_labels %in% rownames(props_table)
+          props_table <- props_table[selected_labels[filter_vec],]
+        }
+        else {
+          props_table <- t(as.data.frame(props_table[selected_labels,]))
+        }
+        
+        ## subest the prps tabel based on the selected node
+        # props_table <- props_table[selected_labels, ]
+        
+        props_table <- as.data.frame(colSums(props_table))
+        
+        
+        # mm <- match(md$sample_id, rownames(props_table))
+        mm <- match(rownames(props_table), md$sample_id)
+        
+        props_table$cond <- md$condition[mm]
+        
+        names(props_table) <- c("value", "cond")
+        
+        ggplot(props_table, aes(x = cond, y = value, fill=cond))+
+          geom_boxplot(outlier.shape = NA) +
+          geom_jitter(width = 0.2) +
+          xlab("Condition") +
+          ylab("Proportion") +
+          theme(plot.title = element_text(size = 22),
+                axis.text = element_text(size = 12),
+                legend.text = element_text(size = 14),
+                legend.title = element_text(size = 20),
+                axis.title.x = element_text(size = 20),
+                axis.title.y = element_text(size = 20)) +
+          ggtitle(reactVals$graph$nodes$label[reactVals$myNode])
       }
-
-      # browser()
-      countsTable <- reactVals$counts_table
-      ## aggregate the clusters by name:
-      countsTable['cell'] <- df_expr$cell
-      # merge and aggregate by cell
-      countsTable <- aggregate(. ~ cell, countsTable, sum)
-
-      rownames(countsTable) <- countsTable$cell
-      countsTable$cell <- NULL
-
-      # countsTable <- countsTable[selected_labels,]
-
-      props_table <- t(t(countsTable) / colSums(countsTable)) * 100
-
-      # check if any of the nodes is empty and therefore not in the props table
-      # this cause the
-      # make sure that sleecte labels are larger than on, otherwise it is
-      # not a vector and treat it as single value
-      if (length(selected_labels) > 1) {
-        filter_vec <- selected_labels %in% rownames(props_table)
-        props_table <- props_table[selected_labels[filter_vec],]
-      }
-      else {
-        props_table <- t(as.data.frame(props_table[selected_labels,]))
-      }
-
-      ## subest the prps tabel based on the selected node
-      # props_table <- props_table[selected_labels, ]
-
-      props_table <- as.data.frame(colSums(props_table))
-
-
-      # mm <- match(md$sample_id, rownames(props_table))
-      mm <- match(rownames(props_table), md$sample_id)
-
-      props_table$cond <- md$condition[mm]
-
-      names(props_table) <- c("value", "cond")
-
-      ggplot(props_table, aes(x = cond, y = value, fill=cond))+
-        geom_boxplot(outlier.shape = NA) +
-        geom_jitter(width = 0.2) +
-        xlab("Condition") +
-        ylab("Proportion") +
-        theme(plot.title = element_text(size = 22),
-              axis.text = element_text(size = 12),
-              legend.text = element_text(size = 14),
-              legend.title = element_text(size = 20),
-              axis.title.x = element_text(size = 20),
-              axis.title.y = element_text(size = 20)) +
-        ggtitle(reactVals$graph$nodes$label[myNode$selected])
-
 
     })
     
@@ -1255,29 +1109,6 @@ cycadas <- function() {
       loadExprData(pathExpr, pathFreq)
       
       initExprData()
-      
-      # updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
-      # 
-      # updateCheckboxGroupButtons(
-      #   session,
-      #   inputId = "treePickerPos",
-      #   choices = lineage_marker,
-      #   selected = NULL
-      # )
-      # updateCheckboxGroupButtons(
-      #   session,
-      #   inputId = "treePickerNeg",
-      #   choices = lineage_marker,
-      #   selected = NULL
-      # )
-      # 
-      # posPickerList <<- lineage_marker
-      # 
-      # updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
-      # 
-      # reactVals$th <- kmeansTH(df_expr[, lineage_marker])
-      # reactVals$annotationlist <- c("Unassigned")
-
     })
     
     # Upload Annotated Expr Demo Data -----------------------------------------
