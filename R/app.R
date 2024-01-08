@@ -24,7 +24,6 @@ cycadas <- function() {
                               myNode = "", # selected node for interactive DA
                               graph = NULL,
                               hm = NULL,
-                              # merged_prop_table = NULL,
                               annotationlist = NULL
                               )
   
@@ -822,10 +821,11 @@ cycadas <- function() {
     # UMAP Marker Expression Tab ----------------------------------------------
     output$umap3 <-
       renderPlot(
+        
         ggplot(dr_umap, aes_string(
           x = "u1",
           y = "u2",
-          color = input$markerSelect
+          color = paste0(input$markerSelect, "_raw")
         )) +
           geom_point(size = 1.0) +
           theme_bw() +
@@ -1100,7 +1100,7 @@ cycadas <- function() {
       
     }
 
-    # Upload expression Demo Data ---------------------------------------------
+    # Upload Expression Demo Data ---------------------------------------------
     observeEvent(input$btnLoadDemoData, {
 
       pathExpr <- "data/demo_data/median_expr_1600.csv"
