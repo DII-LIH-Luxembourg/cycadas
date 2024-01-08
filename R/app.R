@@ -128,9 +128,70 @@ cycadas <- function() {
       output$mynetworkid <- renderVisNetwork({
         visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
           visEdges(arrows = "from") %>%
-          visHierarchicalLayout()
+          visHierarchicalLayout() %>%
+          visEvents(select = "function(nodes) {
+                Shiny.onInputChange('parent_node_id', nodes.nodes);
+                ;}")
       })
     }
+    
+    # Observe Prent Node selection --------------------------------------------
+    observeEvent(input$parent_node_id, {
+      
+      # browser()
+      
+      myid <- input$parent_node_id
+      
+      node <- reactVals$graph$nodes %>% filter(id == myid)
+      # myid <- node$id
+      
+      filterPosMarkers <- unlist(node$pm)
+      filterNegMarkers <- unlist(node$nm)
+      
+      parent <- node$label
+      
+      # receive the parent settings, resp. parent hm
+      # filter hm by parent cell name
+      tmp <- df_expr[df_expr$cell == parent, lineage_marker]
+      tmp <- filterHM(tmp, input$treePickerPos, input$treePickerNeg, reactVals$th)
+      
+      updateClusterLabels(tmp)
+      
+      reactVals$hm <- tmp
+      
+      updateCheckboxGroupButtons(
+        session,
+        inputId = "treePickerPos",
+        choices = lineage_marker,
+        selected = NULL,
+        disabledChoices = filterPosMarkers
+      )
+      updateCheckboxGroupButtons(
+        session,
+        inputId = "treePickerNeg",
+        choices = lineage_marker,
+        selected = NULL,
+        disabledChoices = filterNegMarkers
+      )
+      
+      # update umap plot for Tree
+      ClusterSelection <- filterColor(df_expr,tmp)
+      
+      output$umap_tree <-
+        renderPlot(
+          ggplot(dr_umap, aes(
+            x = u1, y = u2, color = ClusterSelection
+          )) +
+            geom_point(size = 1.0) +
+            theme_bw() +
+            theme(legend.text = element_text(size = 12),
+                  legend.title = element_text(size = 20),
+                  axis.text = element_text(size = 12),
+                  axis.title = element_text(size = 20)) +
+            guides(color = guide_legend(override.aes = list(size = 4)))
+        )
+      
+    })
 
     # Load the marker expression file ---------------------------------------
     observeEvent(c(input$fMarkerExpr, input$cluster_freq), {
@@ -921,8 +982,7 @@ cycadas <- function() {
                 ;}")
     })
 
-    # myNode <- reactiveValues(selected = '')
-
+    # Observe Interactive DA node selection -----------------------------------
     observeEvent(input$current_node_id, {
       reactVals$myNode <- input$current_node_id
       
@@ -930,19 +990,9 @@ cycadas <- function() {
     })
 
     output$selectedNode <- renderText({reactVals$myNode})
-
-    # output$DA_interactive_table <- renderTable({
     
     doInteractiveDA <- function() {  
-      # first check if a node is selected:
-      # TODO:
-      # reactVals$myNode != ""
-      # if (reactVals$myNode == "") {
-      #   
-      #   
-      # }
 
-      # browser()
       children <- all_my_children(reactVals$graph, reactVals$myNode)
 
       if (!is.null(children)) {
