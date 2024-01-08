@@ -135,20 +135,31 @@ cycadas <- function() {
       })
     }
     
-    # Observe Prent Node selection --------------------------------------------
-    observeEvent(input$parent_node_id, {
+    # Parent Node selection ---------------------------------------------------
+    parentNodeSelection <- function(selectMethod, nodeID=0, nodeName="") {
       
-      # browser()
-      
-      myid <- input$parent_node_id
-      
-      node <- reactVals$graph$nodes %>% filter(id == myid)
-      # myid <- node$id
-      
-      filterPosMarkers <- unlist(node$pm)
-      filterNegMarkers <- unlist(node$nm)
-      
-      parent <- node$label
+      if (selectMethod == "picker") {
+        
+        node <- reactVals$graph$nodes %>% filter(label == nodeName)
+        myid <- node$id
+        
+        filterPosMarkers <- unlist(node$pm)
+        filterNegMarkers <- unlist(node$nm)
+        
+        parent <- input$parentPicker
+        
+      } else {
+        
+        myid <- nodeID
+        
+        node <- reactVals$graph$nodes %>% filter(id == myid)
+        
+        filterPosMarkers <- unlist(node$pm)
+        filterNegMarkers <- unlist(node$nm)
+        
+        parent <- node$label
+        
+      }
       
       # receive the parent settings, resp. parent hm
       # filter hm by parent cell name
@@ -191,6 +202,13 @@ cycadas <- function() {
             guides(color = guide_legend(override.aes = list(size = 4)))
         )
       
+    }
+    
+    # Observe Interactive Parent Node selection -------------------------------
+    observeEvent(input$parent_node_id, {
+
+      parentNodeSelection("interactive", nodeID=input$parent_node_id)
+      
     })
 
     # Load the marker expression file ---------------------------------------
@@ -209,8 +227,6 @@ cycadas <- function() {
     
     # Observe MenutItems ------------------------------------------------------
     observeEvent(input$tabs, {
-      
-      # browser()    
 
       if (exists("df_expr")) {
         if(input$tabs=="thresholds") { 
@@ -379,55 +395,9 @@ cycadas <- function() {
 
     # Observe Parent Node selection -------------------------------------------
     observeEvent(input$parentPicker, {
-
-      node <- reactVals$graph$nodes %>% filter(label == input$parentPicker)
-      myid <- node$id
-
-      filterPosMarkers <- unlist(node$pm)
-      filterNegMarkers <- unlist(node$nm)
       
-      parent <- input$parentPicker
-      
-      # receive the parent settings, resp. parent hm
-      # filter hm by parent cell name
-      tmp <- df_expr[df_expr$cell == parent, lineage_marker]
-      tmp <- filterHM(tmp, input$treePickerPos, input$treePickerNeg, reactVals$th)
+      parentNodeSelection("picker", nodeName=input$parentPicker)
 
-      updateClusterLabels(tmp)
-
-      reactVals$hm <- tmp
-
-      updateCheckboxGroupButtons(
-        session,
-        inputId = "treePickerPos",
-        choices = lineage_marker,
-        selected = NULL,
-        disabledChoices = filterPosMarkers
-      )
-      updateCheckboxGroupButtons(
-        session,
-        inputId = "treePickerNeg",
-        choices = lineage_marker,
-        selected = NULL,
-        disabledChoices = filterNegMarkers
-      )
-
-      # update umap plot for Tree
-      ClusterSelection <- filterColor(df_expr,tmp)
-
-      output$umap_tree <-
-        renderPlot(
-          ggplot(dr_umap, aes(
-            x = u1, y = u2, color = ClusterSelection
-          )) +
-            geom_point(size = 1.0) +
-            theme_bw() +
-            theme(legend.text = element_text(size = 12),
-                  legend.title = element_text(size = 20),
-                  axis.text = element_text(size = 12),
-                  axis.title = element_text(size = 20)) +
-            guides(color = guide_legend(override.aes = list(size = 4)))
-        )
     })
 
     # Observe node update picker ----------------------------------------------
