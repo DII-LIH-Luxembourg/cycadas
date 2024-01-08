@@ -132,7 +132,7 @@ cycadas <- function() {
       })
     }
 
-    # Upload the marker expression file ---------------------------------------
+    # Load the marker expression file ---------------------------------------
     observeEvent(c(input$fMarkerExpr, input$cluster_freq), {
 
       req(input$fMarkerExpr)
@@ -539,7 +539,7 @@ cycadas <- function() {
       
       df_expr$cell <<- rebuiltTree(reactVals$graph, df_expr, reactVals$th)
       
-      reactVals$annotationlist <<- as.list(df_nodes$label)
+      reactVals$annotationlist <- as.list(df_nodes$label)
     })
 
 
@@ -854,6 +854,11 @@ cycadas <- function() {
       renderTable(
         reactVals$DA_result_table
       )
+    
+    output$DA_interactive_table <-
+      renderTable(
+        reactVals$DA_interactive_table
+      )
 
     # Do the differential abundance ------------------------------------------
     observeEvent(input$doDA, {
@@ -920,12 +925,15 @@ cycadas <- function() {
 
     observeEvent(input$current_node_id, {
       reactVals$myNode <- input$current_node_id
+      
+      doInteractiveDA()
     })
 
     output$selectedNode <- renderText({reactVals$myNode})
 
-    output$DA_interactive_table <- renderTable({
-      
+    # output$DA_interactive_table <- renderTable({
+    
+    doInteractiveDA <- function() {  
       # first check if a node is selected:
       # TODO:
       # reactVals$myNode != ""
@@ -991,14 +999,12 @@ cycadas <- function() {
       colnames(DA_df) <- c("Var1", "Var2", "p-value", "Cell")
       reactVals$DA_interactive_table <- DA_df
 
-    })
+    }
 
     # Boxplot of interactive DA selection -------------------------------------
     output$boxplot <- renderPlot({
       
       # first check if a node is selected:
-      # TODO:
-      # reactVals$myNode != ""
       if (reactVals$myNode == "") {
         
         plot(1, type = "n", main = "No Data Available")
