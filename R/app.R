@@ -141,25 +141,15 @@ cycadas <- function() {
       if (selectMethod == "picker") {
         
         node <- reactVals$graph$nodes %>% filter(label == nodeName)
-        myid <- node$id
-        
-        filterPosMarkers <- unlist(node$pm)
-        filterNegMarkers <- unlist(node$nm)
-        
         parent <- input$parentPicker
-        
       } else {
-        
-        myid <- nodeID
-        
-        node <- reactVals$graph$nodes %>% filter(id == myid)
-        
-        filterPosMarkers <- unlist(node$pm)
-        filterNegMarkers <- unlist(node$nm)
-        
+
+        node <- reactVals$graph$nodes %>% filter(id == nodeID)
         parent <- node$label
-        
       }
+      
+      filterPosMarkers <- unlist(node$pm)
+      filterNegMarkers <- unlist(node$nm)
       
       # receive the parent settings, resp. parent hm
       # filter hm by parent cell name
@@ -201,14 +191,12 @@ cycadas <- function() {
                   axis.title = element_text(size = 20)) +
             guides(color = guide_legend(override.aes = list(size = 4)))
         )
-      
     }
     
     # Observe Interactive Parent Node selection -------------------------------
     observeEvent(input$parent_node_id, {
 
       parentNodeSelection("interactive", nodeID=input$parent_node_id)
-      
     })
 
     # Load the marker expression file ---------------------------------------
@@ -397,7 +385,6 @@ cycadas <- function() {
     observeEvent(input$parentPicker, {
       
       parentNodeSelection("picker", nodeName=input$parentPicker)
-
     })
 
     # Observe node update picker ----------------------------------------------
@@ -659,7 +646,7 @@ cycadas <- function() {
     )
 
     # Observe marker selection in Thresholds Table ---------------------------
-    # from marker, plot the expression in scatterplot or histogram
+    # from marker, plot the expression in scatter-plot or histogram
     observeEvent(input$table_rows_selected, {
 
       selRow <- reactVals$th[input$table_rows_selected,]
@@ -672,7 +659,7 @@ cycadas <- function() {
       PlottingThreshold(marker_expr, myTH, myColor)
     })
     
-    # Observe click scatterplot -----------------------------------------------
+    # Observe click scatter-plot -----------------------------------------------
     observeEvent(input$plot_click, {
 
       req(input$table_rows_selected)
@@ -693,7 +680,7 @@ cycadas <- function() {
     # Plotting Threshold  function --------------------------------------------
     PlottingThreshold <- function(me, myTH, myCol){
 
-      # Scatterplot
+      # Scatter-plot
       output$plot <- renderPlot({
         set.seed(1)
 
@@ -758,7 +745,6 @@ cycadas <- function() {
       props_table <- t(t(countsTable) / colSums(countsTable)) * 100
       
       return(props_table)
-      
     }
     
     # Save the Merged Proportion Table ----------------------------------------
@@ -890,7 +876,7 @@ cycadas <- function() {
       renderTable(
         reactVals$DA_interactive_table
       )
-
+    
     # Do the differential abundance ------------------------------------------
     observeEvent(input$doDA, {
       
@@ -908,7 +894,6 @@ cycadas <- function() {
       props_table <- t(t(countsTable) / colSums(countsTable)) * 100
 
       mm <- match(colnames(props_table), md$sample_id)
-
       tmp_cond <- md$condition[mm]
 
       DA_df <- data.frame()
@@ -919,7 +904,6 @@ cycadas <- function() {
         df <- subset(melt(foo$p.value), value!=0)
         df$cell <- rownames(countsTable)[i]
         DA_df <- rbind(DA_df, as.data.frame(df))
-
       }
 
       # change the name of nodes:
@@ -937,11 +921,8 @@ cycadas <- function() {
           })
 
       DA_df$list <- unlist(my_list)
-      
       colnames(DA_df) <- c("Cond1", "Cond2", "p-value", "Cell", "Naming")
-
       reactVals$DA_result_table <- DA_df
-
     })
 
     # Render interactive Tree -------------------------------------------------
@@ -973,7 +954,6 @@ cycadas <- function() {
         # selected_labels <- "Unassigned"
       }
 
-      # browser()
       countsTable <- reactVals$counts_table
       ## aggregate the clusters by name:
       countsTable['cell'] <- df_expr$cell
@@ -982,9 +962,6 @@ cycadas <- function() {
 
       rownames(countsTable) <- countsTable$cell
       countsTable$cell <- NULL
-
-      # countsTable <- countsTable[selected_labels,]
-
       props_table <- t(t(countsTable) / colSums(countsTable)) * 100
 
       # check if any of the nodes is empty and therefore not in the props table
@@ -999,13 +976,10 @@ cycadas <- function() {
         props_table <- t(as.data.frame(props_table[selected_labels,]))
       }
 
-      ## subest the prps tabel based on the selected node
+      ## subset the props table based on the selected node
       # props_table <- props_table[selected_labels, ]
       props_table <- t(as.data.frame(colSums(props_table)))
-
-      # mm <- match(md$sample_id, colnames(props_table))
       mm <- match(colnames(props_table), md$sample_id)
-
       tmp_cond <- md$condition[mm]
 
       DA_df <- data.frame()
@@ -1029,9 +1003,7 @@ cycadas <- function() {
         
         plot(1, type = "n", main = "No Data Available")
       } else {
-        
-        
-        # browser()
+
         children <- all_my_children(reactVals$graph, reactVals$myNode)
         
         if (!is.null(children)) {
@@ -1039,8 +1011,7 @@ cycadas <- function() {
         } else {
           selected_labels <- reactVals$graph$nodes$label[reactVals$myNode]
         }
-        
-        # browser()
+
         countsTable <- reactVals$counts_table
         ## aggregate the clusters by name:
         countsTable['cell'] <- df_expr$cell
@@ -1049,9 +1020,7 @@ cycadas <- function() {
         
         rownames(countsTable) <- countsTable$cell
         countsTable$cell <- NULL
-        
-        # countsTable <- countsTable[selected_labels,]
-        
+
         props_table <- t(t(countsTable) / colSums(countsTable)) * 100
         
         # check if any of the nodes is empty and therefore not in the props table
@@ -1066,15 +1035,9 @@ cycadas <- function() {
           props_table <- t(as.data.frame(props_table[selected_labels,]))
         }
         
-        ## subest the prps tabel based on the selected node
-        # props_table <- props_table[selected_labels, ]
-        
+        ## subset the props table based on the selected node
         props_table <- as.data.frame(colSums(props_table))
-        
-        
-        # mm <- match(md$sample_id, rownames(props_table))
         mm <- match(rownames(props_table), md$sample_id)
-        
         props_table$cond <- md$condition[mm]
         
         names(props_table) <- c("value", "cond")

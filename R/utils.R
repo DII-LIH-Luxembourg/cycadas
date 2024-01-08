@@ -214,7 +214,6 @@ buildUMAP <- function(df_expr) {
 # define recursive function to delete a node and all its children -------------
 delete_leaf_node <- function(graph_data, node_id) {
   # find the children nodes
-  # browser()
   children <- graph_data$edges$from[graph_data$edges$to == node_id]
 
   # recursively delete children nodes
