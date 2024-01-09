@@ -936,7 +936,10 @@ cycadas <- function() {
     observeEvent(input$current_node_id, {
       reactVals$myNode <- input$current_node_id
       
-      doInteractiveDA()
+      if (reactVals$myNode != 1) {
+        doInteractiveDA()  
+      }
+      
     })
 
     output$selectedNode <- renderText({reactVals$myNode})
@@ -996,6 +999,8 @@ cycadas <- function() {
 
     # Boxplot of interactive DA selection -------------------------------------
     output$boxplot <- renderPlot({
+      
+      browser()
       
       # first check if a node is selected:
       if (reactVals$myNode == "") {
