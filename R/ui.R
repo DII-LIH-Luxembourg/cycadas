@@ -199,7 +199,6 @@ ui <- dashboardPage(
                     ) # end box
                   ), 
                   tabPanel("Demo Data",
-                           useWaiter(),
                            box(
                              title = "Load Cluster Expression Demo Data",
                              width = NULL,

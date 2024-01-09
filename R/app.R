@@ -1,6 +1,6 @@
 
 # List of packages you want to check and install if needed
-packages_to_install <- c("shiny", "DT", "ggplot2", "matrixStats", "tidyverse", "stats", "waiter",
+packages_to_install <- c("shiny", "DT", "ggplot2", "matrixStats", "tidyverse", "stats",
                          "pheatmap", "Ckmeans.1d.dp", "umap", "RColorBrewer", "shinydashboard",
                          "shinyWidgets", "visNetwork", "glue", "purrr", "reshape2", "mousetrap")
 
@@ -207,16 +207,9 @@ cycadas <- function() {
       pathExpr <- input$fMarkerExpr$datapath
       pathFreq <- input$cluster_freq$datapath
       
-      waiter_show(
-        html = waiting_screen, color = "white"
-      )
-      
       loadExprData(pathExpr, pathFreq)
       
       initExprData()
-      
-      
-      waiter_hide() # hide the waiter
     })
     
     # Observe MenutItems ------------------------------------------------------
@@ -1097,10 +1090,6 @@ cycadas <- function() {
 
     # Upload Expression Demo Data ---------------------------------------------
     observeEvent(input$btnLoadDemoData, {
-      
-      waiter_show( # show the waiter
-        html = spin_fading_circles() # use a spinner
-      )
 
       pathExpr <- "data/demo_data/median_expr_1600.csv"
       pathFreq <- "data/demo_data/cluster_freq_1600.csv"
@@ -1108,16 +1097,10 @@ cycadas <- function() {
       loadExprData(pathExpr, pathFreq)
       
       initExprData()
-      
-      waiter_hide() # hide the waiter
     })
     
     # Upload Annotated Expr Demo Data -----------------------------------------
     observeEvent(input$btnLoadAnnoData, {
-      
-      waiter_show( # show the waiter
-        html = spin_fading_circles() # use a spinner
-      )
       
       pathExpr <- "data/demo_data/median_expr_1600.csv"
       pathFreq <- "data/demo_data/cluster_freq_1600.csv"
@@ -1171,9 +1154,6 @@ cycadas <- function() {
       reactVals$annotationlist <- df_nodes$label
 
       reactVals$hm <- df_expr[, lineage_marker]
-      
-      waiter_hide() # hide the waiter
-
     })
     
   }
