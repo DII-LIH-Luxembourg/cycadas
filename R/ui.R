@@ -1,6 +1,5 @@
 ui <- dashboardPage(
   dashboardHeader(title = "Cluster Annotation"),
-
   # Tab menu layout ---------------------------------------------------------
   sidebar <- dashboardSidebar(
     sidebarMenu(id = "tabs",
@@ -24,6 +23,7 @@ ui <- dashboardPage(
 
       tabItem(tabName = "settings",
               fluidRow(column(
+                
                 width = 12,
                 tabBox(
                   width = NULL,
@@ -142,14 +142,6 @@ ui <- dashboardPage(
                       fileInput(
                         "fEdges",
                         "Choose Edges File",
-                        multiple = FALSE,
-                        accept = c("text/csv",
-                                   "text/comma-separated-values,text/plain",
-                                   ".csv")
-                      ),
-                      fileInput(
-                        "fAnno",
-                        "Choose Annotation File",
                         multiple = FALSE,
                         accept = c("text/csv",
                                    "text/comma-separated-values,text/plain",

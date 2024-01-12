@@ -1,14 +1,5 @@
-availMarkers <- function(sm) {
 
-  m <- colnames(df)
-  return(setdiff(m, sm))
-}
-subsetdf <- function(markers) {
-
-  return(df[1:20, 1:8])
-}
-
-
+# Estimate the threshold values -----------------------------------------------
 kmeansTH <- function(df) {
   th <- data.frame(cell = colnames(df), threshold = 0.0, color = "blue", bi_mod = 0)
 
@@ -21,6 +12,8 @@ kmeansTH <- function(df) {
     if (bi_mod_value < 0.555) {
       th[th$cell == m, "color"] <- "red"
     }
+    
+    set.seed(42)
 
     z <- Ckmeans.1d.dp(df[, m], 2)
     th[th$cell == m, "threshold"] <- round(ahist(z, style="midpoints", data=df[, m], plot=FALSE)$breaks[2:2], 3)
@@ -30,7 +23,7 @@ kmeansTH <- function(df) {
   return(th)
 }
 
-
+# Scale the expression values between 0 and 1 ---------------------------------
 normalize01 <- function(hm) {
 
   eDR <- as.matrix(hm)
@@ -42,10 +35,8 @@ normalize01 <- function(hm) {
   return(as.data.frame(expr01))
 }
 
-
+# Filter the Heatmap ----------------------------------------------------------
 filterHM <- function(DF,posList, negList, th) {
-
-  # browser()
 
   if (length(posList) == 0 & length(negList) == 0) {
     return(as.data.frame(DF))
@@ -61,35 +52,30 @@ filterHM <- function(DF,posList, negList, th) {
     posTH <- th$threshold[th$cell %in% posList]
     for (i in 1:length(posList)) {
       marker <- posList[i]
-      DF <- DF[DF[marker] > posTH[i], ]
+      DF <- DF[DF[marker] >= posTH[i], ]
     }
     return(as.data.frame(DF))
 
   } else {
 
-    # browser()
-
     posTH <- th$threshold[th$cell %in% posList]
     negTH <- th$threshold[th$cell %in% negList]
+    
     # first reduce by the positive markers
-
     for (i in 1:length(posList)) {
       marker <- posList[i]
-      DF <- DF[DF[marker] > posTH[i], ]
-      # DF <- DF[DF[marker] > th[marker,]$threshold, ]
+      DF <- DF[DF[marker] >= posTH[i], ]
     }
     # next reduce by the negative markers
-
     for (i in 1:length(negList)) {
       marker <- negList[i]
       DF <- DF[DF[marker] < negTH[i], ]
-      # DF <- DF[DF[marker] < th[marker,]$threshold, ]
     }
     return(as.data.frame(DF))
   }
 }
 
-
+# Filter the color for UMAP ---------------------------------------------------
 filterColor <- function(DF,hm) {
   # browser()
   tmp <- replicate(nrow(DF), "other clusters")
@@ -98,6 +84,8 @@ filterColor <- function(DF,hm) {
   return(unname(tmp))
 
 }
+
+# TODO: check if needed!
 filterAnnotation <- function(hm_tmp,at_tmp) {
 
   rn <- rownames(hm_tmp)
@@ -107,11 +95,14 @@ filterAnnotation <- function(hm_tmp,at_tmp) {
 
   return(sub_annotation)
 }
+
+# TODO: check if needed!
 set_ptname <- function(ptname, df) {
   df$phenotype <- ptname
 }
 
-
+# Set a phonetype name from marker selection ----------------------------------
+# Currently not used!
 setPhenotypeName <- function(markers, s, ph_name) {
   if (s == "pos") {
     ph_name <- paste0(ph_name, paste0(markers, collapse = "+"), "+")
@@ -121,26 +112,7 @@ setPhenotypeName <- function(markers, s, ph_name) {
   return(ph_name)
 }
 
-# a function which generates the dataframe for plotting the distribution
-getMarkerDistDF <- function(marker, myScale){
-
-  marker_expr <- NULL
-
-  if (myScale == "1") {
-    marker_expr <- as.data.frame(df01[, c(marker)])
-    marker_expr <- cbind(marker_expr, rnorm(1:dim(marker_expr)[1]))
-
-  } else if (myScale == "2") {
-    tmp <- log10(sinh(df_global[, c(marker)]) * 5)
-    marker_expr <- as.data.frame(tmp)
-    marker_expr <- cbind(marker_expr, rnorm(1:dim(marker_expr)[1]))
-  }
-
-  return(marker_expr)
-}
-
-
-# a function to add a new row for nodes and edges
+# a function to add a new row for nodes and edges -----------------------------
 add_node <- function(graph,parent,name,pos_m,neg_m,color) {
 
   next_id <- max(graph$nodes$id) + 1
@@ -157,7 +129,7 @@ add_node <- function(graph,parent,name,pos_m,neg_m,color) {
   return(graph)
 }
 
-# define recursive function to delete a node and all its children
+# define recursive function to delete a node and all its children -------------
 delete_child_nodes <- function(graph_data, node_id) {
   # find the children nodes
   # browser()
@@ -177,6 +149,7 @@ delete_child_nodes <- function(graph_data, node_id) {
   return(graph_data)
 }
 
+# Get all Children from a node selection --------------------------------------
 all_my_children <- function(graph_data, node_id) {
 
   # we don't want the root node
@@ -191,15 +164,56 @@ all_my_children <- function(graph_data, node_id) {
   } else {
     return (c())
   }
-
-
-
 }
 
-# define recursive function to delete a node and all its children
+# Initialize the Tree at start ------------------------------------------------
+initTree <- function() {
+  
+  # create initial master node of all Unassigned clusters
+  nodes <- tibble(id = 1,
+                  label = "Unassigned",
+                  pm = list(""),
+                  nm = list(""),
+                  color = "blue"
+  )
+  
+  edges <- data.frame(from = c(1), to = c(1))
+  
+  return (list(nodes = nodes, edges = edges))
+}
+
+# Build Graph from nodes and edges --------------------------------------------
+getGraphFromLoad <- function(df_nodes, df_edges) {
+  
+  df_nodes$pm[is.na(df_nodes$pm)] <- ""
+  df_nodes$pm <- strsplit(df_nodes$pm, "\\|")
+  
+  df_nodes$nm[is.na(df_nodes$nm)] <- ""
+  df_nodes$nm <- strsplit(df_nodes$nm, "\\|")
+  
+  return (list(nodes = df_nodes, edges = df_edges))
+}
+
+
+# Build UMAP and return as DF -------------------------------------------------
+buildUMAP <- function(df_expr) {
+  
+  my_umap <- umap(df_expr)
+  
+  df_umap <- data.frame(
+    u1 = my_umap$layout[, 1],
+    u2 = my_umap$layout[, 2],
+    my_umap$data,
+    cluster_number = 1:length(my_umap$layout[, 1]),
+    check.names = FALSE
+  )
+  
+  return(df_umap)
+}
+
+# define recursive function to delete a node and all its children -------------
 delete_leaf_node <- function(graph_data, node_id) {
   # find the children nodes
-  # browser()
   children <- graph_data$edges$from[graph_data$edges$to == node_id]
 
   # recursively delete children nodes
@@ -214,7 +228,6 @@ delete_leaf_node <- function(graph_data, node_id) {
     return(graph_data)
 
   } else {
-    # browser()
     # delete the node and its edges from the graph data
     graph_data$nodes <- graph_data$nodes[graph_data$nodes$id != node_id, ]
     graph_data$edges <- graph_data$edges[!(graph_data$edges$from == node_id | graph_data$edges$to == node_id), ]
@@ -222,6 +235,68 @@ delete_leaf_node <- function(graph_data, node_id) {
     return(graph_data)
   }
 
+}
+
+# Rebuild Tree ----------------------------------------------------------------
+# rebuilt the annotation tree if threshold values are changed, or
+# if a tree is loaded
+rebuiltTree <- function(graph, df_expr, th) {
+
+  df_expr$cell <- "Unassigned"
+  
+  # for all rows in annotation table
+  # get all parents for a row:
+  if (nrow(graph$nodes) > 1) {
+    graph$nodes$to <- graph$edges$to
+    
+    # Iterate through the dataframe row by row
+    for (i in 1:nrow(graph$nodes)) {
+      
+      posMarker <- list()
+      negMarker <- list()
+      
+      nodeID <- graph$nodes$id[i]
+      parentID <- graph$nodes$to[i]
+      
+      # now for that nodeID, get all parents and collect
+      # the pm and nm markers
+      posMarker <- c(posMarker, unlist(graph$nodes$pm[graph$nodes$id == nodeID]))
+      negMarker <- c(negMarker, unlist(graph$nodes$nm[graph$nodes$id == nodeID]))
+      
+      # now we have all positive and negative marker for that type collected
+      # and we can start filtering the df
+      # remove the empty strings in the markers
+      posMarker <- posMarker[nzchar(posMarker)]
+      negMarker <- negMarker[nzchar(negMarker)]
+      
+      # receive the parent settings, resp. parent hm
+      # filter hm by parent cell name
+      parent_label <- graph$nodes$label[graph$nodes$id == parentID]
+      
+      tmp_parent <- df_expr[df_expr$cell == parent_label, ]
+      tmp <- filterHM(tmp_parent[, lineage_marker],unique(unlist(posMarker)), unique(unlist(negMarker)), th)
+      
+      df_expr[rownames(tmp), 'cell'] <- graph$node$label[i]
+    }
+  }
+
+  return(df_expr$cell)
+}
+
+# Function for the creation of the oveerall expression DF
+createExpressionDF <- function(df_expr, cell_freq) {
+  
+  df01_expr <- df_expr %>% normalize01()
+  colnames(df01_expr) <- lineage_marker
+  colnames(df_expr) <- lineage_marker_raw
+  
+  df_expr <- cbind(df_expr, df01_expr)
+  
+  ## Add frequencies and annotation
+  df_expr$freq <- cell_freq$clustering_prop
+  df_expr$cell <- "Unassigned"
+  
+  return(df_expr)
 }
 
 

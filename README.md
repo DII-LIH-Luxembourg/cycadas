@@ -1,4 +1,4 @@
-![Alt text](./cycadas_logo.png)
+![Alt text](./logo4_small2.png)
 
 ## Cytometry Cluster Annotation and Differential Abundance Suite
 
@@ -22,7 +22,7 @@ Key features:
 
 To run:
 
--   Checkout branch develop
+-   Checkout the develop branch, and within R:
 
 ``` r
 library(devtools)
@@ -64,9 +64,10 @@ Upon uploading: • metadata table (defining the condition of each sample, for e
 
 ### Demo dataset
 
-CyCadas includes two versions of a dataset for demonstration purpose. Version 1 includes median expression and cluster frequencies but no annotation has been performaed yet. Version two includes the fully annotated dataset for exploration and differential abundance.     
+CyCadas includes two versions of a dataset for demonstration purpose. Version 1 includes median expression and cluster frequencies but no annotation has been performaed yet. Version two includes the fully annotated dataset for exploration and differential abundance.
 
 ## Prepare the Data input
+
 ### Median Expression and Cluster Frequencies from FlowSOM (R Code):
 
 ``` r
@@ -115,7 +116,8 @@ mapping = gather_array(mapping_di)
 
 # get the cluster frequencies
 clusterFreq = dcount(mc, mapping_di)
-df = DataFrame(column_name = clusterFreq)
+df = DataFrame(cluster = 1:length(df), clustering_prop = clusterFreq)
+df.clustering_prop = df.clustering_prop ./ sum(df.clustering_prop)
 CSV.write("cluster_freq_$mc.csv", df)
 
 files = distributeFCSFileVector(:fileIDs, md[:, :file_name])
