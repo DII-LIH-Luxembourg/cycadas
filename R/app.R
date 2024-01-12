@@ -999,9 +999,7 @@ cycadas <- function() {
 
     # Boxplot of interactive DA selection -------------------------------------
     output$boxplot <- renderPlot({
-      
-      browser()
-      
+
       # first check if a node is selected:
       if (reactVals$myNode == "") {
         
