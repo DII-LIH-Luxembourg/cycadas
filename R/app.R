@@ -1,6 +1,6 @@
 
 # List of packages you want to check and install if needed
-packages_to_install <- c("shiny", "DT", "ggplot2", "matrixStats", "tidyverse", "stats",
+packages_to_install <- c("shiny", "DT", "ggplot2", "matrixStats", "tidyverse", "stats", "knitr",
                          "pheatmap", "Ckmeans.1d.dp", "umap", "RColorBrewer", "shinydashboard",
                          "shinyWidgets", "visNetwork", "glue", "purrr", "reshape2", "mousetrap")
 
@@ -11,6 +11,8 @@ for (package in packages_to_install) {
     library(package, character.only = TRUE)
   }
 }
+
+addResourcePath("images", "./www")
 
 cycadas <- function() {
 
