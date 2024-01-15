@@ -1,19 +1,3 @@
-options(repos = "https://cran.r-project.org/")
-
-# List of packages you want to check and install if needed
-# packages_to_install <- c("shiny", "DT", "ggplot2", "matrixStats", "tidyverse", "stats",
-#                          "pheatmap", "Ckmeans.1d.dp", "umap", "RColorBrewer", "shinydashboard",
-#                          "shinyWidgets", "visNetwork", "glue", "purrr", "reshape2", "mousetrap")
-# 
-# # Check if each package is already installed, and install if not
-# for (package in packages_to_install) {
-#   if (!require(package, character.only = TRUE)) {
-#     install.packages(package)
-#     library(package, character.only = TRUE)
-#   }
-# }
-
-
 
 library("shiny")
 library("DT")
