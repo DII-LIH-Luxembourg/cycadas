@@ -34,37 +34,19 @@ pkgload::load_all(".")
 cycadas()
 ```
 
-## Working with CyCadas
-
-### Starting a new project and exploring data:
-
-**CyCadas** requires two CSV files being an output of clustering algorithm -- 1) median expression of markers in the clusters and 2) frequency of each cluster (Load -- Required). To have a first look on the data, explore the UMAP interactive and UMAP Marker expression tabs. In UMAP interactive tab, select the desired part of the UMAP to visualise marker expression in selected clusters on the heatmap. In the UMAP Marker expression, select the marker of interest to evaluate its expression in all the clusters.
-
-### Selecting threshold for each marker:
-
-As the cluster annotation (phenotype definition) relies on a defined set of negative/positive markers, each marker should follow a bi-modal distribution. An initial separation (threshold) between positve (high) and negative (low) expression is estimated after uploading the data-set and indicated by a blue vertical line in the scatter plot and histogram. If a marker doesn't show a bimodal distribution, it is marked with a red line. In such cases the adjustments have to be made manually, or this marker should be re-considered as phenotypic marker.
-
-The threshold value can be adjusted by clicking at the desired position within the scatter plot. In such cases any already defined annotation is automatically re-calculated.
-
-Threshold settings can be exported as csv and re-used by loading.
-
-### Annotation
-
-Select the desired combination of positive and negative markers in the rolling menu. The classification of the clusters as negative or positive for a specific marker is occurring based on the threshold values set in the Thresholds tab. Clusters characterised by the defined (negative/positive) expression for the chosen markers are then selected, and:
-
-• heatmap displays normalized expression of all the markers in the selected clusters, • UMAP represents all the clusters, with the selected clusters being highlighted in blue.
-
-A new node containing clusters characterised by a selected phenotype will be generated.
-
-Annotation is a hierarchical process, where desired sub-populations can be differentiated from the main cell phenotypes.
-
-### Differential abundance analysis
-
-Upon uploading: • metadata table (defining the condition of each sample, for example patient vs healthy), • proportion table (defining the cluster composition of each sample), differential abundance analysis (comparing cellular composition in samples of different conditions) is performed (pairwise Wilcoxon test). Multiple testing correction methods (Bonferroni, Hochberg, FDR, among others) can be selected.
-
 ### Demo dataset
 
-CyCadas includes two versions of a dataset for demonstration purpose. Version 1 includes median expression and cluster frequencies but no annotation has been performaed yet. Version two includes the fully annotated dataset for exploration and differential abundance.
+To enable tool exploration, we provide the demo dataset that can be loaded (**Load** tab → **Demo Data**) either as  cluster expression data only (**Load Cluster Expression Demo Data**, allowing the user to create the annotation) or as annotated data (**Load Annotated Demo Data** which include the annotation tree).
+
+*This demo dataset is generated from the publicly available mass cytometry data of patients with idiopathic Parkinson’s disease and healthy controls (Capelle, C.M. et al., Nat Commun, 2023) that were clustered with GigaSOM to generate 1600 clusters.*
+
+### Input data
+
+All the data tables loaded into CyCadas are uploaded in the **Load** tab → **Required**. The tool requires output of the clustering algorithm in the form of 2 data tables:
+
+• marker expression (mean or median expression of each marker in each cluster),
+
+• cluster frequency (proportion of each cluster within the dataset).
 
 ## Prepare the Data input
 
@@ -141,3 +123,77 @@ CSV.write("median_expr_$mc.csv", et)
 ```
 
 Detailed workflow for each method can be found in the data section.
+
+### Data exploration
+
+The **UMAP interactive** tab allows the preview of marker expression in the clusters selected by the user on the UMAP:
+
+![](./www/umap_interactive.png)
+
+In the **UMAP Marker expression** tab, user can investigate the expression level of the selected marker across all the clusters.
+
+![](./www/umap_marker_expression.png)
+
+### Thresholds
+
+In the **Thresholds** tab, the estimation of threshold value defining negative and positive marker expression of each marker is based on 1-dimensional k-means clustering. The bimodality for every marker is assessed and the bimodal coefficient values are reported. The blue threshold line indicates that data meets the bimodal distribution criteria, otherwise it is colored red. The threshold value can be manually adjusted by clicking on the scatterplot.
+
+*Expression of CD8a with blue threshold line indicating the bimodal distribution:*
+
+![](./www/thresholds_bimodal_cd8.png)
+
+*Expression of TCRgd with red threshold line indicating that this marker expression does not follow the bimodal distribution:*
+
+![](./www/thresholds_notbimodal_tcrgd.png)
+
+### Annotation
+
+The **Annotation** tab allows performing the annotation in a tree-based hierarchical process - initially, the main cell types are defined, followed by the identification of their subtypes (with the level of detail defined by the user).
+
+All the clusters are initially defined as "unassigned". Then, upon the selection of positive and negative markers defining the population, clusters characterized by given expression pattern are re-assigned from the parent node to the child node.
+
+*Scheme depicting the process of building the annotation tree:*
+
+![](./www/annotation_building_tree.png)
+
+*Cropped fragment of the completed annotation tree:*
+
+![](./www/annotation_tree.png)
+
+Upon selection of the node, heatmap displaying the expression of all the markers in all the clusters belonging to this node is shown.
+
+*Heatmap depicting phenotype of clusters annotated as CD8+ TEM cells:*
+
+![](./www/annotation_heatmap.png)
+
+### Differential abundance analysis
+
+In the **Differential Abundance** tab, a pairwise Wilcoxon test on all the nodes is performed upon selecting the desired multiple testing correction method:
+
+![](./www/differential_abundance.png)
+
+**DA Interactive Tree** allows exploration of abundance of all the defined subpopulations across the conditions by selecting the node on the annotation tree.
+
+*Upon clicking on the desired node...*
+
+![](./www/DA_interactive_tree_tree.png)
+
+*... proportion of the selected celltype across the condition is plotted.*
+
+![](./www/DA_interactive_tree_plot.png)
+
+### Data export
+
+Differential abundance analysis results, as well as proportion table (% of defined cell populations across all the samples) can be exported in the **Differential Abundance** tab.
+
+![](./www/differential_abundance_export.png)
+
+Files enabling the continuation of the analysis - modified threshold values, as well as annotation tree structure, can be exported from the **Thresholds** and **Annotation** tabs, respectively, and re-loaded (**Load** tab) to continue the analysis.
+
+*Exporting annotation tree:*
+
+![](./www/annotation_export.png)
+
+*Exporting threshold values:*
+
+![](./www/thresholds_export.png)

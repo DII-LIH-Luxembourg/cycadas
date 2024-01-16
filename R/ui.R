@@ -1,5 +1,5 @@
 ui <- dashboardPage(
-  dashboardHeader(title = "Cluster Annotation"),
+  dashboardHeader(title = "CyCadas"),
   # Tab menu layout ---------------------------------------------------------
   sidebar <- dashboardSidebar(
     sidebarMenu(id = "tabs",
