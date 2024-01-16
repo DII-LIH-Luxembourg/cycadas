@@ -16,11 +16,10 @@ library("glue")
 library("purrr")
 library("reshape2")
 library("mousetrap")
-
 source("./ui.R")
 source("./utils.R")
 
-
+# addResourcePath("images", "../www")
 
 # Server function -------------------------
 server = function(input, output, session) {

@@ -1,16 +1,16 @@
 ui <- dashboardPage(
-  dashboardHeader(title = "Cluster Annotation"),
+  dashboardHeader(title = "CyCadas"),
   # Tab menu layout ---------------------------------------------------------
   sidebar <- dashboardSidebar(
     sidebarMenu(id = "tabs",
+      menuItem("Home", tabName = "home"),
       menuItem("Load", tabName = "settings"),
       menuItem("Thresholds", tabName = "thresholds"),
       menuItem("Tree-Annotation", tabName = "treeannotation"),
       menuItem("UMAP interactive", tabName = "umap_reactive"),
       menuItem("UMAP Marker expression", tabName = "UMAP_Marker_expression"),
       menuItem("Differential Abundance", tabName = "DA_tab"),
-      menuItem("DA interactive Tree", tabName = "DA_tree"),
-      menuItem("Help", tabName = "help")
+      menuItem("DA interactive Tree", tabName = "DA_tree")
     )
   ),
   dashboardBody(
@@ -20,6 +20,74 @@ ui <- dashboardPage(
     tags$head(tags$style("#mytreebox{height:700px !important;}")),
     # Load/Settings Tab ----------------------------------------------------------------
     tabItems(
+      tabItem(tabName = "home",
+
+              fluidRow(align = "left",
+                       box(width = NULL,
+                           
+                           # Body
+                           fluidRow(
+                             column(
+                               width = 12,
+                               align = "center",
+                               tags$div(
+                                 style = "padding: 20px;",
+                                 tags$title("CyCadas - CyCtometry Cluster Annotation and Differential Abundance Suite"),
+                                 tags$h2(strong("Cy"), "tometry ", strong("C"), "luster ", strong("A"), "nnotation and ", strong("D"), "ifferential ", strong("A"), "bundance ", strong("S"), "uite"),
+                                 tags$p("Efficient and reproducible annotation of cytometry data")
+                               )
+                             )
+                           ),
+                           
+                           fluidRow(
+                             column(
+                               width = 12,
+                               tags$div(
+                                 style = "max-width: 600px; margin: auto;",
+                                 tags$h3("Aims:"),
+                                 tags$ul(
+                                   tags$li("Facilitating the process of cluster annotation while reducing user bias."),
+                                   tags$li("Saving time required to perform the annotation in comparison to manual methods."),
+                                   tags$li("Improving reproducibility.")
+                                 ),
+                                 tags$h3("Key features:"),
+                                 tags$ul(
+                                   tags$li("Defining the threshold of positive/negative marker expression."),
+                                   tags$li("Interactive inspection of cluster phenotypes."),
+                                   tags$li("Automatic merging of populations."),
+                                   tags$li("Differential abundance analysis.")
+                                 )
+                               )
+                             )
+                           ),
+                           
+                           fluidRow(
+                             column(
+                               width = 12,
+                               tags$div(
+                                 style = "max-width: 600px; margin: auto; margin-top: 20px;",
+                                 tags$h3("Demo dataset"),
+                                 tags$p(
+                                   "To enable tool exploration, we provide the demo dataset that can be loaded ",
+                                   strong("Load"), " tab → ", strong("Demo Data"), ") either as cluster expression data only ",
+                                   strong("Load Cluster Expression Demo Data"), ", allowing the user to create the annotation) or as annotated data (",
+                                   strong("Load Annotated Demo Data"), " which include the annotation tree)."
+                                 ),
+                                 tags$p(
+                                   tags$em(
+                                     "This demo dataset is generated from the publicly available mass cytometry data ",
+                                     "of patients with idiopathic Parkinson’s disease and healthy controls (Capelle, C.M. et al., ",
+                                     "Nat Commun, 2023) that were clustered with GigaSOM to generate 1600 clusters."
+                                   )
+                                 )
+                               )
+                             )
+                           )
+                       
+                       )
+              )
+              
+      ),
 
       tabItem(tabName = "settings",
               fluidRow(column(
