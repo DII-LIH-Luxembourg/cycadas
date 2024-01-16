@@ -3,14 +3,14 @@ ui <- dashboardPage(
   # Tab menu layout ---------------------------------------------------------
   sidebar <- dashboardSidebar(
     sidebarMenu(id = "tabs",
-      menuItem("Load", tabName = "settings"),
-      menuItem("Thresholds", tabName = "thresholds"),
-      menuItem("Tree-Annotation", tabName = "treeannotation"),
-      menuItem("UMAP interactive", tabName = "umap_reactive"),
-      menuItem("UMAP Marker expression", tabName = "UMAP_Marker_expression"),
-      menuItem("Differential Abundance", tabName = "DA_tab"),
-      menuItem("DA interactive Tree", tabName = "DA_tree"),
-      menuItem("Help", tabName = "help")
+                menuItem("Home", tabName = "home"),
+                menuItem("Load", tabName = "settings"),
+                menuItem("Thresholds", tabName = "thresholds"),
+                menuItem("Tree-Annotation", tabName = "treeannotation"),
+                menuItem("UMAP interactive", tabName = "umap_reactive"),
+                menuItem("UMAP Marker expression", tabName = "UMAP_Marker_expression"),
+                menuItem("Differential Abundance", tabName = "DA_tab"),
+                menuItem("DA interactive Tree", tabName = "DA_tree")
     )
   ),
   dashboardBody(
@@ -20,7 +20,18 @@ ui <- dashboardPage(
     tags$head(tags$style("#mytreebox{height:700px !important;}")),
     # Load/Settings Tab ----------------------------------------------------------------
     tabItems(
+      tabItem(tabName = "home",
+              fluidRow(align = "center",
+                tags$img(src="./images/logo4_small2.png"),
+                  ),
+              fluidRow(align = "left",
+                       box(width = NULL,
+                              HTML(markdown::markdownToHTML(knit("HOME.md", quiet=T),fragment.only = T)),
+                              tags$hr()
+                       )
+                       )
 
+              ),
       tabItem(tabName = "settings",
               fluidRow(column(
                 
