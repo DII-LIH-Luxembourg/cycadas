@@ -29,7 +29,7 @@ To enable tool exploration, we provide the demo dataset that can be loaded (**Lo
 
 ### Input data
 
-All the data tables uploaded into CyCadas are uploaded in the **Load** tab → **Required**. The tool requires output of the clustering algorithm in the form of 2 data tables:
+All the data tables loaded into CyCadas are uploaded in the **Load** tab → **Required**. The tool requires output of the clustering algorithm in the form of 2 data tables:
 
 • marker expression (mean or median expression of each marker in each cluster),
 
@@ -37,13 +37,13 @@ All the data tables uploaded into CyCadas are uploaded in the **Load** tab → *
 
 Coding examples enabling the extraction of these files from the clustering algorithm workflow are available on Github.
 
-Additionally, if performing differential abundance analysis is desired, 2 additional tables can be uploaded ( **Load** → **Optional**):
+Additionally, if performing differential abundance analysis is desired, 2 additional tables can be uploaded (**Load** → **Optional**):
 
 • metadata table,
 
 • count table (of every cluster in each sample).
 
-If the analysis is being continued, the threshold values and annotation tree can be exported from CyCadas and uploaded into the software.
+If the analysis is being continued, the threshold values and annotation tree can be exported from CyCadas (see: **Data export** below) and uploaded into the software.
 
 ### Data exploration
 
