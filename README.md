@@ -22,7 +22,7 @@ Key features:
 
 To run:
 
--   Checkout the develop branch, and within R:
+-   Checkout the main branch, and within R:
 
 ``` r
 library(devtools)
