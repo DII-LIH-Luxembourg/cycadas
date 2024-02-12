@@ -741,8 +741,26 @@ cycadas <- function() {
       # merge and aggregate by cell
       countsTable <- aggregate(. ~ cell, countsTable, sum)
       
+      
+      # change the name of nodes:
+      # if node has children add "_remaining"
+      my_list <- lapply(countsTable$cell, function(x) {
+        # get the id
+        nid <- reactVals$graph$nodes$id[reactVals$graph$nodes$label == x]
+        # check if the id has children
+        if(nid %in% reactVals$graph$edges$to) {
+          return (x <- paste0(x, "_remaining"))
+        }
+        else {
+          return(x)
+        }
+      })
+      
+      countsTable$cell <- unlist(my_list)
+      
+      
       # rename the cells for the remaining definition
-      countsTable$cell <- reactVals$DA_result_table$Naming
+      # countsTable$cell <- reactVals$DA_result_table$Naming
       
       rownames(countsTable) <- countsTable$cell
       countsTable$cell <- NULL
