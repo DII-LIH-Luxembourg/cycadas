@@ -608,8 +608,8 @@ server = function(input, output, session) {
       export_df_nodes$pm <- pm_concatenated
       export_df_nodes$nm <- nm_concatenated
 
-      export_freq <- data.frame(cluster=1:length(annotaionDF$cell),
-                                clustering_prop = annotaionDF$clusterSize)
+      # export_freq <- data.frame(cluster=1:length(annotaionDF$cell),
+      #                           clustering_prop = annotaionDF$clusterSize)
 
       download_list <- list(annTable = df_expr,
                             nodesTable = export_df_nodes,
@@ -737,6 +737,8 @@ server = function(input, output, session) {
   # Get the merged phenotypes as proportion table  --------------------------
   get_merged_prop_table <- function() {
     
+    # browser()
+    
     req(reactVals$counts_table)
     
     countsTable <- reactVals$counts_table
@@ -745,7 +747,10 @@ server = function(input, output, session) {
     # merge and aggregate by cell
     countsTable <- aggregate(. ~ cell, countsTable, sum)
     
+    # rename the cells for the remaining definition
+    countsTable$cell <- reactVals$DA_result_table$Naming
     rownames(countsTable) <- countsTable$cell
+    
     countsTable$cell <- NULL
     
     props_table <- t(t(countsTable) / colSums(countsTable)) * 100
@@ -926,6 +931,8 @@ server = function(input, output, session) {
           }
         })
 
+    # browser()
+    
     DA_df$list <- unlist(my_list)
     colnames(DA_df) <- c("Cond1", "Cond2", "p-value", "Cell", "Naming")
     reactVals$DA_result_table <- DA_df
