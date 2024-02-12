@@ -611,10 +611,9 @@ server = function(input, output, session) {
       export_freq <- data.frame(cluster=1:length(annotaionDF$cell),
                                 clustering_prop = annotaionDF$clusterSize)
 
-      download_list <- list(annTable = reactVals,
+      download_list <- list(annTable = df_expr,
                             nodesTable = export_df_nodes,
-                            edgesTable = reactVals$graph$edges,
-                            freq = export_freq)
+                            edgesTable = reactVals$graph$edges)
 
       download_list %>%
         imap(function(x,y){
