@@ -741,6 +741,9 @@ cycadas <- function() {
       # merge and aggregate by cell
       countsTable <- aggregate(. ~ cell, countsTable, sum)
       
+      # rename the cells for the remaining definition
+      countsTable$cell <- reactVals$DA_result_table$Naming
+      
       rownames(countsTable) <- countsTable$cell
       countsTable$cell <- NULL
       
