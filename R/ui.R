@@ -338,12 +338,12 @@ ui <- dashboardPage(
                 title = "Export Annotation",
                 # actionButton("exportAnnotationBtn", "Export Annotation")
                 downloadButton("exportAnnotationBtn", "Export Annotation")
-              ),
-              box(
-                width = NULL,
-                title = "Export Tree as Image",
-                actionButton("exportTreeGraphics", "Export Tree Image")
               )
+              # box(
+              #   width = NULL,
+              #   title = "Export Tree as Image",
+              #   actionButton("exportTreeGraphics", "Export Tree Image")
+              # )
               ), # end column
               column(
                 width = 8,
