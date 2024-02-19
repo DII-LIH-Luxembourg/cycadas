@@ -182,16 +182,29 @@ cycadas <- function() {
       
       output$umap_tree <-
         renderPlot(
-          ggplot(dr_umap, aes(
-            x = u1, y = u2, color = ClusterSelection
-          )) +
-            geom_point(size = 1.0) +
-            theme_bw() +
-            theme(legend.text = element_text(size = 12),
-                  legend.title = element_text(size = 20),
-                  axis.text = element_text(size = 12),
-                  axis.title = element_text(size = 20)) +
-            guides(color = guide_legend(override.aes = list(size = 4)))
+      cbind(dr_umap,ClusterSelection) %>%
+        mutate(ClusterSelection=as_factor(ClusterSelection)) %>%
+        mutate(ClusterSelection=fct_relevel(ClusterSelection,"other clusters","selected phenotype")) %>%
+        arrange(desc(ClusterSelection)) %>%
+        ggplot( aes(x = u1, y = u2, color = ClusterSelection,alpha=ClusterSelection)) +
+        geom_point(size = 1.0) +
+        theme_pubr() +
+        theme(legend.text = element_text(size = 12),
+              legend.title = element_text(size = 20),
+              axis.text = element_text(size = 12),
+              axis.title = element_text(size = 20)) +
+        guides(color = guide_legend(override.aes = list(size = 4)))
+      
+      #     ggplot(dr_umap, aes(
+      #       x = u1, y = u2, color = ClusterSelection
+      #     )) +
+      #       geom_point(size = 1.0) +
+      #       theme_bw() +
+      #       theme(legend.text = element_text(size = 12),
+      #             legend.title = element_text(size = 20),
+      #             axis.text = element_text(size = 12),
+      #             axis.title = element_text(size = 20)) +
+      #       guides(color = guide_legend(override.aes = list(size = 4)))
         )
     }
     
