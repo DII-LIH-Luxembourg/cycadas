@@ -688,6 +688,7 @@ cycadas <- function() {
 
         ggplot(me, aes_string(x=me[,1], y=me[,2])) +
           geom_point(size=1) +
+          theme_pubr() +
           theme(axis.title.y = element_blank(),
                 axis.ticks.y  = element_blank(),
                 axis.text.y = element_blank(),
@@ -709,6 +710,7 @@ cycadas <- function() {
         ggplot(me, aes_string(x = me[, 1])) +
           geom_histogram(bins = 80) +
           labs(x = "Scale 0 to 1") +
+          theme_pubr() +
           theme(axis.text = element_text(size = 12),
                 axis.title = element_text(size = 18)) +
           geom_vline(
