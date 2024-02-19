@@ -1073,12 +1073,15 @@ cycadas <- function() {
           geom_jitter(width = 0.2) +
           xlab("Condition") +
           ylab("Proportion") +
+          geom_pwc(aes(group = cond),method = "wilcox_test", label = "Wilcoxon, italic(p)= {p}")+
+          theme_pubr() +
           theme(plot.title = element_text(size = 22),
                 axis.text = element_text(size = 12),
                 legend.text = element_text(size = 14),
                 legend.title = element_text(size = 20),
                 axis.title.x = element_text(size = 20),
-                axis.title.y = element_text(size = 20)) +
+                axis.title.y = element_text(size = 20),
+                legend.position = "none") +
           ggtitle(reactVals$graph$nodes$label[reactVals$myNode])
       }
 
