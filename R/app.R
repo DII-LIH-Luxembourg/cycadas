@@ -162,6 +162,13 @@ cycadas <- function() {
       
       reactVals$hm <- tmp
       
+      updatePickerInput(
+        session,
+        inputId = "parentPicker",
+        choices = reactVals$annotationlist,
+        selected = parent
+      )
+      
       updateCheckboxGroupButtons(
         session,
         inputId = "treePickerPos",
