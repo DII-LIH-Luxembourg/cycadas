@@ -18,5 +18,6 @@ import(stats)
 import(umap)
 import(reshape2)
 import(mousetrap)
+import(ggpubr)
 export(cycadas)
 
