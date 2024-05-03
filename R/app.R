@@ -15,6 +15,7 @@ for (package in packages_to_install) {
 
 addResourcePath("images", "./www")
 
+#' @export
 cycadas <- function() {
 
   reactVals <- reactiveValues(th = NULL,
