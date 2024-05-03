@@ -31,5 +31,6 @@ Imports:
     umap,
     visNetwork,
     reshape2,
+    ggpubr,
     mousetrap,
     knitr
