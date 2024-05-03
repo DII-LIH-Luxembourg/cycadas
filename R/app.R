@@ -1,3 +1,22 @@
+# usethis::use_package("shiny")
+# usethis::use_package("DT")
+# usethis::use_package("ggplot2")
+# usethis::use_package("matrixStats")
+# usethis::use_package("dplyr")
+# usethis::use_package("stats")
+# usethis::use_package("pheatmap")
+# usethis::use_package("Ckmeans.1d.dp")
+# usethis::use_package("umap")
+# usethis::use_package("RColorBrewer")
+# usethis::use_package("shinydashboard")
+# usethis::use_package("shinyWidgets")
+# usethis::use_package("visNetwork")
+# usethis::use_package("glue")
+# usethis::use_package("purrr")
+# usethis::use_package("reshape2")
+# usethis::use_package("mousetrap")
+# usethis::use_package("knitr")
+
 
 # List of packages you want to check and install if needed
 packages_to_install <- c("shiny", "DT", "ggplot2", "matrixStats", "tidyverse", "stats", "knitr",
@@ -13,7 +32,7 @@ for (package in packages_to_install) {
   }
 }
 
-addResourcePath("images", "./www")
+shiny::addResourcePath("images", "./www")
 
 #' @export
 cycadas <- function() {
@@ -1217,4 +1236,5 @@ cycadas <- function() {
     server = server
   )
 }
+
 
