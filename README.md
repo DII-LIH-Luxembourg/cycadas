@@ -20,15 +20,13 @@ Key features:
 
 ## Installation Instructions
 
-To run:
 
--   Checkout the main branch, and within R:
 
 ``` r
 library(devtools)
 
-# load all required packages
-pkgload::load_all(".")
+# Install all required packages
+devtools::install_github("DII-LIH-Luxembourg/cycadas")
 
 # start the cycadas shiny app
 cycadas()
