@@ -1159,14 +1159,46 @@ cycadas <- function() {
       
     }
 
-    # Upload Expression Demo Data ---------------------------------------------
+    # Load Expression Demo Data ---------------------------------------------
     observeEvent(input$btnLoadDemoData, {
+      
+      df_expr <<- df_expr_demoData
+      cell_freq <<- cluster_freq_demoData
+      
+      lineage_marker <<- colnames(df_expr)
+      lineage_marker_raw <<- paste0(lineage_marker, "_raw")
+      
+      df_expr <<- createExpressionDF(df_expr, cell_freq)
+      reactVals$graph <- initTree()
+      
+      # Create a Progress object
+      progress <- shiny::Progress$new()
+      # Make sure it closes when we exit this reactive, even if there's an error
+      on.exit(progress$close())
+      
+      progress$set(message = "loading Data Cluster Expression Demo Data...", value = 0.2)
+      
+      reactVals$graph <- initTree()
+      
+      set.seed(1234)
+      progress$set(message = "Building the UMAP...", value = 0.3)
+      dr_umap <<- buildUMAP(df_expr[, lineage_marker_raw]) 
+      
+      # df_expr
+      # 
+      # pathExpr <- "data/demo_data/median_expr_1600.csv"
+      # pathFreq <- "data/demo_data/cluster_freq_1600.csv"
+      # 
+      # loadExprData(pathExpr, pathFreq)
+      # posPickerList <<- lineage_marker
+      
+      updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
 
-      pathExpr <- "data/demo_data/median_expr_1600.csv"
-      pathFreq <- "data/demo_data/cluster_freq_1600.csv"
-      
-      loadExprData(pathExpr, pathFreq)
-      
+      # pathExpr <- "data/demo_data/median_expr_1600.csv"
+      # pathFreq <- "data/demo_data/cluster_freq_1600.csv"
+      # 
+      # loadExprData(pathExpr, pathFreq)
+      # 
       initExprData()
     })
     
