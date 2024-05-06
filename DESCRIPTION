@@ -34,3 +34,4 @@ Imports:
     ggpubr,
     mousetrap,
     knitr
+LazyData: true

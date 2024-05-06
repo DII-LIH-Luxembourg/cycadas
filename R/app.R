@@ -109,7 +109,7 @@ cycadas <- function() {
         selected = NULL
       )
       
-      posPickerList <<- lineage_marker
+      # posPickerList <<- lineage_marker
       
       updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
       
@@ -212,7 +212,7 @@ cycadas <- function() {
         mutate(ClusterSelection=as_factor(ClusterSelection)) %>%
         mutate(ClusterSelection=fct_relevel(ClusterSelection,"other clusters","selected phenotype")) %>%
         arrange(desc(ClusterSelection)) %>%
-        ggplot( aes(x = u1, y = u2, color = ClusterSelection,alpha=ClusterSelection)) +
+        ggplot( aes(x = u1, y = u2, color = ClusterSelection)) +
         geom_point(size = 1.0) +
         ggpubr::theme_pubr() +
         theme(legend.text = element_text(size = 12),
@@ -407,6 +407,8 @@ cycadas <- function() {
 
     # Annotation heatmap plot -------------------------------------------------
     output$hm_tree <- renderPlot({
+      
+      # browser()
 
       if (is.null(reactVals$hm)) {
         plot(1, type = "n", main = "No Data Available")
@@ -432,7 +434,7 @@ cycadas <- function() {
     ## Function currently not ins use!
     observeEvent(input$updateNodePicker, {
 
-      node <- reactVals$graph$nodes %>% filter(label == input$updateNodePicker)
+      node <- reactVals$graph$nodes %>% dplyr::filter(label == input$updateNodePicker)
       myid <- node$id
 
       filterPosMarkers <- unlist(node$pm)
@@ -473,7 +475,7 @@ cycadas <- function() {
     ## Function currently not ins use!
     observeEvent(input$updateNodeBtn, {
 
-      node <- reactVals$graph$nodes %>% filter(label == input$parentPicker)
+      node <- reactVals$graph$nodes %>% dplyr::filter(label == input$parentPicker)
       myid <- node$id
 
       reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker,]$pm <-
@@ -1168,14 +1170,39 @@ cycadas <- function() {
       initExprData()
     })
     
-    # Upload Annotated Expr Demo Data -----------------------------------------
+    # Load Annotated Expr Demo Data -----------------------------------------
     observeEvent(input$btnLoadAnnoData, {
       
-      pathExpr <- "data/demo_data/median_expr_1600.csv"
-      pathFreq <- "data/demo_data/cluster_freq_1600.csv"
       
-      loadExprData(pathExpr, pathFreq)
-      posPickerList <<- lineage_marker
+      df_expr <<- df_expr_demoData
+      cell_freq <<- cluster_freq_demoData
+      
+      lineage_marker <<- colnames(df_expr)
+      lineage_marker_raw <<- paste0(lineage_marker, "_raw")
+      
+      df_expr <<- createExpressionDF(df_expr, cell_freq)
+      reactVals$graph <- initTree()
+      
+      # Create a Progress object
+      progress <- shiny::Progress$new()
+      # Make sure it closes when we exit this reactive, even if there's an error
+      on.exit(progress$close())
+      
+      progress$set(message = "loading Data Cluster Expression Demo Data...", value = 0.2)
+      
+      reactVals$graph <- initTree()
+      
+      set.seed(1234)
+      progress$set(message = "Building the UMAP...", value = 0.3)
+      dr_umap <<- buildUMAP(df_expr[, lineage_marker_raw]) 
+      
+      # df_expr
+      # 
+      # pathExpr <- "data/demo_data/median_expr_1600.csv"
+      # pathFreq <- "data/demo_data/cluster_freq_1600.csv"
+      # 
+      # loadExprData(pathExpr, pathFreq)
+      # posPickerList <<- lineage_marker
 
       updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
 
@@ -1193,7 +1220,7 @@ cycadas <- function() {
       )
       
       ## Load demo thresholds
-      th <- read.csv("data/demo_data/MarkerThresholds.csv")
+      th <- marker_th_demo_data
 
       th$X <- NULL
       th$color <- "blue"
@@ -1204,18 +1231,18 @@ cycadas <- function() {
       reactVals$th<- th
 
       ## Load metadata
-      md <<- read.csv("data/demo_data/metadata.csv")
+      md <<- meta_demo_data
       md$X <- NULL
       reactVals$md<- md
 
       ## Load counts table
-      ct <<- read.csv("data/demo_data/cluster_counts_1600.csv")
+      ct <<- cluster_counts_demoData
       ct$X <- NULL
       reactVals$counts_table <- ct
 
       ## Load annotaiton Tree
-      df_nodes <- read.csv("data/demo_data/nodesTable_data.csv")
-      df_edges <- read.csv("data/demo_data/edgesTable_data.csv")
+      df_nodes <- nodes_demo_data
+      df_edges <- edges_demo_data
 
       reactVals$graph <- getGraphFromLoad(df_nodes, df_edges)
 
