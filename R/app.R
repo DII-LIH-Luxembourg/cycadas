@@ -132,7 +132,6 @@ cycadas <- function() {
 
     # Function: Plot the annotation tree --------------------------------------
     plotTree <- function() {
-
       # before plotting the tree, update its properties
       for(i in 1:nrow(reactVals$graph$nodes)) {
         
@@ -162,11 +161,11 @@ cycadas <- function() {
       
       if (selectMethod == "picker") {
         
-        node <- reactVals$graph$nodes %>% filter(label == nodeName)
+        node <- reactVals$graph$nodes %>% dplyr::filter(label == nodeName)
         parent <- input$parentPicker
       } else {
 
-        node <- reactVals$graph$nodes %>% filter(id == nodeID)
+        node <- reactVals$graph$nodes %>% dplyr::filter(id == nodeID)
         parent <- node$label
       }
       
@@ -206,7 +205,7 @@ cycadas <- function() {
       
       # update umap plot for Tree
       ClusterSelection <- filterColor(df_expr,tmp)
-      
+
       output$umap_tree <-
         renderPlot(
       cbind(dr_umap,ClusterSelection) %>%
@@ -606,8 +605,6 @@ cycadas <- function() {
     # TODO: find a method to get a good resolution output
     observeEvent(input$exportTreeGraphics, {
 
-      # browser()
-
       # visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
       #   visEdges(arrows = "from") %>%
       #   visHierarchicalLayout() %>%
@@ -624,8 +621,7 @@ cycadas <- function() {
         paste("cycadas_annotation_data_", Sys.Date(), ".zip", sep = "")
       },
       content = function(file) {
-        
-        # browser()
+
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
 

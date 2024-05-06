@@ -23,7 +23,7 @@ ui <- dashboardPage(
     tabItems(
       tabItem(tabName = "home",
               fluidRow(align = "center",
-                tags$img(src="logo4_small2.png"),
+                tags$img(src="./images/logo4_small2.png"),
                   ),
               fluidRow(align = "left",
                        box(width = NULL,
