@@ -19,8 +19,8 @@
 
 
 # List of packages you want to check and install if needed
-packages_to_install <- c("shiny", "DT", "ggplot2", "matrixStats", "tidyverse", "stats", "knitr",
-                         "pheatmap", "Ckmeans.1d.dp", "umap", "RColorBrewer", "shinydashboard",
+packages_to_install <- c("shiny", "DT", "ggplot2", "matrixStats", "tidyverse", "stats", "knitr", "forcats",
+                         "pheatmap", "Ckmeans.1d.dp", "umap", "RColorBrewer", "shinydashboard", "mixtools",
                          "shinyWidgets", "visNetwork", "glue", "purrr", "reshape2", "mousetrap", "ggpubr")
 
 
@@ -206,11 +206,12 @@ cycadas <- function() {
       # update umap plot for Tree
       ClusterSelection <- filterColor(df_expr,tmp)
 
+      #---- UMAP Annotation Tree
       output$umap_tree <-
         renderPlot(
       cbind(dr_umap,ClusterSelection) %>%
-        mutate(ClusterSelection=as_factor(ClusterSelection)) %>%
-        mutate(ClusterSelection=fct_relevel(ClusterSelection,"other clusters","selected phenotype")) %>%
+        dplyr::mutate(ClusterSelection=as.factor(ClusterSelection)) %>%
+        dplyr::mutate(ClusterSelection=fct_relevel(ClusterSelection,"other clusters","selected phenotype")) %>%
         arrange(desc(ClusterSelection)) %>%
         ggplot( aes(x = u1, y = u2, color = ClusterSelection)) +
         geom_point(size = 1.0) +

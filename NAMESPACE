@@ -19,5 +19,7 @@ import(umap)
 import(reshape2)
 import(mousetrap)
 import(ggpubr)
+import(mixtools)
+import(forcats)
 export(cycadas)
 

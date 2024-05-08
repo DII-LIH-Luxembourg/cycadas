@@ -33,5 +33,7 @@ Imports:
     reshape2,
     ggpubr,
     mousetrap,
-    knitr
+    knitr,
+    mixtools,
+    forcats
 LazyData: true
