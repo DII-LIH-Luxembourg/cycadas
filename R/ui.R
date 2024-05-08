@@ -239,6 +239,20 @@ ui <- dashboardPage(
                 #   )
                 # ),
                 box(width = NULL,
+                    selectInput(
+                      "th_method",
+                      "Threshold Method:",
+                      c("K-means" = "km",
+                        "GMM mid" = "gmm_mid",
+                        "GMM-high" = "gmm_high",
+                        "GMM-low" = "gmm_low"),
+                      selected = "km",
+                      multiple = FALSE,
+                      selectize = TRUE,
+                      width = NULL,
+                      size = NULL
+                    )),
+                box(width = NULL,
                     DTOutput('table'))
               ))),
       # umap Reactive  Tab ----------------------------------------------------

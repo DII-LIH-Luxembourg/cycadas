@@ -700,6 +700,34 @@ cycadas <- function() {
       PlottingThreshold(marker_expr, myTH, myColor)
     })
     
+    # Observe Threshold Method Selection --------------------------------------
+    observeEvent(input$th_method, {
+      
+      # browser()
+      
+      if (!is.null(reactVals$th)) {
+        # TODO: change naming: not only k-means
+        reactVals$th <- updateTH(df_expr, reactVals$th, th_mode=input$th_method)
+        # df_expr$cell <<- rebuiltTree(reactVals$graph, df_expr, reactVals$th)      
+          
+          # req(input$table_rows_selected)
+          # selRow <- reactVals$th[input$table_rows_selected,]
+          # 
+          # reactVals$th[input$table_rows_selected, "threshold"] <- round(input$plot_click$x, 3)
+        # req(input$table_rows_selected)  
+        # myTH <- reactVals$th[input$table_rows_selected, "threshold"]
+        # myColor <- reactVals$th[input$table_rows_selected, "color"]
+        # marker_expr <- as.data.frame(df_expr[, selRow$cell])
+        # marker_expr <- cbind(marker_expr, rnorm(1:nrow(marker_expr)))
+        # 
+        # PlottingThreshold(marker_expr, myTH, myColor)
+        
+        # df_expr$cell <<- rebuiltTree(reactVals$graph, df_expr, reactVals$th)        
+      }
+      
+
+    })
+    
     # Observe click scatter-plot -----------------------------------------------
     observeEvent(input$plot_click, {
 

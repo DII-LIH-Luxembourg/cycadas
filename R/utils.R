@@ -1,6 +1,6 @@
 
 # Estimate the threshold values -----------------------------------------------
-kmeansTH <- function(df) {
+kmeansTH <- function(df, th_mode="km") {
   th <- data.frame(cell = colnames(df), threshold = 0.0, color = "blue", bi_mod = 0)
 
   for (m in th$cell) {
@@ -17,11 +17,67 @@ kmeansTH <- function(df) {
 
     z <- Ckmeans.1d.dp(df[, m], 2)
     th[th$cell == m, "threshold"] <- round(ahist(z, style="midpoints", data=df[, m], plot=FALSE)$breaks[2:2], 3)
+
   }
 
   rownames(th) <- th$cell
   return(th)
 }
+
+updateTH <- function(df, th, th_mode) {
+  
+  set.seed(42)
+  
+  if (th_mode == "km") {
+    
+    for (m in th$cell) {
+      set.seed(42)
+      z <- Ckmeans.1d.dp(df[, m], 2)
+      th[th$cell == m, "threshold"] <- round(ahist(z, style="midpoints", data=df[, m], plot=FALSE)$breaks[2:2], 3)
+    }
+  }
+  else if (th_mode == "gmm_mid") {
+    
+    # browser()
+    for (m in th$cell) {
+      set.seed(42)
+      fit <- normalmixEM(df[, m], k = 2)
+      # Get component means
+      means <- fit$mu
+      # Define high expression threshold (e.g., mean of high component + standard deviation)
+      # th[th$cell == m, "threshold"] <- round(means[2] - fit$sigma[2], 3)
+      th[th$cell == m, "threshold"] <- round((means[2] - means[1]) / 2, 3)
+    }
+  }
+    else if (th_mode == "gmm_high") {
+      
+      # browser()
+      for (m in th$cell) {
+        set.seed(42)
+        fit <- normalmixEM(df[, m], k = 2)
+        # Get component means
+        means <- fit$mu
+        # Define high expression threshold (e.g., mean of high component + standard deviation)
+        th[th$cell == m, "threshold"] <- round(means[2] - fit$sigma[2], 3)
+        # th[th$cell == m, "threshold"] <- round((means[2] - means[1]) / 2, 3)
+      }
+    }
+    else if (th_mode == "gmm_low") {
+      
+      # browser()
+      for (m in th$cell) {
+        set.seed(42)
+        fit <- normalmixEM(df[, m], k = 2)
+        # Get component means
+        means <- fit$mu
+        # Define high expression threshold (e.g., mean of high component + standard deviation)
+        th[th$cell == m, "threshold"] <- round(means[1] + fit$sigma[1], 3)
+        # th[th$cell == m, "threshold"] <- round((means[2] - means[1]) / 2, 3)
+      }
+    }
+  return(th)
+}
+ 
 
 # Scale the expression values between 0 and 1 ---------------------------------
 normalize01 <- function(hm) {
