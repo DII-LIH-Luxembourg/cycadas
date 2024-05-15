@@ -21,5 +21,6 @@ import(mousetrap)
 import(ggpubr)
 import(mixtools)
 import(forcats)
+import(SingleCellExperiment)
+import(CATALYST)
 export(cycadas)
-

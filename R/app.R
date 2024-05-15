@@ -21,7 +21,8 @@
 # List of packages you want to check and install if needed
 packages_to_install <- c("shiny", "DT", "ggplot2", "matrixStats", "tidyverse", "stats", "knitr", "forcats",
                          "pheatmap", "Ckmeans.1d.dp", "umap", "RColorBrewer", "shinydashboard", "mixtools",
-                         "shinyWidgets", "visNetwork", "glue", "purrr", "reshape2", "mousetrap", "ggpubr")
+                         "shinyWidgets", "visNetwork", "glue", "purrr", "reshape2", "mousetrap", "ggpubr", 
+                         "SingleCellExperiment", "CATALYST")
 
 
 # Check if each package is already installed, and install if not
@@ -46,7 +47,8 @@ cycadas <- function() {
                               myNode = "", # selected node for interactive DA
                               graph = NULL,
                               hm = NULL,
-                              annotationlist = NULL
+                              annotationlist = NULL,
+                              sce = NULL
                               )
   
   # Global static values
@@ -253,6 +255,68 @@ cycadas <- function() {
       loadExprData(pathExpr, pathFreq)
       
       initExprData()
+    })
+    
+    observeEvent(input$sce, {
+      # browser()
+      req(input$sce)
+      
+      # Create a Progress object
+      progress <- shiny::Progress$new()
+      # Make sure it closes when we exit this reactive, even if there's an error
+      on.exit(progress$close())
+      
+      progress$set(message = "loading Data ...", value = 0.2)
+      
+      reactVals$sce <- readRDS(input$sce$datapath)
+      
+      # my_sce <- readRDS(input$sce$datapath)
+      # cluster_ids(sce)
+      
+      print(dim(assay(reactVals$sce)))
+      print(colnames(colData(reactVals$sce)))
+      
+      print(head(reactVals$sce@metadata$SOM_codes))
+      
+      df_expr_tmp <- as.data.frame(reactVals$sce@metadata$SOM_codes)
+      
+      rd <- rowData(reactVals$sce)
+      
+      lineage_marker <<- rd$marker_name[rd$marker_class == "type"]
+      lineage_marker_raw <<- paste0(lineage_marker, "_raw")
+      
+      # cell_freq_tmp <- as.data.frame(cluster_ids(c_id = cluster_ids(reactVals$sce, "meta20")))
+      cell_freq_tmp <- as.data.frame(table(c_id = cluster_ids(reactVals$sce)))
+      
+      cell_freq_tmp$clustering_prop <- cell_freq_tmp$Freq / sum(cell_freq_tmp$Freq)
+      cell_freq_tmp$Freq <- NULL
+      colnames(cell_freq_tmp) <- c("cluster", "clustering_prop")
+      cell_freq <<- cell_freq_tmp
+      
+      
+      df_expr <<- createExpressionDF(df_expr_tmp, cell_freq_tmp)
+      reactVals$graph <- initTree()
+      
+      set.seed(1234)
+      progress$set(message = "Building the UMAP...", value = 0.3)
+      dr_umap <<- buildUMAP(df_expr[, lineage_marker_raw]) 
+      
+      # df_expr
+      # 
+      # pathExpr <- "data/demo_data/median_expr_1600.csv"
+      # pathFreq <- "data/demo_data/cluster_freq_1600.csv"
+      # 
+      # loadExprData(pathExpr, pathFreq)
+      # posPickerList <<- lineage_marker
+      
+      updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
+      
+      # pathExpr <- "data/demo_data/median_expr_1600.csv"
+      # pathFreq <- "data/demo_data/cluster_freq_1600.csv"
+      # 
+      # loadExprData(pathExpr, pathFreq)
+      # 
+      initExprData()      
     })
     
     # Observe MenutItems ------------------------------------------------------

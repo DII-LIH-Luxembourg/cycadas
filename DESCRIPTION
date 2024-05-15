@@ -35,5 +35,7 @@ Imports:
     mousetrap,
     knitr,
     mixtools,
-    forcats
+    forcats,
+    SingleCellExperiment,
+    CATALYST
 LazyData: true
