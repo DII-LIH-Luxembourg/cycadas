@@ -75,9 +75,51 @@ updateTH <- function(df, th, th_mode) {
         # th[th$cell == m, "threshold"] <- round((means[2] - means[1]) / 2, 3)
       }
     }
+    else if (th_mode == "mclust") {
+      
+      # browser()
+      for (m in th$cell) {
+        set.seed(42)
+        
+        # Fit the GMM model using Mclust
+        model <- Mclust(df[, m], G = 2)
+
+        max_clus1 <- max(model$data[model$classification==1])
+        min_clus2 <- min(model$data[model$classification==2])
+
+        th[th$cell == m, "threshold"] <- mean(max_clus1, min_clus2) 
+
+      }
+    }
+    else if (th_mode == "kde") {
+      
+      # browser()
+      for (m in th$cell) {
+        set.seed(42)
+        
+        dens <- density(asinh(df[, m]))
+        
+        # Fit Gaussian Mixture Model (GMM) to the peaks
+        peaks <- data.frame(x = dens$x, y = dens$y)
+        fit <- Mclust(peaks, G = 2) # Assuming 2 clusters
+        
+        # Get means of the Gaussian components (cluster centers)
+        cluster_means <- fit$parameters$mean
+        
+        # Sort means to identify the two peaks
+        sorted_means <- sort(cluster_means)
+        
+        # Calculate threshold as the midpoint between the two cluster means
+        threshold <- mean(sorted_means)
+        
+        # th[th$cell == m, "threshold"] <- quantile(dens$x, probs = 0.75)
+        th[th$cell == m, "threshold"] <- threshold
+        
+      }
+    }
   return(th)
 }
- 
+
 
 # Scale the expression values between 0 and 1 ---------------------------------
 normalize01 <- function(hm) {
