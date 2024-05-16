@@ -37,5 +37,6 @@ Imports:
     mixtools,
     forcats,
     SingleCellExperiment,
-    CATALYST
+    CATALYST,
+    shinyjs
 LazyData: true

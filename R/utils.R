@@ -384,6 +384,8 @@ rebuiltTree <- function(graph, df_expr, th) {
 # Function for the creation of the oveerall expression DF
 createExpressionDF <- function(df_expr, cell_freq) {
   
+  # browser()
+  
   df01_expr <- df_expr %>% normalize01()
   colnames(df01_expr) <- lineage_marker
   colnames(df_expr) <- lineage_marker_raw

@@ -22,7 +22,7 @@
 packages_to_install <- c("shiny", "DT", "ggplot2", "matrixStats", "tidyverse", "stats", "knitr", "forcats",
                          "pheatmap", "Ckmeans.1d.dp", "umap", "RColorBrewer", "shinydashboard", "mixtools",
                          "shinyWidgets", "visNetwork", "glue", "purrr", "reshape2", "mousetrap", "ggpubr", 
-                         "SingleCellExperiment", "CATALYST")
+                         "SingleCellExperiment", "CATALYST", "shinyjs")
 
 
 # Check if each package is already installed, and install if not
@@ -48,16 +48,20 @@ cycadas <- function() {
                               graph = NULL,
                               hm = NULL,
                               annotationlist = NULL,
-                              sce = NULL
+                              sce = NULL,
+                              metaClustLevel = NULL
                               )
   
   # Global static values
   lineage_marker <<- character(0)
   df_expr <<- NULL
   dr_umap <<- NULL
+  init_app <<- TRUE
 
   # Server function -------------------------
   server = function(input, output, session) {
+    
+    shinyjs::disable("metadiv")
     
 
     # Load Expression Data and UMAP -------------------------------------------------
@@ -257,6 +261,7 @@ cycadas <- function() {
       initExprData()
     })
     
+    # Load CATALYST data ----
     observeEvent(input$sce, {
       # browser()
       req(input$sce)
@@ -270,14 +275,17 @@ cycadas <- function() {
       
       reactVals$sce <- readRDS(input$sce$datapath)
       
+      reactVals$metaClustLevel <- colnames(reactVals$sce@metadata$cluster_codes)[1]
+      
       # my_sce <- readRDS(input$sce$datapath)
       # cluster_ids(sce)
       
-      print(dim(assay(reactVals$sce)))
-      print(colnames(colData(reactVals$sce)))
+      # print(dim(assay(reactVals$sce)))
+      # print(colnames(colData(reactVals$sce)))
+      # 
+      # print(head(reactVals$sce@metadata$SOM_codes))
       
-      print(head(reactVals$sce@metadata$SOM_codes))
-      
+      # load only som codes as default
       df_expr_tmp <- as.data.frame(reactVals$sce@metadata$SOM_codes)
       
       rd <- rowData(reactVals$sce)
@@ -316,7 +324,87 @@ cycadas <- function() {
       # 
       # loadExprData(pathExpr, pathFreq)
       # 
-      initExprData()      
+      initExprData()
+      
+      updatePickerInput(
+        session,
+        inputId = "metaLevel",
+        choices = colnames(reactVals$sce@metadata$cluster_codes),
+        selected = reactVals$metaClustLevel
+        # selected = colnames(reactVals$sce@metadata$cluster_codes)[1]
+      )
+      
+      shinyjs::enable("metadiv")
+    })
+    
+    # Observe Parent Node selection -------------------------------------------
+    observeEvent(input$metaLevel, {
+      
+      req(input$sce)
+      
+      if (init_app == TRUE) {
+        
+        init_app <<- FALSE
+        return()
+      } else {
+        
+        # browser()
+        
+        reactVals$metaClustLevel=input$metaLevel
+        
+        # select the metalvel and merge the clusters 
+        somExpr <- as.data.frame(reactVals$sce@metadata$SOM_codes)
+        
+        somExpr$metaLevels <- reactVals$sce@metadata$cluster_codes[reactVals$metaClustLevel]
+        
+        somExpr <- somExpr %>%
+          group_by(metaLevels) %>%
+          summarise_if(is.numeric, mean)
+        
+        somExpr <- as.data.frame(somExpr[, lineage_marker])
+        # cell_freq_tmp <- as.data.frame(cluster_ids(c_id = cluster_ids(reactVals$sce, "meta20")))
+        cell_freq_tmp <- as.data.frame(table(c_id = cluster_ids(reactVals$sce, reactVals$metaClustLevel)))
+        
+        cell_freq_tmp$clustering_prop <- cell_freq_tmp$Freq / sum(cell_freq_tmp$Freq)
+        cell_freq_tmp$Freq <- NULL
+        colnames(cell_freq_tmp) <- c("cluster", "clustering_prop")
+        cell_freq <<- cell_freq_tmp
+        
+        
+        df_expr <<- createExpressionDF(somExpr, cell_freq_tmp)
+        reactVals$graph <- initTree()
+        
+        set.seed(1234)
+        # progress$set(message = "Building the UMAP...", value = 0.3)
+        
+        if (nrow(df_expr) > 20) {
+          dr_umap <<- buildUMAP(df_expr[, lineage_marker_raw])   
+        } else {
+          dr_umap <<- NULL
+        }
+        
+        
+        # df_expr
+        # 
+        # pathExpr <- "data/demo_data/median_expr_1600.csv"
+        # pathFreq <- "data/demo_data/cluster_freq_1600.csv"
+        # 
+        # loadExprData(pathExpr, pathFreq)
+        # posPickerList <<- lineage_marker
+        
+        updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
+        
+        # pathExpr <- "data/demo_data/median_expr_1600.csv"
+        # pathFreq <- "data/demo_data/cluster_freq_1600.csv"
+        # 
+        # loadExprData(pathExpr, pathFreq)
+        # 
+        initExprData()
+        
+        reactVals$hm <- df_expr[, lineage_marker]
+        
+      }
+      
     })
     
     # Observe MenutItems ------------------------------------------------------

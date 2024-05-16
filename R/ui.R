@@ -102,6 +102,24 @@ ui <- dashboardPage(
                 ),
                 box(
                   width = NULL,
+                  title = "Select MetaCluster Level (CATALYST)",
+                  useShinyjs(),
+                  div(id="metadiv",
+                  pickerInput(
+                    inputId = "metaLevel",
+                    label = "Select Cluster Level:",
+                    choices = NULL,
+                    options = list(
+                      `actions-box` = TRUE,
+                      size = 10,
+                      `selected-text-format` = "count > 3"
+                    ),
+                    multiple = F,
+                  )
+                  )
+                ),
+                box(
+                  width = NULL,
                   column(
                     width = 4,
                     checkboxGroupButtons(
@@ -193,6 +211,12 @@ ui <- dashboardPage(
                 # actionButton("exportAnnotationBtn", "Export Annotation")
                 downloadButton("exportAnnotationBtn", "Export Annotation")
               )
+              # box(
+              #   width = NULL,
+              #   title = "Export CATALYST Annotation",
+              #   # actionButton("exportAnnotationBtn", "Export Annotation")
+              #   downloadButton("exportCatalystBtn", "Export Annotation")
+              # )
               # box(
               #   width = NULL,
               #   title = "Export Tree as Image",
