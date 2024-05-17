@@ -210,13 +210,19 @@ ui <- dashboardPage(
                 title = "Export Annotation",
                 # actionButton("exportAnnotationBtn", "Export Annotation")
                 downloadButton("exportAnnotationBtn", "Export Annotation")
+              ),
+              box(
+                width = NULL,
+                title = "Merge CATALYST Annotation",
+                # actionButton("exportAnnotationBtn", "Export Annotation")
+                downloadButton("mergeCatalystBtn", "Merge Annotation")
+              ),
+              box(
+                width = NULL,
+                title = "Export CATALYST Annotation",
+                # actionButton("exportAnnotationBtn", "Export Annotation")
+                downloadButton("exportCatalystBtn", "Export Annotation")
               )
-              # box(
-              #   width = NULL,
-              #   title = "Export CATALYST Annotation",
-              #   # actionButton("exportAnnotationBtn", "Export Annotation")
-              #   downloadButton("exportCatalystBtn", "Export Annotation")
-              # )
               # box(
               #   width = NULL,
               #   title = "Export Tree as Image",
@@ -267,22 +273,24 @@ ui <- dashboardPage(
                 #     selected = "1"
                 #   )
                 # ),
-                box(width = NULL,
-                    selectInput(
-                      "th_method",
-                      "Threshold Method:",
-                      c("K-means" = "km",
-                        "GMM mid" = "gmm_mid",
-                        "GMM-high" = "gmm_high",
-                        "GMM-low" = "gmm_low",
-                        "Mclust" = "mclust",
-                        "KDE" = "kde"),
-                      selected = "km",
-                      multiple = FALSE,
-                      selectize = TRUE,
-                      width = NULL,
-                      size = NULL
-                    )),
+                # box(width = NULL,
+                #     selectInput(
+                #       "th_method",
+                #       "Threshold Method:",
+                #       c("K-means" = "km",
+                #         "GMM midpoint" = "gmm_mid"),
+                #       # c("K-means" = "km",
+                #       #   "GMM mid" = "gmm_mid",
+                #       #   "GMM-high" = "gmm_high",
+                #       #   "GMM-low" = "gmm_low",
+                #       #   "Mclust" = "mclust",
+                #       #   "KDE" = "kde"),
+                #       selected = "km",
+                #       multiple = FALSE,
+                #       selectize = TRUE,
+                #       width = NULL,
+                #       size = NULL
+                #     )),
                 box(width = NULL,
                     DTOutput('table'))
               ))),

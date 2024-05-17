@@ -4,6 +4,8 @@ kmeansTH <- function(df, th_mode="km") {
   th <- data.frame(cell = colnames(df), threshold = 0.0, color = "blue", bi_mod = 0)
 
   for (m in th$cell) {
+    
+    # browser()
 
     # check for bi-modal distribution, if not color = red to indicate
     # stated in Pfister et al., 2013
@@ -13,11 +15,34 @@ kmeansTH <- function(df, th_mode="km") {
       th[th$cell == m, "color"] <- "red"
     }
     
+    ############### K-Means
     set.seed(42)
 
     z <- Ckmeans.1d.dp(df[, m], 2)
-    th[th$cell == m, "threshold"] <- round(ahist(z, style="midpoints", data=df[, m], plot=FALSE)$breaks[2:2], 3)
-
+    midpoint_kmeans <- mean(z$centers)
+    
+    kmeans_silhouette <- silhouette(z$cluster, dist(df[, m]))
+    kmeans_avg_silhouette <- mean(kmeans_silhouette[, 3])
+    
+    ############### GMM
+    # Fit a Gaussian mixture model using normalmixEM
+    fit <- normalmixEM(df[, m], k = 2)  # Assuming 2 clusters
+    # Extract means of the fitted components
+    means <- fit$mu
+    
+    midpoint_normalMix <- mean(means)
+    
+    # Plot silhouette plot for normalmixEM with threshold line
+    silhouette_result <- silhouette(fit$posterior[, 1] > 0.5, dist(df[, m]))
+    gmm_normalMix_avg_silhouette <- mean(silhouette_result[,3])
+    
+    if (kmeans_avg_silhouette >= gmm_normalMix_avg_silhouette) {
+      
+      th[th$cell == m, "threshold"] <- midpoint_kmeans
+    } else {
+      
+      th[th$cell == m, "threshold"] <- midpoint_normalMix
+    }
   }
 
   rownames(th) <- th$cell
@@ -46,7 +71,8 @@ updateTH <- function(df, th, th_mode) {
       means <- fit$mu
       # Define high expression threshold (e.g., mean of high component + standard deviation)
       # th[th$cell == m, "threshold"] <- round(means[2] - fit$sigma[2], 3)
-      th[th$cell == m, "threshold"] <- round((means[2] - means[1]) / 2, 3)
+      # th[th$cell == m, "threshold"] <- round((means[2] - means[1]) / 2, 3)
+      th[th$cell == m, "threshold"] <- round(mean(means), 3)
     }
   }
     else if (th_mode == "gmm_high") {
@@ -84,10 +110,13 @@ updateTH <- function(df, th, th_mode) {
         # Fit the GMM model using Mclust
         model <- Mclust(df[, m], G = 2)
 
-        max_clus1 <- max(model$data[model$classification==1])
-        min_clus2 <- min(model$data[model$classification==2])
+        # Extract means of the Gaussian components
+        means <- gmm_result$parameters$mean
+        
+        # Calculate the midpoint between the means
+        # midpoint_gmm <- mean(means)
 
-        th[th$cell == m, "threshold"] <- mean(max_clus1, min_clus2) 
+        th[th$cell == m, "threshold"] <- mean(means)
 
       }
     }

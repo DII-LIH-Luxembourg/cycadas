@@ -22,7 +22,7 @@
 packages_to_install <- c("shiny", "DT", "ggplot2", "matrixStats", "tidyverse", "stats", "knitr", "forcats",
                          "pheatmap", "Ckmeans.1d.dp", "umap", "RColorBrewer", "shinydashboard", "mixtools",
                          "shinyWidgets", "visNetwork", "glue", "purrr", "reshape2", "mousetrap", "ggpubr", 
-                         "SingleCellExperiment", "CATALYST", "shinyjs")
+                         "SingleCellExperiment", "CATALYST", "shinyjs", "cluster")
 
 
 # Check if each package is already installed, and install if not
