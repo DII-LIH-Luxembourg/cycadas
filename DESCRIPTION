@@ -39,5 +39,6 @@ Imports:
     SingleCellExperiment,
     CATALYST,
     shinyjs,
-    cluster
+    cluster,
+    mclust
 LazyData: true

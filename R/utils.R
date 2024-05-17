@@ -2,8 +2,16 @@
 # Estimate the threshold values -----------------------------------------------
 kmeansTH <- function(df, th_mode="km") {
   th <- data.frame(cell = colnames(df), threshold = 0.0, color = "blue", bi_mod = 0)
+  
+  # for debug
+  # i <- 1
 
   for (m in th$cell) {
+    
+    # if (i == 18) {
+    #   browser()
+    # }
+    # i <- i+1
     
     # browser()
 
@@ -17,6 +25,7 @@ kmeansTH <- function(df, th_mode="km") {
     
     ############### K-Means
     set.seed(42)
+    # set.seed(123)
 
     z <- Ckmeans.1d.dp(df[, m], 2)
     midpoint_kmeans <- mean(z$centers)
@@ -31,18 +40,37 @@ kmeansTH <- function(df, th_mode="km") {
     means <- fit$mu
     
     midpoint_normalMix <- mean(means)
-    
-    # Plot silhouette plot for normalmixEM with threshold line
+
     silhouette_result <- silhouette(fit$posterior[, 1] > 0.5, dist(df[, m]))
     gmm_normalMix_avg_silhouette <- mean(silhouette_result[,3])
     
-    if (kmeans_avg_silhouette >= gmm_normalMix_avg_silhouette) {
+    ###############
+    # Perform GMM clustering ##################################################
+    gmm_result <- Mclust(df[, m], G = 2)
+    
+    # Extract means of the Gaussian components
+    means <- gmm_result$parameters$mean
+    
+    # Calculate the midpoint between the means
+    midpoint_gmm <- mean(means)
+    # Calculate silhouette widths for GMM
+    gmm_clusters <- gmm_result$classification
+    gmm_silhouette <- silhouette(gmm_clusters, dist(df[, m]))
+    
+    gmm_avg_silhouette <- mean(gmm_silhouette[, 3])
+    ###########################################################################
+    
+    if (kmeans_avg_silhouette >= gmm_avg_silhouette) {
       
       th[th$cell == m, "threshold"] <- midpoint_kmeans
     } else {
       
-      th[th$cell == m, "threshold"] <- midpoint_normalMix
+      # th[th$cell == m, "threshold"] <- midpoint_normalMix
+      th[th$cell == m, "threshold"] <- midpoint_gmm
     }
+    
+
+    
   }
 
   rownames(th) <- th$cell
@@ -111,7 +139,7 @@ updateTH <- function(df, th, th_mode) {
         model <- Mclust(df[, m], G = 2)
 
         # Extract means of the Gaussian components
-        means <- gmm_result$parameters$mean
+        midpoint_mcluster <- gmm_result$parameters$mean
         
         # Calculate the midpoint between the means
         # midpoint_gmm <- mean(means)
