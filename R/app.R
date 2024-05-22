@@ -276,6 +276,7 @@ cycadas <- function() {
       reactVals$sce <- readRDS(input$sce$datapath)
       
       reactVals$metaClustLevel <- colnames(reactVals$sce@metadata$cluster_codes)[1]
+      # reactVals$metaClustLevel <- mc_levels[5:length(mc_levels)]
       
       # my_sce <- readRDS(input$sce$datapath)
       # cluster_ids(sce)
@@ -326,10 +327,15 @@ cycadas <- function() {
       # 
       initExprData()
       
+      mc_levels <- colnames(reactVals$sce@metadata$cluster_codes)
+      #remove 2,3, and 4
+      mc_levels <- mc_levels[-(2:5)]
+      
       updatePickerInput(
         session,
         inputId = "metaLevel",
-        choices = colnames(reactVals$sce@metadata$cluster_codes),
+        # choices = colnames(reactVals$sce@metadata$cluster_codes),
+        choices = mc_levels,
         selected = reactVals$metaClustLevel
         # selected = colnames(reactVals$sce@metadata$cluster_codes)[1]
       )
