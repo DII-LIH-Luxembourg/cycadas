@@ -337,7 +337,7 @@ cycadas <- function() {
       shinyjs::enable("metadiv")
     })
     
-    # Observe Parent Node selection -------------------------------------------
+    # Observe Metalevel selection -------------------------------------------
     observeEvent(input$metaLevel, {
       
       req(input$sce)

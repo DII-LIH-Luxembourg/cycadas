@@ -35,17 +35,18 @@ kmeansTH <- function(df, th_mode="km") {
     
     ############### GMM
     # Fit a Gaussian mixture model using normalmixEM
-    fit <- normalmixEM(df[, m], k = 2)  # Assuming 2 clusters
-    # Extract means of the fitted components
-    means <- fit$mu
-    
-    midpoint_normalMix <- mean(means)
-
-    silhouette_result <- silhouette(fit$posterior[, 1] > 0.5, dist(df[, m]))
-    gmm_normalMix_avg_silhouette <- mean(silhouette_result[,3])
+    # fit <- normalmixEM(df[, m], k = 2)  # Assuming 2 clusters
+    # # Extract means of the fitted components
+    # means <- fit$mu
+    # 
+    # midpoint_normalMix <- mean(means)
+    # 
+    # silhouette_result <- silhouette(fit$posterior[, 1] > 0.5, dist(df[, m]))
+    # gmm_normalMix_avg_silhouette <- mean(silhouette_result[,3])
     
     ###############
     # Perform GMM clustering ##################################################
+    # browser()
     gmm_result <- Mclust(df[, m], G = 2)
     
     # Extract means of the Gaussian components
