@@ -216,7 +216,7 @@ ui <- dashboardPage(
                 width = NULL,
                 title = "Merge CATALYST Annotation",
                 # actionButton("exportAnnotationBtn", "Export Annotation")
-                downloadButton("mergeCatalystBtn", "Merge Annotation")
+                actionButton("mergeCatalystBtn", "Merge Annotation")
               ),
               box(
                 width = NULL,

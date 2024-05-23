@@ -57,6 +57,8 @@ cycadas <- function() {
   df_expr <<- NULL
   dr_umap <<- NULL
   init_app <<- TRUE
+  # 2 column data.frame containing old_cluster and new_cluster IDs
+  mergeTableCatalyst <<- NULL
 
   # Server function -------------------------
   server = function(input, output, session) {
@@ -494,7 +496,32 @@ cycadas <- function() {
         }
       }
     })
+    
+    # Merge CATALYST function -------------------------------------------------
+    observeEvent(input$mergeCatalystBtn, {
 
+      # browser()
+      mergeTableCatalyst <<- data.frame(old_cluster = as.numeric(rownames(df_expr)),
+                                       new_cluster = df_expr$cell)
+
+      reactVals$sce <- mergeClusters(reactVals$sce, k = reactVals$metaClustLevel, table = mergeTableCatalyst, 
+                                     id = paste0("merging_", reactVals$metaClustLevel))
+      
+      # x <- 1 # for debug
+      
+    })
+    
+    # Export CATALYST SingleCellObject ----------------------------------------
+    output$exportCatalystBtn <- downloadHandler(
+      filename = function() {
+        paste("Annotated_sce_", Sys.Date(), ".rds", sep="")
+      },
+      content = function(file) {
+        saveRDS(reactVals$sce, file)
+      },
+      contentType = "application/octet-stream"
+    )
+    
     # Annotation heatmap plot -------------------------------------------------
     output$hm_tree <- renderPlot({
       
