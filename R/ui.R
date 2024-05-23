@@ -84,8 +84,9 @@ ui <- dashboardPage(
                 width = 4,
                 box(
                   width = NULL,
-                  title = "Create Node",
+                  title = "Create Node", 
                   textOutput("progressBox"),
+                  # textOutput("totalSelection"),
                   textOutput("progressBox2"),
                   textInput("newNode", "Set Name..."),
                   pickerInput(

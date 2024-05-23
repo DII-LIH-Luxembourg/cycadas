@@ -124,15 +124,29 @@ cycadas <- function() {
     }
     
     # Function: Update cluster labels -----------------------------------------
-    updateClusterLabels <- function(mydf) {
+    updateClusterLabels <- function(mydf, my_node_id=0) {
+      
+      # browser()
+      
+      children <- all_my_children(reactVals$graph, my_node_id)
+      
+      if (is.null(children)) {
+        children <- c()
+      } 
+      
+      all_cluster_ids <- as.numeric(c(rownames(mydf), children))
+      totalSum <- sum(cell_freq[all_cluster_ids,]$clustering_prop)
 
       mysum <- sum(cell_freq[rownames(mydf),]$clustering_prop)
 
       output$progressBox <- renderText({
-        paste0(mysum, "%")
+        paste0(round(mysum, 3), "% in selection")
+      })
+      output$totalSelection <- renderText({
+        paste0(round(totalSum, 3), "% in total")
       })
       output$progressBox2 <- renderText({
-        paste0(dim(mydf)[1], "Cluster")
+        paste0(dim(mydf)[1], " Cluster in selection")
       })
     }
 
@@ -162,90 +176,6 @@ cycadas <- function() {
       })
     }
     
-    # Parent Node selection ---------------------------------------------------
-    parentNodeSelection <- function(selectMethod, nodeID=0, nodeName="") {
-      
-      if (selectMethod == "picker") {
-        
-        node <- reactVals$graph$nodes %>% dplyr::filter(label == nodeName)
-        parent <- input$parentPicker
-      } else {
-
-        node <- reactVals$graph$nodes %>% dplyr::filter(id == nodeID)
-        parent <- node$label
-      }
-      
-      filterPosMarkers <- unlist(node$pm)
-      filterNegMarkers <- unlist(node$nm)
-      
-      # receive the parent settings, resp. parent hm
-      # filter hm by parent cell name
-      tmp <- df_expr[df_expr$cell == parent, lineage_marker]
-      tmp <- filterHM(tmp, input$treePickerPos, input$treePickerNeg, reactVals$th)
-      
-      updateClusterLabels(tmp)
-      
-      reactVals$hm <- tmp
-      
-      updatePickerInput(
-        session,
-        inputId = "parentPicker",
-        choices = reactVals$annotationlist,
-        selected = parent
-      )
-      
-      updateCheckboxGroupButtons(
-        session,
-        inputId = "treePickerPos",
-        choices = lineage_marker,
-        selected = NULL,
-        disabledChoices = filterPosMarkers
-      )
-      updateCheckboxGroupButtons(
-        session,
-        inputId = "treePickerNeg",
-        choices = lineage_marker,
-        selected = NULL,
-        disabledChoices = filterNegMarkers
-      )
-      
-      # update umap plot for Tree
-      ClusterSelection <- filterColor(df_expr,tmp)
-
-      #---- UMAP Annotation Tree
-      output$umap_tree <-
-        renderPlot(
-      cbind(dr_umap,ClusterSelection) %>%
-        dplyr::mutate(ClusterSelection=as.factor(ClusterSelection)) %>%
-        dplyr::mutate(ClusterSelection=fct_relevel(ClusterSelection,"other clusters","selected phenotype")) %>%
-        arrange(desc(ClusterSelection)) %>%
-        ggplot( aes(x = u1, y = u2, color = ClusterSelection)) +
-        geom_point(size = 1.0) +
-        ggpubr::theme_pubr() +
-        theme(legend.text = element_text(size = 12),
-              legend.title = element_text(size = 20),
-              axis.text = element_text(size = 12),
-              axis.title = element_text(size = 20)) +
-        guides(color = guide_legend(override.aes = list(size = 4)))
-      
-      #     ggplot(dr_umap, aes(
-      #       x = u1, y = u2, color = ClusterSelection
-      #     )) +
-      #       geom_point(size = 1.0) +
-      #       theme_bw() +
-      #       theme(legend.text = element_text(size = 12),
-      #             legend.title = element_text(size = 20),
-      #             axis.text = element_text(size = 12),
-      #             axis.title = element_text(size = 20)) +
-      #       guides(color = guide_legend(override.aes = list(size = 4)))
-        )
-    }
-    
-    # Observe Interactive Parent Node selection -------------------------------
-    observeEvent(input$parent_node_id, {
-
-      parentNodeSelection("interactive", nodeID=input$parent_node_id)
-    })
 
     # Load the marker expression file ---------------------------------------
     observeEvent(c(input$fMarkerExpr, input$cluster_freq), {
@@ -557,7 +487,8 @@ cycadas <- function() {
             selected = name
           )
 
-          updateClusterLabels(tmp)
+          # browser()
+          updateClusterLabels(tmp, parent)
 
           plotTree()
         }
@@ -586,7 +517,168 @@ cycadas <- function() {
     # Observe Parent Node selection -------------------------------------------
     observeEvent(input$parentPicker, {
       
-      parentNodeSelection("picker", nodeName=input$parentPicker)
+      # browser()
+      
+      nodeName <- input$parentPicker
+      
+      # if (selectMethod == "picker") {
+      #   
+      node <- reactVals$graph$nodes %>% dplyr::filter(label == nodeName)
+      parent <- input$parentPicker
+      
+      nodeID <- reactVals$graph$nodes$id[reactVals$graph$nodes$label == nodeName]
+      # } else {
+      #   
+      #   node <- reactVals$graph$nodes %>% dplyr::filter(id == nodeID)
+      #   parent <- node$label
+      # }
+      # 
+      filterPosMarkers <- unlist(node$pm)
+      filterNegMarkers <- unlist(node$nm)
+      
+      # receive the parent settings, resp. parent hm
+      # filter hm by parent cell name
+      tmp <- df_expr[df_expr$cell == parent, lineage_marker]
+      tmp <- filterHM(tmp, input$treePickerPos, input$treePickerNeg, reactVals$th)
+      
+      # browser()
+      updateClusterLabels(tmp, nodeID)
+      
+      reactVals$hm <- tmp
+      
+      updatePickerInput(
+        session,
+        inputId = "parentPicker",
+        choices = reactVals$annotationlist,
+        selected = parent
+      )
+      
+      updateCheckboxGroupButtons(
+        session,
+        inputId = "treePickerPos",
+        choices = lineage_marker,
+        selected = NULL,
+        disabledChoices = filterPosMarkers
+      )
+      updateCheckboxGroupButtons(
+        session,
+        inputId = "treePickerNeg",
+        choices = lineage_marker,
+        selected = NULL,
+        disabledChoices = filterNegMarkers
+      )
+      
+      # update umap plot for Tree
+      ClusterSelection <- filterColor(df_expr,tmp)
+      
+      #---- UMAP Annotation Tree
+      output$umap_tree <-
+        renderPlot(
+          cbind(dr_umap,ClusterSelection) %>%
+            dplyr::mutate(ClusterSelection=as.factor(ClusterSelection)) %>%
+            dplyr::mutate(ClusterSelection=fct_relevel(ClusterSelection,"other clusters","selected phenotype")) %>%
+            arrange(desc(ClusterSelection)) %>%
+            ggplot( aes(x = u1, y = u2, color = ClusterSelection)) +
+            geom_point(size = 1.0) +
+            ggpubr::theme_pubr() +
+            theme(legend.text = element_text(size = 12),
+                  legend.title = element_text(size = 20),
+                  axis.text = element_text(size = 12),
+                  axis.title = element_text(size = 20)) +
+            guides(color = guide_legend(override.aes = list(size = 4)))
+          
+          #     ggplot(dr_umap, aes(
+          #       x = u1, y = u2, color = ClusterSelection
+          #     )) +
+          #       geom_point(size = 1.0) +
+          #       theme_bw() +
+          #       theme(legend.text = element_text(size = 12),
+          #             legend.title = element_text(size = 20),
+          #             axis.text = element_text(size = 12),
+          #             axis.title = element_text(size = 20)) +
+          #       guides(color = guide_legend(override.aes = list(size = 4)))
+        )
+    })
+    
+    # Observe Interactive Parent Node selection -------------------------------
+    observeEvent(input$parent_node_id, {
+      
+      # browser()
+      
+      # parentNodeSelection("interactive", nodeID=input$parent_node_id)
+      node <- reactVals$graph$nodes %>% dplyr::filter(id == input$parent_node_id)
+      parent <- node$label
+      
+      nodeID <- reactVals$graph$nodes$id[reactVals$graph$nodes$label == parent]
+      
+      filterPosMarkers <- unlist(node$pm)
+      filterNegMarkers <- unlist(node$nm)
+      
+      # receive the parent settings, resp. parent hm
+      # filter hm by parent cell name
+      tmp <- df_expr[df_expr$cell == parent, lineage_marker]
+      tmp <- filterHM(tmp, input$treePickerPos, input$treePickerNeg, reactVals$th)
+      
+      # browser()
+      updateClusterLabels(tmp, nodeID)
+      
+      reactVals$hm <- tmp
+      
+      updatePickerInput(
+        session,
+        inputId = "parentPicker",
+        choices = reactVals$annotationlist,
+        selected = parent
+      )
+      
+      updateCheckboxGroupButtons(
+        session,
+        inputId = "treePickerPos",
+        choices = lineage_marker,
+        selected = NULL,
+        disabledChoices = filterPosMarkers
+      )
+      updateCheckboxGroupButtons(
+        session,
+        inputId = "treePickerNeg",
+        choices = lineage_marker,
+        selected = NULL,
+        disabledChoices = filterNegMarkers
+      )
+      
+      # update umap plot for Tree
+      ClusterSelection <- filterColor(df_expr,tmp)
+      
+      #---- UMAP Annotation Tree
+      output$umap_tree <-
+        renderPlot(
+          cbind(dr_umap,ClusterSelection) %>%
+            dplyr::mutate(ClusterSelection=as.factor(ClusterSelection)) %>%
+            dplyr::mutate(ClusterSelection=fct_relevel(ClusterSelection,"other clusters","selected phenotype")) %>%
+            arrange(desc(ClusterSelection)) %>%
+            ggplot( aes(x = u1, y = u2, color = ClusterSelection)) +
+            geom_point(size = 1.0) +
+            ggpubr::theme_pubr() +
+            theme(legend.text = element_text(size = 12),
+                  legend.title = element_text(size = 20),
+                  axis.text = element_text(size = 12),
+                  axis.title = element_text(size = 20)) +
+            guides(color = guide_legend(override.aes = list(size = 4)))
+          
+          #     ggplot(dr_umap, aes(
+          #       x = u1, y = u2, color = ClusterSelection
+          #     )) +
+          #       geom_point(size = 1.0) +
+          #       theme_bw() +
+          #       theme(legend.text = element_text(size = 12),
+          #             legend.title = element_text(size = 20),
+          #             axis.text = element_text(size = 12),
+          #             axis.title = element_text(size = 20)) +
+          #       guides(color = guide_legend(override.aes = list(size = 4)))
+        )
+      
+      
+      # parentNodeSelection("picker", nodeName=input$parentPicker)
     })
 
     # Observe node update picker ----------------------------------------------

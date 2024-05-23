@@ -307,6 +307,8 @@ delete_child_nodes <- function(graph_data, node_id) {
 
 # Get all Children from a node selection --------------------------------------
 all_my_children <- function(graph_data, node_id) {
+  
+  # browser()
 
   # we don't want the root node
   if (node_id > 1) {
