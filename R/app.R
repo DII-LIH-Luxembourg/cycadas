@@ -19,19 +19,19 @@
 
 
 # List of packages you want to check and install if needed
-packages_to_install <- c("shiny", "DT", "ggplot2", "matrixStats", "tidyverse", "stats", "knitr", "forcats",
-                         "pheatmap", "Ckmeans.1d.dp", "umap", "RColorBrewer", "shinydashboard", "mixtools",
-                         "shinyWidgets", "visNetwork", "glue", "purrr", "reshape2", "mousetrap", "ggpubr", 
-                         "SingleCellExperiment", "CATALYST", "shinyjs", "cluster", "mclust")
-
-
-# Check if each package is already installed, and install if not
-for (package in packages_to_install) {
-  if (!require(package, character.only = TRUE)) {
-    install.packages(package)
-    library(package, character.only = TRUE)
-  }
-}
+# packages_to_install <- c("shiny", "DT", "ggplot2", "matrixStats", "tidyverse", "stats", "knitr", "forcats",
+#                          "pheatmap", "Ckmeans.1d.dp", "umap", "RColorBrewer", "shinydashboard", "mixtools",
+#                          "shinyWidgets", "visNetwork", "glue", "purrr", "reshape2", "mousetrap", "ggpubr", 
+#                          "SingleCellExperiment", "CATALYST", "shinyjs", "cluster", "mclust")
+# 
+# 
+# # Check if each package is already installed, and install if not
+# for (package in packages_to_install) {
+#   if (!require(package, character.only = TRUE)) {
+#     install.packages(package)
+#     library(package, character.only = TRUE)
+#   }
+# }
 
 shiny::addResourcePath("images", "./www")
 
@@ -64,6 +64,25 @@ cycadas <- function() {
   server = function(input, output, session) {
     
     shinyjs::disable("metadiv")
+    
+    # browser()
+    
+    # Check if the package is available
+    package_available <- requireNamespace("CATALYST", quietly = TRUE)
+    
+    # Render the conditional UI elements
+    output$test <- renderUI({
+      if (package_available) {
+        library(CATALYST)
+        library(SingleCellExperiment)
+        fileInput("sce","Upload RDS",
+                  placeholder = "Choose RDS File",
+                  multiple = FALSE,
+                  accept = c(".rds"))
+      } else {
+        p("The CATALYST package is not available.")
+      }
+    })
     
 
     # Load Expression Data and UMAP -------------------------------------------------

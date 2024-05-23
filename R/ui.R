@@ -47,10 +47,11 @@ ui <- dashboardPage(
                                        multiple = FALSE,
                                        accept = c("text/csv","text/comma-separated-values,text/plain",".csv"))),
                          box(title = "From Catalyst",collapsible = TRUE,solidHeader = TRUE,status = "info",width = NULL,collapsed = F,
-                             fileInput("sce","Upload RDS",
-                                       placeholder = "Choose RDS File",
-                                       multiple = FALSE,
-                                       accept = c(".rds"))
+                             # fileInput("sce","Upload RDS",
+                             #           placeholder = "Choose RDS File",
+                             #           multiple = FALSE,
+                             #           accept = c(".rds"))
+                             uiOutput("test")
                          )),
                   column(width = 4,
                          box(title = "Optional - Marker-thresholds",collapsible = TRUE,solidHeader = TRUE,status = "warning",width = NULL,collapsed = T,

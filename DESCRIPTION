@@ -11,7 +11,7 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Suggests: 
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0), CATALYST, SingleCellExperiment
 Config/testthat/edition: 3
 StagedInstall: no
 Imports: 
@@ -36,8 +36,6 @@ Imports:
     knitr,
     mixtools,
     forcats,
-    SingleCellExperiment,
-    CATALYST,
     shinyjs,
     cluster,
     mclust
