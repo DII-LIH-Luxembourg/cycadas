@@ -1430,24 +1430,33 @@ cycadas <- function() {
         ## subset the props table based on the selected node
         props_table <- as.data.frame(colSums(props_table))
         mm <- match(rownames(props_table), md$sample_id)
-        props_table$cond <- md$condition[mm]
+        props_table$cond <- as.factor(md$condition[mm])
         
         names(props_table) <- c("value", "cond")
+        
+        # browser()
         
         ggplot(props_table, aes(x = cond, y = value, fill=cond))+
           geom_boxplot(outlier.shape = NA) +
           geom_jitter(width = 0.2) +
           xlab("Condition") +
           ylab("Proportion") +
+          geom_signif(
+            # comparisons = list(c("HC", "PD")),
+            comparisons = list(levels(props_table$cond)),
+            map_signif_level = F, textsize = 6
+          ) +
+          theme_classic() +
           # geom_pwc(aes(group = cond),method = "wilcox_test", label = "Wilcoxon, italic(p)= {p}")+
           # ggpubr::theme_pubr() +
-          theme(plot.title = element_text(size = 22),
-                axis.text = element_text(size = 12),
-                legend.text = element_text(size = 14),
-                legend.title = element_text(size = 20),
-                axis.title.x = element_text(size = 20),
-                axis.title.y = element_text(size = 20),
-                legend.position = "none") +
+          theme(
+            plot.title = element_text(size = 22),
+            axis.text = element_text(size = 12),
+            legend.text = element_text(size = 14),
+            legend.title = element_text(size = 20),
+            axis.title.x = element_text(size = 20),
+            axis.title.y = element_text(size = 20),
+            legend.position = "none") +
           ggtitle(reactVals$graph$nodes$label[reactVals$myNode])
       }
 
