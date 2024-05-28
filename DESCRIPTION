@@ -38,5 +38,6 @@ Imports:
     forcats,
     shinyjs,
     cluster,
-    mclust
+    mclust,
+    markdown
 LazyData: true

@@ -30,7 +30,13 @@ devtools::install_github("DII-LIH-Luxembourg/cycadas", dependencies = TRUE)
 cycadas()
 ```
 
-## Loading Single Cell Data, CATALYST
+### Demo dataset
+
+To enable tool exploration, we provide the demo dataset that can be loaded (**Load** tab → **Demo Data**) either as cluster expression data only (**Load Cluster Expression Demo Data**, allowing the user to create the annotation) or as annotated data (**Load Annotated Demo Data** which include the annotation tree).
+
+*This demo dataset is generated from the publicly available mass cytometry data of patients with idiopathic Parkinson's disease and healthy controls (Capelle, C.M. et al., Nat Commun, 2023) that were clustered with GigaSOM to generate 1600 clusters.*
+
+### Loading SingleCellExperiment Data (CATALYST)
 
 This is optional. If you wish to load data clustered with CATALYST or other Tools using the Single Cell Format, please install:
 
@@ -42,23 +48,35 @@ BiocManager::install("CATALYST")
 BiocManager::install("SingleCellExperiment")
 ```
 
-### Demo dataset
+### Data input, Single Cell Format
 
-To enable tool exploration, we provide the demo dataset that can be loaded (**Load** tab → **Demo Data**) either as cluster expression data only (**Load Cluster Expression Demo Data**, allowing the user to create the annotation) or as annotated data (**Load Annotated Demo Data** which include the annotation tree).
+```{r}
 
-*This demo dataset is generated from the publicly available mass cytometry data of patients with idiopathic Parkinson's disease and healthy controls (Capelle, C.M. et al., Nat Commun, 2023) that were clustered with GigaSOM to generate 1600 clusters.*
+# CATALYST Workflow using Single Cell Experiment data object
+# Preprocessing ...
 
-### Input data
+# Cluster with CATALYST
+sce <- cluster(sce, features = "type", 
+               xdim = 10, ydim = 10, maxK = 20, 
+               verbose = FALSE, seed = 1)   
 
-All the data tables loaded into CyCadas are uploaded in the **Load** tab → **Required**. The tool requires output of the clustering algorithm in the form of 2 data tables:
+# Save the object as .rds file
+saveRDS(sce, "my_sce.rds")
 
-• marker expression (mean or median expression of each marker in each cluster),
+# Load into CyCadas
+# Annotate the desired (meta-)cluster levels
+# use the integrated merge function within Cycadas
+# save the object 
+# load it back into your workflow
+sce <- readRDS("Annotated_sce.rds")
 
-• cluster frequency (proportion of each cluster within the dataset).
+# continue downstream analysis
+# ...
+```
 
-## Prepare the Data input
+### Data Input from FlowSOM
 
-### Median Expression and Cluster Frequencies from FlowSOM (R Code):
+#### Median Expression and Cluster Frequencies:
 
 ``` r
 # within your clustering workflow create sample_ids according to the metadata files:
@@ -93,7 +111,9 @@ props <- as.data.frame.matrix(props_table)
 write.csv(props, "proportion_table.csv")
 ```
 
-### Median Expression and Cluster Frequencies from GigaSOM (Julia Code):
+### Data Input from GigaSOM
+
+#### Median Expression and Cluster Frequencies:
 
 ``` julia
 Random.seed!(42)
@@ -144,7 +164,7 @@ In the **UMAP Marker expression** tab, user can investigate the expression level
 
 ### Thresholds
 
-In the **Thresholds** tab, the estimation of threshold value defining negative and positive marker expression of each marker is based on 1-dimensional k-means clustering. The bimodality for every marker is assessed and the bimodal coefficient values are reported. The blue threshold line indicates that data meets the bimodal distribution criteria, otherwise it is colored red. The threshold value can be manually adjusted by clicking on the scatterplot.
+In the **Thresholds** tab, the estimation of threshold value defining negative and positive marker expression of each marker is based on 1-dimensional k-means clustering and Mclust. A silhouette score chooses the best estimation of each marker. The bimodality for every marker is assessed and the bimodal coefficient values are reported. The blue threshold line indicates that data meets the bimodal distribution criteria, otherwise it is colored red. The threshold value can be manually adjusted by clicking on the scatterplot.
 
 *Expression of CD8a with blue threshold line indicating the bimodal distribution:*
 
