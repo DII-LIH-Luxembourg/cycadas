@@ -459,6 +459,13 @@ createExpressionDF <- function(df_expr, cell_freq) {
   return(df_expr)
 }
 
+# Function to get all pairs of combinations
+get_pairs <- function(vec) {
+    pairs <- combn(vec, 2)
+    pairs_list <- split(pairs, col(pairs))
+    return(pairs_list)
+}
+
 
 
 # deleteChildNodes <- function(graph, node) {

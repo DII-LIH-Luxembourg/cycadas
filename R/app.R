@@ -1386,7 +1386,7 @@ cycadas <- function() {
       reactVals$DA_interactive_table <- DA_df
 
     }
-
+    
     # Boxplot of interactive DA selection -------------------------------------
     output$boxplot <- renderPlot({
 
@@ -1432,9 +1432,12 @@ cycadas <- function() {
         mm <- match(rownames(props_table), md$sample_id)
         props_table$cond <- as.factor(md$condition[mm])
         
+        combCond <- combn(levels(props_table$cond), 2)
+        
         names(props_table) <- c("value", "cond")
         
         # browser()
+        condPairList <- get_pairs(levels(props_table$cond))
         
         ggplot(props_table, aes(x = cond, y = value, fill=cond))+
           geom_boxplot(outlier.shape = NA) +
@@ -1443,8 +1446,10 @@ cycadas <- function() {
           ylab("Proportion") +
           geom_signif(
             # comparisons = list(c("HC", "PD")),
-            comparisons = list(levels(props_table$cond)),
-            map_signif_level = F, textsize = 6
+            comparisons = condPairList,
+            map_signif_level = F, 
+            textsize = 6,
+            step_increase = 0.1
           ) +
           theme_classic() +
           # geom_pwc(aes(group = cond),method = "wilcox_test", label = "Wilcoxon, italic(p)= {p}")+
