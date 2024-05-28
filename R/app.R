@@ -626,7 +626,7 @@ cycadas <- function() {
             arrange(desc(ClusterSelection)) %>%
             ggplot( aes(x = u1, y = u2, color = ClusterSelection)) +
             geom_point(size = 1.0) +
-            ggpubr::theme_pubr() +
+            # ggpubr::theme_pubr() +
             theme(legend.text = element_text(size = 12),
                   legend.title = element_text(size = 20),
                   axis.text = element_text(size = 12),
@@ -704,7 +704,7 @@ cycadas <- function() {
             arrange(desc(ClusterSelection)) %>%
             ggplot( aes(x = u1, y = u2, color = ClusterSelection)) +
             geom_point(size = 1.0) +
-            ggpubr::theme_pubr() +
+            # ggpubr::theme_pubr() +
             theme(legend.text = element_text(size = 12),
                   legend.title = element_text(size = 20),
                   axis.text = element_text(size = 12),
@@ -1052,7 +1052,7 @@ cycadas <- function() {
 
         ggplot(me, aes_string(x=me[,1], y=me[,2])) +
           geom_point(size=1) +
-          ggpubr::theme_pubr() +
+          # ggpubr::theme_pubr() +
           theme(axis.title.y = element_blank(),
                 axis.ticks.y  = element_blank(),
                 axis.text.y = element_blank(),
@@ -1074,7 +1074,7 @@ cycadas <- function() {
         ggplot(me, aes_string(x = me[, 1])) +
           geom_histogram(bins = 80) +
           labs(x = "Scale 0 to 1") +
-          ggpubr::theme_pubr() +
+          # ggpubr::theme_pubr() +
           theme(axis.text = element_text(size = 12),
                 axis.title = element_text(size = 18)) +
           geom_vline(
@@ -1439,8 +1439,8 @@ cycadas <- function() {
           geom_jitter(width = 0.2) +
           xlab("Condition") +
           ylab("Proportion") +
-          geom_pwc(aes(group = cond),method = "wilcox_test", label = "Wilcoxon, italic(p)= {p}")+
-          ggpubr::theme_pubr() +
+          # geom_pwc(aes(group = cond),method = "wilcox_test", label = "Wilcoxon, italic(p)= {p}")+
+          # ggpubr::theme_pubr() +
           theme(plot.title = element_text(size = 22),
                 axis.text = element_text(size = 12),
                 legend.text = element_text(size = 14),
