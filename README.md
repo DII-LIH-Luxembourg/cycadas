@@ -26,6 +26,7 @@ library(devtools)
 # Install all required packages
 devtools::install_github("DII-LIH-Luxembourg/cycadas", dependencies = TRUE)
 
+library(cycadas)
 # start the cycadas shiny app
 cycadas()
 ```
