@@ -4,6 +4,8 @@
 
 #### Efficient and reproducible cytometry data
 
+[![DOI](https://img.shields.io/badge/DOI-10.1234/cycadas-blue)](https://doi.org/10.1093/bioinformatics/btae595)
+
 Aims:
 
 • facilitating the process of cluster annotation while reducing user bias • improving reproducibility
