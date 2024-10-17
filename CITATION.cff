@@ -6,8 +6,14 @@ authors:
     given-names: "Oliver"
     orcid: "https://orcid.org/0000-0001-5402-5084"  # optional
     affiliation: "Department of Infection and Immunity, Luxembourg Institute of Health, Esch-sur-Alzette, Luxembourg
-Bioinformatics & AI, Department of Medical Informatics, Luxembourg Institute of Health, Strassen, Luxembourg"
+    Bioinformatics & AI, Department of Medical Informatics, Luxembourg Institute of Health, Strassen, Luxembourg"
 date-released: 2024-10-07
+
+  - family-names: "Demczuk"
+    given-names: "Agnieszka"
+    orcid: "https://orcid.org/0000-0001-9868-7653"  # optional
+    affiliation: "Department of Infection and Immunity, Luxembourg Institute of Health, Esch-sur-Alzette, Luxembourg
+    Faculty of Science, Technology and Medicine, University of Luxembourg, Esch-sur-Alzette, Luxembourg
 version: "1.0.0"
 doi: "10.1234/bioinformatics/btae595"
 url: "https://https://github.com/DII-LIH-Luxembourg/cycadas"
