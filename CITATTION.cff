@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the following:"
+title: "CyCadas"
+authors:
+  - family-names: "Hunewald"
+    given-names: "Oliver"
+    orcid: "https://orcid.org/0000-0001-5402-5084"  # optional
+    affiliation: "Department of Infection and Immunity, Luxembourg Institute of Health, Esch-sur-Alzette, Luxembourg
+Bioinformatics & AI, Department of Medical Informatics, Luxembourg Institute of Health, Strassen, Luxembourg"
+date-released: 2024-10-07
+version: "1.0.0"
+doi: "10.1234/bioinformatics/btae595"
+url: "https://https://github.com/DII-LIH-Luxembourg/cycadas"
+license: "MIT"
+
