@@ -119,9 +119,10 @@ write.csv(props, "proportion_table.csv")
 #### Median Expression and Cluster Frequencies:
 
 ``` julia
-Random.seed!(42)
+gridSize = 20
+nEpochs = 40
 
-som = initGigaSOM(di, gridSize, gridSize, seed = 13) # set a seed value
+som = initGigaSOM(di, gridSize, gridSize, seed = 42) # set a seed value
 som = trainGigaSOM(som, di, epochs = nEpochs)
 
 mapping_di = mapToGigaSOM(som, di)
