@@ -33,7 +33,31 @@
 #   }
 # }
 
-shiny::addResourcePath("images", "./www")
+# shiny::addResourcePath("images", "./www")
+# Ensure paths are correct
+# addResourcePath("images", file.path(getwd(), "www/images"))
+# addResourcePath("images", "../www/images")
+library(shiny)
+
+# Dynamically resolve the path to the www/images directory
+if (file.exists("www/images")) {
+  # Local environment
+  resource_path <- "www/images"
+} else if (file.exists("../www/images")) {
+  # Running from R directory (e.g., in Docker)
+  resource_path <- "../www/images"
+} else if (file.exists("/usr/src/app/www/images")) {
+  # Running in Docker container with absolute path
+  resource_path <- "/usr/src/app/www/images"
+} else {
+  stop("Could not locate the 'www/images' directory.")
+}
+
+# Add the resource path
+addResourcePath("images", resource_path)
+
+
+
 
 #' @export
 cycadas <- function() {
@@ -1631,7 +1655,8 @@ cycadas <- function() {
 
   shinyApp(
     ui = ui,
-    server = server
+    server = server,
+    options = list(host = "0.0.0.0", port = 3838)
   )
 }
 
