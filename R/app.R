@@ -1381,6 +1381,10 @@ cycadas <- function() {
     # Load Expression Demo Data ---------------------------------------------
     observeEvent(input$btnLoadDemoData, {
       
+      # Explicitly load datasets
+      data(df_expr_demoData, package = "cycadas")
+      data(cluster_freq_demoData, package = "cycadas")
+      
       df_expr <<- df_expr_demoData
       cell_freq <<- cluster_freq_demoData
       
@@ -1410,6 +1414,10 @@ cycadas <- function() {
     
     # Load Annotated Expr Demo Data -----------------------------------------
     observeEvent(input$btnLoadAnnoData, {
+      
+      # Explicitly load datasets
+      data(df_expr_demoData, package = "cycadas")
+      data(cluster_freq_demoData, package = "cycadas")
       
       
       df_expr <<- df_expr_demoData
@@ -1450,6 +1458,8 @@ cycadas <- function() {
       )
       
       ## Load demo thresholds
+      # Explicitly load datasets
+      data(marker_th_demo_data, package = "cycadas")
       th <- marker_th_demo_data
 
       th$X <- NULL
@@ -1461,16 +1471,20 @@ cycadas <- function() {
       reactVals$th<- th
 
       ## Load metadata
+      data(meta_demo_data, package = "cycadas")
       md <<- meta_demo_data
       md$X <- NULL
       reactVals$md<- md
 
       ## Load counts table
+      data(cluster_counts_demoData, package = "cycadas")
       ct <<- cluster_counts_demoData
       ct$X <- NULL
       reactVals$counts_table <- ct
 
       ## Load annotaiton Tree
+      data(nodes_demo_data, package = "cycadas")
+      data(edges_demo_data, package = "cycadas")
       df_nodes <- nodes_demo_data
       df_edges <- edges_demo_data
 
