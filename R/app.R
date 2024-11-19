@@ -1,42 +1,4 @@
-# usethis::use_package("shiny")
-# usethis::use_package("DT")
-# usethis::use_package("ggplot2")
-# usethis::use_package("matrixStats")
-# usethis::use_package("dplyr")
-# usethis::use_package("stats")
-# usethis::use_package("pheatmap")
-# usethis::use_package("Ckmeans.1d.dp")
-# usethis::use_package("umap")
-# usethis::use_package("RColorBrewer")
-# usethis::use_package("shinydashboard")
-# usethis::use_package("shinyWidgets")
-# usethis::use_package("visNetwork")
-# usethis::use_package("glue")
-# usethis::use_package("purrr")
-# usethis::use_package("reshape2")
-# usethis::use_package("mousetrap")
-# usethis::use_package("knitr")
 
-
-# List of packages you want to check and install if needed
-# packages_to_install <- c("shiny", "DT", "ggplot2", "matrixStats", "tidyverse", "stats", "knitr", "forcats",
-#                          "pheatmap", "Ckmeans.1d.dp", "umap", "RColorBrewer", "shinydashboard", "mixtools",
-#                          "shinyWidgets", "visNetwork", "glue", "purrr", "reshape2", "mousetrap", "ggpubr", 
-#                          "SingleCellExperiment", "CATALYST", "shinyjs", "cluster", "mclust")
-# 
-# 
-# # Check if each package is already installed, and install if not
-# for (package in packages_to_install) {
-#   if (!require(package, character.only = TRUE)) {
-#     install.packages(package)
-#     library(package, character.only = TRUE)
-#   }
-# }
-
-# shiny::addResourcePath("images", "./www")
-# Ensure paths are correct
-# addResourcePath("images", file.path(getwd(), "www/images"))
-# addResourcePath("images", "../www/images")
 library(shiny)
 
 # Dynamically resolve the path to the www/images directory
@@ -55,8 +17,6 @@ if (file.exists("www/images")) {
 
 # Add the resource path
 addResourcePath("images", resource_path)
-
-
 
 
 #' @export
@@ -88,8 +48,6 @@ cycadas <- function() {
   server = function(input, output, session) {
     
     shinyjs::disable("metadiv")
-    
-    # browser()
     
     # Check if the package is available
     package_available <- requireNamespace("CATALYST", quietly = TRUE)
@@ -160,8 +118,6 @@ cycadas <- function() {
         selected = NULL
       )
       
-      # posPickerList <<- lineage_marker
-      
       updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
       
       reactVals$th <- kmeansTH(df_expr[, lineage_marker])
@@ -170,8 +126,6 @@ cycadas <- function() {
     
     # Function: Update cluster labels -----------------------------------------
     updateClusterLabels <- function(mydf, my_node_id=0) {
-      
-      # browser()
       
       children <- all_my_children(reactVals$graph, my_node_id)
       
@@ -220,7 +174,6 @@ cycadas <- function() {
                 ;}")
       })
     }
-    
 
     # Load the marker expression file ---------------------------------------
     observeEvent(c(input$fMarkerExpr, input$cluster_freq), {
@@ -251,15 +204,6 @@ cycadas <- function() {
       reactVals$sce <- readRDS(input$sce$datapath)
       
       reactVals$metaClustLevel <- colnames(reactVals$sce@metadata$cluster_codes)[1]
-      # reactVals$metaClustLevel <- mc_levels[5:length(mc_levels)]
-      
-      # my_sce <- readRDS(input$sce$datapath)
-      # cluster_ids(sce)
-      
-      # print(dim(assay(reactVals$sce)))
-      # print(colnames(colData(reactVals$sce)))
-      # 
-      # print(head(reactVals$sce@metadata$SOM_codes))
       
       # load only som codes as default
       df_expr_tmp <- as.data.frame(reactVals$sce@metadata$SOM_codes)
@@ -269,14 +213,12 @@ cycadas <- function() {
       lineage_marker <<- rd$marker_name[rd$marker_class == "type"]
       lineage_marker_raw <<- paste0(lineage_marker, "_raw")
       
-      # cell_freq_tmp <- as.data.frame(cluster_ids(c_id = cluster_ids(reactVals$sce, "meta20")))
       cell_freq_tmp <- as.data.frame(table(c_id = cluster_ids(reactVals$sce)))
       
       cell_freq_tmp$clustering_prop <- cell_freq_tmp$Freq / sum(cell_freq_tmp$Freq)
       cell_freq_tmp$Freq <- NULL
       colnames(cell_freq_tmp) <- c("cluster", "clustering_prop")
       cell_freq <<- cell_freq_tmp
-      
       
       df_expr <<- createExpressionDF(df_expr_tmp, cell_freq_tmp)
       reactVals$graph <- initTree()
@@ -285,36 +227,19 @@ cycadas <- function() {
       progress$set(message = "Building the UMAP...", value = 0.3)
       dr_umap <<- buildUMAP(df_expr[, lineage_marker_raw]) 
       
-      # df_expr
-      # 
-      # pathExpr <- "data/demo_data/median_expr_1600.csv"
-      # pathFreq <- "data/demo_data/cluster_freq_1600.csv"
-      # 
-      # loadExprData(pathExpr, pathFreq)
-      # posPickerList <<- lineage_marker
-      
       updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
-      
-      # pathExpr <- "data/demo_data/median_expr_1600.csv"
-      # pathFreq <- "data/demo_data/cluster_freq_1600.csv"
-      # 
-      # loadExprData(pathExpr, pathFreq)
-      # 
+
       initExprData()
       
       mc_levels <- colnames(reactVals$sce@metadata$cluster_codes)
-      #remove 2,3, and 4
       mc_levels <- mc_levels[-(2:5)]
       
       updatePickerInput(
         session,
         inputId = "metaLevel",
-        # choices = colnames(reactVals$sce@metadata$cluster_codes),
         choices = mc_levels,
         selected = reactVals$metaClustLevel
-        # selected = colnames(reactVals$sce@metadata$cluster_codes)[1]
       )
-      
       shinyjs::enable("metadiv")
     })
     
@@ -329,8 +254,6 @@ cycadas <- function() {
         return()
       } else {
         
-        # browser()
-        
         reactVals$metaClustLevel=input$metaLevel
         
         # select the metalvel and merge the clusters 
@@ -343,7 +266,6 @@ cycadas <- function() {
           summarise_if(is.numeric, mean)
         
         somExpr <- as.data.frame(somExpr[, lineage_marker])
-        # cell_freq_tmp <- as.data.frame(cluster_ids(c_id = cluster_ids(reactVals$sce, "meta20")))
         cell_freq_tmp <- as.data.frame(table(c_id = cluster_ids(reactVals$sce, reactVals$metaClustLevel)))
         
         cell_freq_tmp$clustering_prop <- cell_freq_tmp$Freq / sum(cell_freq_tmp$Freq)
@@ -351,35 +273,19 @@ cycadas <- function() {
         colnames(cell_freq_tmp) <- c("cluster", "clustering_prop")
         cell_freq <<- cell_freq_tmp
         
-        
         df_expr <<- createExpressionDF(somExpr, cell_freq_tmp)
         reactVals$graph <- initTree()
         
         set.seed(1234)
-        # progress$set(message = "Building the UMAP...", value = 0.3)
-        
+
         if (nrow(df_expr) > 20) {
           dr_umap <<- buildUMAP(df_expr[, lineage_marker_raw])   
         } else {
           dr_umap <<- NULL
         }
         
-        
-        # df_expr
-        # 
-        # pathExpr <- "data/demo_data/median_expr_1600.csv"
-        # pathFreq <- "data/demo_data/cluster_freq_1600.csv"
-        # 
-        # loadExprData(pathExpr, pathFreq)
-        # posPickerList <<- lineage_marker
-        
         updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
-        
-        # pathExpr <- "data/demo_data/median_expr_1600.csv"
-        # pathFreq <- "data/demo_data/cluster_freq_1600.csv"
-        # 
-        # loadExprData(pathExpr, pathFreq)
-        # 
+
         initExprData()
         
         reactVals$hm <- df_expr[, lineage_marker]
@@ -550,8 +456,6 @@ cycadas <- function() {
       reactVals$sce <- mergeClusters(reactVals$sce, k = reactVals$metaClustLevel, table = mergeTableCatalyst, 
                                      id = paste0("merging_", reactVals$metaClustLevel))
       
-      # x <- 1 # for debug
-      
     })
     
     # Export CATALYST SingleCellObject ----------------------------------------
@@ -567,8 +471,6 @@ cycadas <- function() {
     
     # Annotation heatmap plot -------------------------------------------------
     output$hm_tree <- renderPlot({
-      
-      # browser()
 
       if (is.null(reactVals$hm)) {
         plot(1, type = "n", main = "No Data Available")
@@ -587,22 +489,13 @@ cycadas <- function() {
     # Observe Parent Node selection -------------------------------------------
     observeEvent(input$parentPicker, {
       
-      # browser()
-      
       nodeName <- input$parentPicker
-      
-      # if (selectMethod == "picker") {
-      #   
+
       node <- reactVals$graph$nodes %>% dplyr::filter(label == nodeName)
       parent <- input$parentPicker
       
       nodeID <- reactVals$graph$nodes$id[reactVals$graph$nodes$label == nodeName]
-      # } else {
-      #   
-      #   node <- reactVals$graph$nodes %>% dplyr::filter(id == nodeID)
-      #   parent <- node$label
-      # }
-      # 
+
       filterPosMarkers <- unlist(node$pm)
       filterNegMarkers <- unlist(node$nm)
       
@@ -610,8 +503,7 @@ cycadas <- function() {
       # filter hm by parent cell name
       tmp <- df_expr[df_expr$cell == parent, lineage_marker]
       tmp <- filterHM(tmp, input$treePickerPos, input$treePickerNeg, reactVals$th)
-      
-      # browser()
+
       updateClusterLabels(tmp, nodeID)
       
       reactVals$hm <- tmp
@@ -657,26 +549,12 @@ cycadas <- function() {
                   axis.text = element_text(size = 12),
                   axis.title = element_text(size = 20)) +
             guides(color = guide_legend(override.aes = list(size = 4)))
-          
-          #     ggplot(dr_umap, aes(
-          #       x = u1, y = u2, color = ClusterSelection
-          #     )) +
-          #       geom_point(size = 1.0) +
-          #       theme_bw() +
-          #       theme(legend.text = element_text(size = 12),
-          #             legend.title = element_text(size = 20),
-          #             axis.text = element_text(size = 12),
-          #             axis.title = element_text(size = 20)) +
-          #       guides(color = guide_legend(override.aes = list(size = 4)))
         )
     })
     
     # Observe Interactive Parent Node selection -------------------------------
     observeEvent(input$parent_node_id, {
-      
-      # browser()
-      
-      # parentNodeSelection("interactive", nodeID=input$parent_node_id)
+
       node <- reactVals$graph$nodes %>% dplyr::filter(id == input$parent_node_id)
       parent <- node$label
       
@@ -689,8 +567,7 @@ cycadas <- function() {
       # filter hm by parent cell name
       tmp <- df_expr[df_expr$cell == parent, lineage_marker]
       tmp <- filterHM(tmp, input$treePickerPos, input$treePickerNeg, reactVals$th)
-      
-      # browser()
+
       updateClusterLabels(tmp, nodeID)
       
       reactVals$hm <- tmp
@@ -736,21 +613,8 @@ cycadas <- function() {
                   axis.text = element_text(size = 12),
                   axis.title = element_text(size = 20)) +
             guides(color = guide_legend(override.aes = list(size = 4)))
-          
-          #     ggplot(dr_umap, aes(
-          #       x = u1, y = u2, color = ClusterSelection
-          #     )) +
-          #       geom_point(size = 1.0) +
-          #       theme_bw() +
-          #       theme(legend.text = element_text(size = 12),
-          #             legend.title = element_text(size = 20),
-          #             axis.text = element_text(size = 12),
-          #             axis.title = element_text(size = 20)) +
-          #       guides(color = guide_legend(override.aes = list(size = 4)))
         )
-      
-      
-      # parentNodeSelection("picker", nodeName=input$parentPicker)
+
     })
 
     # Observe node update picker ----------------------------------------------
@@ -811,7 +675,6 @@ cycadas <- function() {
 
       reactVals$hm <- reactVals[reactVals$cell == input$parentPicker, ]
 
-      # if "newNode" text-field is not empty, update the node name
       if (input$newNode != "") {
 
         old_name <- input$parentPicker
@@ -966,9 +829,6 @@ cycadas <- function() {
         export_df_nodes$pm <- pm_concatenated
         export_df_nodes$nm <- nm_concatenated
 
-        # export_freq <- data.frame(cluster=1:length(annotaionDF$cell),
-        #                           clustering_prop = annotaionDF$clusterSize)
-
         download_list <- list(annTable = df_expr,
                               nodesTable = export_df_nodes,
                               edgesTable = reactVals$graph$edges)
@@ -1047,8 +907,6 @@ cycadas <- function() {
         
         # df_expr$cell <<- rebuiltTree(reactVals$graph, df_expr, reactVals$th)        
       }
-      
-
     })
     
     # Observe click scatter-plot -----------------------------------------------
@@ -1135,7 +993,6 @@ cycadas <- function() {
       # merge and aggregate by cell
       countsTable <- aggregate(. ~ cell, countsTable, sum)
       
-      
       # change the name of nodes:
       # if node has children add "_remaining"
       my_list <- lapply(countsTable$cell, function(x) {
@@ -1151,11 +1008,7 @@ cycadas <- function() {
       })
       
       countsTable$cell <- unlist(my_list)
-      
-      
-      # rename the cells for the remaining definition
-      # countsTable$cell <- reactVals$DA_result_table$Naming
-      
+
       rownames(countsTable) <- countsTable$cell
       countsTable$cell <- NULL
       
@@ -1463,8 +1316,7 @@ cycadas <- function() {
         combCond <- combn(levels(props_table$cond), 2)
         
         names(props_table) <- c("value", "cond")
-        
-        # browser()
+
         condPairList <- get_pairs(levels(props_table$cond))
         
         ggplot(props_table, aes(x = cond, y = value, fill=cond))+
@@ -1551,21 +1403,8 @@ cycadas <- function() {
       progress$set(message = "Building the UMAP...", value = 0.3)
       dr_umap <<- buildUMAP(df_expr[, lineage_marker_raw]) 
       
-      # df_expr
-      # 
-      # pathExpr <- "data/demo_data/median_expr_1600.csv"
-      # pathFreq <- "data/demo_data/cluster_freq_1600.csv"
-      # 
-      # loadExprData(pathExpr, pathFreq)
-      # posPickerList <<- lineage_marker
-      
       updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
 
-      # pathExpr <- "data/demo_data/median_expr_1600.csv"
-      # pathFreq <- "data/demo_data/cluster_freq_1600.csv"
-      # 
-      # loadExprData(pathExpr, pathFreq)
-      # 
       initExprData()
     })
     
@@ -1594,14 +1433,6 @@ cycadas <- function() {
       set.seed(1234)
       progress$set(message = "Building the UMAP...", value = 0.3)
       dr_umap <<- buildUMAP(df_expr[, lineage_marker_raw]) 
-      
-      # df_expr
-      # 
-      # pathExpr <- "data/demo_data/median_expr_1600.csv"
-      # pathFreq <- "data/demo_data/cluster_freq_1600.csv"
-      # 
-      # loadExprData(pathExpr, pathFreq)
-      # posPickerList <<- lineage_marker
 
       updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
 
