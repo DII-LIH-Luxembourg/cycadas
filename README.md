@@ -122,11 +122,10 @@ write.csv(props, "proportion_table.csv")
 gridSize = 20
 nEpochs = 40
 
+# assume the dataset is loaded as described in distributed data info `di`
 som = initGigaSOM(di, gridSize, gridSize, seed = 42) # set a seed value
 som = trainGigaSOM(som, di, epochs = nEpochs)
-
 mapping_di = mapToGigaSOM(som, di)
-mapping = gather_array(mapping_di)
 
 num_cluster = gridSize^2
 # get the cluster frequencies
@@ -135,6 +134,9 @@ df = DataFrame(cluster = 1:length(df), clustering_prop = clusterFreq)
 df.clustering_prop = df.clustering_prop ./ sum(df.clustering_prop)
 CSV.write("cluster_freq.csv", df)
 
+# assume `md` is a data frame that describes the data
+# (i.e., it contains a row for all filenames loaded in `di` in the same order,
+# together with sample identifiers)
 files = distributeFCSFileVector(:fileIDs, md[:, :file_name])
 
 # Get the count table per fileID
@@ -148,6 +150,8 @@ CSV.write("cluster_counts.csv", ct)
 # Get the median expression per cluster
 expr_tbl = dmedian_buckets(di, num_cluster, mapping_di, cols)
 
+# assume lineage_markers is a human-readable list of markers used in clustering
+# (here used for annotating the median expression table)
 et  = DataFrame(expr_tbl, :auto)
 rename!(et, lineage_markers)
 
