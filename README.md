@@ -114,7 +114,7 @@ props <- as.data.frame.matrix(props_table)
 write.csv(props, "proportion_table.csv")
 ```
 
-### Data Input from GigaSOM
+### Data Input from [GigaSOM.jl](https://github.com/LCSB-BioCore/GigaSOM.jl)
 
 #### Median Expression and Cluster Frequencies:
 
