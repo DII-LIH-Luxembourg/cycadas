@@ -144,7 +144,7 @@ count_tbl = dcount_buckets(num_cluster, mapping_di, size(md, 1), files)
 ct = DataFrame(count_tbl, :auto)
 # ct = convert(DataFrame, count_tbl)
 rename!(ct, md.sample_id)
-# export the count talbe
+# export the count table
 CSV.write("cluster_counts.csv", ct)
 
 # Get the median expression per cluster
