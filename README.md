@@ -114,7 +114,7 @@ props <- as.data.frame.matrix(props_table)
 write.csv(props, "proportion_table.csv")
 ```
 
-### Data Input from GigaSOM
+### Data Input from [GigaSOM.jl](https://github.com/LCSB-BioCore/GigaSOM.jl)
 
 #### Median Expression and Cluster Frequencies:
 
@@ -122,36 +122,35 @@ write.csv(props, "proportion_table.csv")
 gridSize = 20
 nEpochs = 40
 
-som = initGigaSOM(di, gridSize, gridSize, seed = 42) # set a seed value
+# Assume the dataset is loaded in distributed data info `di`, e.g. using `loadFCSSet`.
+som = initGigaSOM(di, gridSize, gridSize, seed = 42) # set a seed value here
 som = trainGigaSOM(som, di, epochs = nEpochs)
-
 mapping_di = mapToGigaSOM(som, di)
-mapping = gather_array(mapping_di)
 
 num_cluster = gridSize^2
-# get the cluster frequencies
+
+# Get the Cluster Frequencies for CyCadas:
 clusterFreq = dcount(num_cluster, mapping_di)
 df = DataFrame(cluster = 1:length(df), clustering_prop = clusterFreq)
 df.clustering_prop = df.clustering_prop ./ sum(df.clustering_prop)
 CSV.write("cluster_freq.csv", df)
 
+# Get the count table per fileID (optional - Count Table in CyCadas).
+# Assume `md` is a data frame that describes the data
+# (i.e., it contains a row for all filenames loaded in `di` in the same order,
+# together with sample identifiers)
 files = distributeFCSFileVector(:fileIDs, md[:, :file_name])
-
-# Get the count table per fileID
 count_tbl = dcount_buckets(num_cluster, mapping_di, size(md, 1), files)
 ct = DataFrame(count_tbl, :auto)
-# ct = convert(DataFrame, count_tbl)
 rename!(ct, md.sample_id)
-# export the count talbe
 CSV.write("cluster_counts.csv", ct)
 
-# Get the median expression per cluster
+# Get the median Marker Expressions.
+# Assume lineage_markers is a human-readable list of markers used in clustering
+# (here used for annotating the median expression table)
 expr_tbl = dmedian_buckets(di, num_cluster, mapping_di, cols)
-
 et  = DataFrame(expr_tbl, :auto)
 rename!(et, lineage_markers)
-
-# export median marker expression
 CSV.write("median_expr.csv", et)
 ```
 
