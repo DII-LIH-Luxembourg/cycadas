@@ -45,6 +45,7 @@ cycadas <- function() {
                               DA_result_table = NULL,
                               DA_interactive_table = NULL,
                               myNode = "", # selected node for interactive DA
+                              selectedNodes = NULL, # multi node selection
                               graph = NULL,
                               hm = NULL,
                               annotationlist = NULL,
@@ -1315,63 +1316,110 @@ cycadas <- function() {
       colnames(DA_df) <- c("Cond1", "Cond2", "p-value", "Cell", "Naming")
       reactVals$DA_result_table <- DA_df
     })
+    
+    # Store selected nodes dynamically
+    observeEvent(input$graph_selectedNodes, {
+      reactVals$selectedNodes <- input$graph_selectedNodes
+    })
 
     # Render interactive Tree -------------------------------------------------
     output$interactiveTree <- renderVisNetwork({
-      visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
-        visEvents(select = "function(nodes) {
-                Shiny.onInputChange('current_node_id', nodes.nodes);
-                ;}")
-    })
+      # multiselect_option <- if (input$abundance_type == "Relative") TRUE else FALSE
 
-    # Observe Interactive DA node selection -----------------------------------
-    observeEvent(input$current_node_id, {
-      reactVals$myNode <- input$current_node_id
+      visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
+        visInteraction(multiselect = T) %>%  # Conditional multiselect
+        visEvents(selectNode = "function(nodes) {
+      Shiny.onInputChange('graph_selectedNodes', nodes.nodes);
+    }")
+    })
+    
+
+    observeEvent(input$graph_selectedNodes, {
+      reactVals$selectedNodes   <- input$graph_selectedNodes
       
-      if (reactVals$myNode != 1) {
+      # if (reactVals$myNode != 1) {
         doInteractiveDA()  
-      }
+      # }
       
     })
 
     output$selectedNode <- renderText({reactVals$myNode})
     
-    doInteractiveDA <- function() {  
+    doInteractiveDA <- function() {
+      
+      selected_nodes <- reactVals$selectedNodes  
 
-      children <- all_my_children(reactVals$graph, reactVals$myNode)
-
-      if (!is.null(children)) {
-        selected_labels <- c(reactVals$graph$nodes$label[children], reactVals$graph$nodes$label[reactVals$myNode])
-      } else {
-        selected_labels <- reactVals$graph$nodes$label[reactVals$myNode]
-        # TODO: find a better method 
-        # selected_labels <- "Unassigned"
+      if (length(selected_nodes) == 1) {
+        
+        abundance_type <- "Absolute"
+        
+        parent_node <- selected_nodes[1]
+        parent_labels <- c(reactVals$graph$nodes$label[all_my_children(reactVals$graph, parent_node)], 
+                           reactVals$graph$nodes$label[parent_node])
+        
+        sub_labels <- NULL  # No sub-node in absolute mode
+        
+      }
+      else if (length(selected_nodes) == 2) {
+        
+        # browser()
+        
+        abundance_type <- "Relative"
+        
+        if (length(all_my_children(reactVals$graph, selected_nodes[1])) >
+            length(all_my_children(reactVals$graph, selected_nodes[2]))) {
+          
+          parent_node <- selected_nodes[1]
+          sub_node <- selected_nodes[2]
+        }
+        else {
+          
+          parent_node <- selected_nodes[2]
+          sub_node <- selected_nodes[1]
+          
+        }
+        
+        # Get the full list of labels for both nodes
+        parent_labels <- c(reactVals$graph$nodes$label[all_my_children(reactVals$graph, parent_node)], 
+                           reactVals$graph$nodes$label[parent_node])
+        sub_labels <- c(reactVals$graph$nodes$label[all_my_children(reactVals$graph, sub_node)], 
+                        reactVals$graph$nodes$label[sub_node])
+        
+      }
+      else {
+        return(NULL)
       }
 
       countsTable <- reactVals$counts_table
-      ## aggregate the clusters by name:
       countsTable['cell'] <- df_expr$cell
-      # merge and aggregate by cell
       countsTable <- aggregate(. ~ cell, countsTable, sum)
-
       rownames(countsTable) <- countsTable$cell
       countsTable$cell <- NULL
+      
       props_table <- t(t(countsTable) / colSums(countsTable)) * 100
 
-      # check if any of the nodes is empty and therefore not in the props table
-      # this cause the
-      # make sure that sleecte labels are larger than on, otherwise it is
-      # not a vector and treat it as single value
-      if (length(selected_labels) > 1) {
-        filter_vec <- selected_labels %in% rownames(props_table)
-        props_table <- props_table[selected_labels[filter_vec],]
+      if (abundance_type == "Absolute") {
+        # Keep the full parent node counts
+        filter_vec <- parent_labels %in% rownames(props_table)
+        props_table <- props_table[parent_labels[filter_vec], , drop = FALSE]
       }
       else {
-        props_table <- t(as.data.frame(props_table[selected_labels,]))
+        # Compute sub-node abundance relative to parent node
+        filter_parent <- parent_labels %in% rownames(props_table)
+        filter_sub <- sub_labels %in% rownames(props_table)
+        
+        parent_counts <- colSums(props_table[parent_labels[filter_parent], , drop = FALSE])
+        sub_counts <- colSums(props_table[sub_labels[filter_sub], , drop = FALSE])
+        
+        # Ensure no division by zero
+        parent_counts[parent_counts == 0] <- NA
+        
+        tt <- sub_counts / parent_counts * 100
+        props_table <- t(as.data.frame(tt))
+
       }
 
       ## subset the props table based on the selected node
-      # props_table <- props_table[selected_labels, ]
       props_table <- t(as.data.frame(colSums(props_table)))
       mm <- match(colnames(props_table), md$sample_id)
       tmp_cond <- md$condition[mm]
@@ -1388,87 +1436,48 @@ cycadas <- function() {
       reactVals$DA_interactive_table <- DA_df
 
     }
-    
-    # Boxplot of interactive DA selection -------------------------------------
+  
+    # Render boxplot of selected nodes
     output$boxplot <- renderPlot({
-
-      # first check if a node is selected:
-      if (reactVals$myNode == "") {
-        
-        plot(1, type = "n", main = "No Data Available")
-      } else {
-
-        children <- all_my_children(reactVals$graph, reactVals$myNode)
-        
-        if (!is.null(children)) {
-          selected_labels <- c(reactVals$graph$nodes$label[children], reactVals$graph$nodes$label[reactVals$myNode])
-        } else {
-          selected_labels <- reactVals$graph$nodes$label[reactVals$myNode]
-        }
-
-        countsTable <- reactVals$counts_table
-        ## aggregate the clusters by name:
-        countsTable['cell'] <- df_expr$cell
-        # merge and aggregate by cell
-        countsTable <- aggregate(. ~ cell, countsTable, sum)
-        
-        rownames(countsTable) <- countsTable$cell
-        countsTable$cell <- NULL
-
+      if (is.null(reactVals$DA_interactive_table)) return(NULL)
+      
+      selected_nodes <- reactVals$selectedNodes
+      selected_labels <- unlist(lapply(selected_nodes, function(node) {
+        children <- all_my_children(reactVals$graph, node)
+        c(reactVals$graph$nodes$label[children], reactVals$graph$nodes$label[node])
+      }))
+      
+      countsTable <- reactVals$counts_table
+      countsTable['cell'] <- df_expr$cell
+      
+      countsTable <- aggregate(. ~ cell, countsTable, sum)
+      rownames(countsTable) <- countsTable$cell
+      countsTable$cell <- NULL
+      
+      abundance_type <- ifelse(length(selected_nodes) == 1, "Absolute", "Relative")
+      
+      if (abundance_type == "Relative") {
         props_table <- t(t(countsTable) / colSums(countsTable)) * 100
-        
-        # check if any of the nodes is empty and therefore not in the props table
-        # this cause the
-        # make sure that sleecte labels are larger than on, otherwise it is
-        # not a vector and treat it as single value
-        if (length(selected_labels) > 1) {
-          filter_vec <- selected_labels %in% rownames(props_table)
-          props_table <- props_table[selected_labels[filter_vec],]
-        }
-        else {
-          props_table <- t(as.data.frame(props_table[selected_labels,]))
-        }
-        
-        ## subset the props table based on the selected node
-        props_table <- as.data.frame(colSums(props_table))
-        mm <- match(rownames(props_table), md$sample_id)
-        props_table$cond <- as.factor(md$condition[mm])
-        
-        combCond <- combn(levels(props_table$cond), 2)
-        
-        names(props_table) <- c("value", "cond")
-        
-        # browser()
-        condPairList <- get_pairs(levels(props_table$cond))
-        
-        ggplot(props_table, aes(x = cond, y = value, fill=cond))+
-          geom_boxplot(outlier.shape = NA) +
-          geom_jitter(width = 0.2) +
-          xlab("Condition") +
-          ylab("Proportion") +
-          geom_signif(
-            # comparisons = list(c("HC", "PD")),
-            comparisons = condPairList,
-            map_signif_level = F, 
-            textsize = 6,
-            step_increase = 0.1
-          ) +
-          theme_classic() +
-          # geom_pwc(aes(group = cond),method = "wilcox_test", label = "Wilcoxon, italic(p)= {p}")+
-          # ggpubr::theme_pubr() +
-          theme(
-            plot.title = element_text(size = 22),
-            axis.text = element_text(size = 12),
-            legend.text = element_text(size = 14),
-            legend.title = element_text(size = 20),
-            axis.title.x = element_text(size = 20),
-            axis.title.y = element_text(size = 20),
-            legend.position = "none") +
-          ggtitle(reactVals$graph$nodes$label[reactVals$myNode])
+      } else {
+        props_table <- countsTable
       }
-
+      
+      filter_vec <- selected_labels %in% rownames(props_table)
+      props_table <- props_table[selected_labels[filter_vec], , drop = FALSE]
+      
+      boxplot_data <- data.frame(
+        Sample = rep(colnames(props_table), each = nrow(props_table)),
+        Value = as.numeric(t(props_table)),
+        Condition = rep(md$condition[match(colnames(props_table), md$sample_id)], each = nrow(props_table))
+      )
+      
+      ggplot(boxplot_data, aes(x = Condition, y = Value, fill = Condition)) +
+        geom_boxplot() +
+        theme_minimal() +
+        labs(title = "Abundance Comparison", y = abundance_type, x = "Condition")
     })
     
+        
     # Load Expression Data and UMAP -------------------------------------------------
     loadExprData <- function(path_expr, path_freq) {
       

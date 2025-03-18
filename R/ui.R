@@ -403,6 +403,23 @@ ui <- dashboardPage(
                                 visNetworkOutput("interactiveTree", width = "100%", height = "700px")
                               )
                               ),
+                       # column(width = 4,
+                       #        box(
+                       #          width = NULL,
+                       #          radioButtons("abundance_type", 
+                       #                       label = "Select Abundance Type:", 
+                       #                       choices = c("Absolute", "Relative"),
+                       #                       selected = "Absolute")  # Default is relative
+                       #        ),
+                       #        box(
+                       #          width = NULL,
+                       #          tableOutput("DA_interactive_table")
+                       #        ),
+                       #        box(
+                       #          width = NULL,
+                       #          plotOutput("boxplot")
+                       #        )
+                       # )
                        column(width = 4,
                               box(
                                 width = NULL,
@@ -412,7 +429,7 @@ ui <- dashboardPage(
                                 width = NULL,
                                 plotOutput("boxplot")
                               )
-                              )
+                            )
 
                        ))# tabItem
     ) # tabItems
