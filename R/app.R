@@ -1,37 +1,3 @@
-# usethis::use_package("shiny")
-# usethis::use_package("DT")
-# usethis::use_package("ggplot2")
-# usethis::use_package("matrixStats")
-# usethis::use_package("dplyr")
-# usethis::use_package("stats")
-# usethis::use_package("pheatmap")
-# usethis::use_package("Ckmeans.1d.dp")
-# usethis::use_package("umap")
-# usethis::use_package("RColorBrewer")
-# usethis::use_package("shinydashboard")
-# usethis::use_package("shinyWidgets")
-# usethis::use_package("visNetwork")
-# usethis::use_package("glue")
-# usethis::use_package("purrr")
-# usethis::use_package("reshape2")
-# usethis::use_package("mousetrap")
-# usethis::use_package("knitr")
-
-
-# List of packages you want to check and install if needed
-# packages_to_install <- c("shiny", "DT", "ggplot2", "matrixStats", "tidyverse", "stats", "knitr", "forcats",
-#                          "pheatmap", "Ckmeans.1d.dp", "umap", "RColorBrewer", "shinydashboard", "mixtools",
-#                          "shinyWidgets", "visNetwork", "glue", "purrr", "reshape2", "mousetrap", "ggpubr", 
-#                          "SingleCellExperiment", "CATALYST", "shinyjs", "cluster", "mclust")
-# 
-# 
-# # Check if each package is already installed, and install if not
-# for (package in packages_to_install) {
-#   if (!require(package, character.only = TRUE)) {
-#     install.packages(package)
-#     library(package, character.only = TRUE)
-#   }
-# }
 
 shiny::addResourcePath("images", "./www")
 
@@ -104,7 +70,7 @@ cycadas <- function() {
       lineage_marker_raw <<- paste0(lineage_marker, "_raw")
       
       df_expr <<- createExpressionDF(df_expr, cell_freq)
-      reactVals$graph <- initTree()
+      # reactVals$graph <- initTree()
       
       progress$set(message = "loading Data Cluster Expression Demo Data...", value = 0.2)
       
@@ -171,31 +137,55 @@ cycadas <- function() {
       })
     }
 
-    # Function: Plot the annotation tree --------------------------------------
+    # # Function: Plot the annotation tree --------------------------------------
     plotTree <- function() {
-      # before plotting the tree, update its properties
-      for(i in 1:nrow(reactVals$graph$nodes)) {
-        
-        l <- reactVals$graph$nodes$label[i]
-        # get the number of clusters with that label
-        nLabel <- sum(df_expr$cell == l)
-
-        if (nLabel == 0) {
-          reactVals$graph$nodes[i,]$color <- "grey"
-        } else {
-          reactVals$graph$nodes[i,]$color <- "blue"
-        }
-      }
-
+      # 1. Export nodes and edges from the tree
+      tree_df <- reactVals$graph$to_dataframes()
+      nodes <- tree_df$nodes
+      edges <- tree_df$edges
+      
+      # 2. Update node color based on expression data
+      nodes$color <- ifelse(
+        sapply(nodes$name, function(label) sum(df_expr$cell == label) == 0),
+        "grey", "blue"
+      )
+      
+      # 3. Render the visNetwork plot
       output$mynetworkid <- renderVisNetwork({
-        visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
+        visNetwork(nodes, edges, width = "100%") %>%
           visEdges(arrows = "from") %>%
           visHierarchicalLayout() %>%
           visEvents(select = "function(nodes) {
-                Shiny.onInputChange('parent_node_id', nodes.nodes);
-                ;}")
+        Shiny.onInputChange('parent_node_id', nodes.nodes);
+      }")
       })
     }
+    
+    
+    # plotTree <- function() {
+    #   # before plotting the tree, update its properties
+    #   for(i in 1:nrow(reactVals$graph$nodes)) {
+    #     
+    #     l <- reactVals$graph$nodes$label[i]
+    #     # get the number of clusters with that label
+    #     nLabel <- sum(df_expr$cell == l)
+    # 
+    #     if (nLabel == 0) {
+    #       reactVals$graph$nodes[i,]$color <- "grey"
+    #     } else {
+    #       reactVals$graph$nodes[i,]$color <- "blue"
+    #     }
+    #   }
+    # 
+    #   output$mynetworkid <- renderVisNetwork({
+    #     visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
+    #       visEdges(arrows = "from") %>%
+    #       visHierarchicalLayout() %>%
+    #       visEvents(select = "function(nodes) {
+    #             Shiny.onInputChange('parent_node_id', nodes.nodes);
+    #             ;}")
+    #   })
+    # }
     
 
     # Load the marker expression file ---------------------------------------

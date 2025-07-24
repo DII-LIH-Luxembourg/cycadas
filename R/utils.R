@@ -325,20 +325,28 @@ all_my_children <- function(graph_data, node_id) {
 }
 
 # Initialize the Tree at start ------------------------------------------------
+# initTree <- function() {
+#   
+#   # create initial master node of all Unassigned clusters
+#   nodes <- tibble(id = 1,
+#                   label = "Unassigned",
+#                   pm = list(""),
+#                   nm = list(""),
+#                   color = "blue"
+#   )
+#   
+#   edges <- data.frame(from = c(1), to = c(1))
+#   
+#   return (list(nodes = nodes, edges = edges))
+# }
+
 initTree <- function() {
   
-  # create initial master node of all Unassigned clusters
-  nodes <- tibble(id = 1,
-                  label = "Unassigned",
-                  pm = list(""),
-                  nm = list(""),
-                  color = "blue"
-  )
+  root <- Node$new(id = "1", name = "Unassigned")
   
-  edges <- data.frame(from = c(1), to = c(1))
-  
-  return (list(nodes = nodes, edges = edges))
+  return(root)
 }
+
 
 # Build Graph from nodes and edges --------------------------------------------
 getGraphFromLoad <- function(df_nodes, df_edges) {
