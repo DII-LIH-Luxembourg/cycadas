@@ -70,11 +70,11 @@ cycadas <- function() {
       lineage_marker_raw <<- paste0(lineage_marker, "_raw")
       
       df_expr <<- createExpressionDF(df_expr, cell_freq)
-      # reactVals$graph <- initTree()
+      # reactVals$graph <- cyTree::initTree()
       
       progress$set(message = "loading Data Cluster Expression Demo Data...", value = 0.2)
       
-      reactVals$graph <- initTree()
+      reactVals$graph <- cyTree::initTree()
       
       set.seed(1234)
       progress$set(message = "Building the UMAP...", value = 0.3)
@@ -115,7 +115,7 @@ cycadas <- function() {
       
       # browser()
       
-      children <- all_my_children(reactVals$graph, my_node_id)
+      children <- cyTree::all_my_children(reactVals$graph, my_node_id)
       
       if (is.null(children)) {
         children <- c()
@@ -245,7 +245,7 @@ cycadas <- function() {
       
       
       df_expr <<- createExpressionDF(df_expr_tmp, cell_freq_tmp)
-      reactVals$graph <- initTree()
+      reactVals$graph <- cyTree::initTree()
       
       set.seed(1234)
       progress$set(message = "Building the UMAP...", value = 0.3)
@@ -319,7 +319,7 @@ cycadas <- function() {
         
         
         df_expr <<- createExpressionDF(somExpr, cell_freq_tmp)
-        reactVals$graph <- initTree()
+        reactVals$graph <- cyTree::initTree()
         
         set.seed(1234)
         # progress$set(message = "Building the UMAP...", value = 0.3)
@@ -472,7 +472,7 @@ cycadas <- function() {
           posmarker <- list(input$treePickerPos)
           negmarker <- list(input$treePickerNeg)
 
-          reactVals$graph <- add_node(reactVals$graph,parent,name,posmarker,negmarker,"blue")
+          reactVals$graph <- cyTree::add_node(reactVals$graph,parent,name,posmarker,negmarker,"blue")
 
           df_expr[rownames(tmp),]$cell <<- name
 
@@ -773,8 +773,6 @@ cycadas <- function() {
       reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker,]$nm <-
         list(c(reactVals$graph$nodes[reactVals$graph$nodes$label == input$parentPicker,]$nm[[1]], input$treePickerNeg))
 
-      reactVals <- rebuiltTree(reactVals)
-
       reactVals$hm <- reactVals[reactVals$cell == input$parentPicker, ]
 
       # if "newNode" text-field is not empty, update the node name
@@ -869,7 +867,7 @@ cycadas <- function() {
           value = ""
         )
 
-        reactVals$graph <- delete_leaf_node(reactVals$graph, node$id)
+        reactVals$graph <- cyTree::delete_leaf_node(reactVals$graph, node$id)
         plotTree()
       }
     })
@@ -885,9 +883,9 @@ cycadas <- function() {
       df_nodes <- read.csv(input$fNodes$datapath)
       df_edges <- read.csv(input$fEdges$datapath)
       
-      reactVals$graph <- getGraphFromLoad(df_nodes, df_edges)
+      reactVals$graph <- cyTree::getGraphFromLoad(df_nodes, df_edges)
       
-      df_expr$cell <<- rebuiltTree(reactVals$graph, df_expr, reactVals$th)
+      df_expr$cell <<- cyTree::rebuiltTree(reactVals$graph, df_expr, reactVals$th, lineage_marker, filterHM)
       
       reactVals$annotationlist <- as.list(df_nodes$label)
     })
@@ -997,7 +995,7 @@ cycadas <- function() {
       if (!is.null(reactVals$th)) {
         # TODO: change naming: not only k-means
         reactVals$th <- updateTH(df_expr, reactVals$th, th_mode=input$th_method)
-        # df_expr$cell <<- rebuiltTree(reactVals$graph, df_expr, reactVals$th)      
+        # df_expr$cell <<- cyTree::rebuiltTree(reactVals$graph, df_expr, reactVals$th, lineage_marker, filterHM)      
           
           # req(input$table_rows_selected)
           # selRow <- reactVals$th[input$table_rows_selected,]
@@ -1011,7 +1009,7 @@ cycadas <- function() {
         # 
         # PlottingThreshold(marker_expr, myTH, myColor)
         
-        # df_expr$cell <<- rebuiltTree(reactVals$graph, df_expr, reactVals$th)        
+        # df_expr$cell <<- cyTree::rebuiltTree(reactVals$graph, df_expr, reactVals$th, lineage_marker, filterHM)        
       }
       
 
@@ -1032,7 +1030,7 @@ cycadas <- function() {
       
       PlottingThreshold(marker_expr, myTH, myColor)
 
-      df_expr$cell <<- rebuiltTree(reactVals$graph, df_expr, reactVals$th)
+      df_expr$cell <<- cyTree::rebuiltTree(reactVals$graph, df_expr, reactVals$th, lineage_marker, filterHM)
     })
 
     # Plotting Threshold  function --------------------------------------------
@@ -1155,7 +1153,7 @@ cycadas <- function() {
       
       # re-calculate the tree after threshold upload
       req(input$fMarkerExpr)
-      df_expr$cell <<- rebuiltTree(reactVals$graph, df_expr, reactVals$th)
+      df_expr$cell <<- cyTree::rebuiltTree(reactVals$graph, df_expr, reactVals$th, lineage_marker, filterHM)
     })
 
     # Load the metadata ----------------------------------------------------
@@ -1330,7 +1328,7 @@ cycadas <- function() {
     
     doInteractiveDA <- function() {  
 
-      children <- all_my_children(reactVals$graph, reactVals$myNode)
+      children <- cyTree::all_my_children(reactVals$graph, reactVals$myNode)
 
       if (!is.null(children)) {
         selected_labels <- c(reactVals$graph$nodes$label[children], reactVals$graph$nodes$label[reactVals$myNode])
@@ -1390,7 +1388,7 @@ cycadas <- function() {
         plot(1, type = "n", main = "No Data Available")
       } else {
 
-        children <- all_my_children(reactVals$graph, reactVals$myNode)
+        children <- cyTree::all_my_children(reactVals$graph, reactVals$myNode)
         
         if (!is.null(children)) {
           selected_labels <- c(reactVals$graph$nodes$label[children], reactVals$graph$nodes$label[reactVals$myNode])
@@ -1480,11 +1478,11 @@ cycadas <- function() {
       lineage_marker_raw <<- paste0(lineage_marker, "_raw")
       
       df_expr <<- createExpressionDF(df_expr, cell_freq)
-      reactVals$graph <- initTree()
+      reactVals$graph <- cyTree::initTree()
       
       progress$set(message = "loading Data Cluster Expression Demo Data...", value = 0.2)
       
-      reactVals$graph <- initTree()
+      reactVals$graph <- cyTree::initTree()
       
       set.seed(1234)
       progress$set(message = "Building the UMAP...", value = 0.3)
@@ -1502,7 +1500,7 @@ cycadas <- function() {
       lineage_marker_raw <<- paste0(lineage_marker, "_raw")
       
       df_expr <<- createExpressionDF(df_expr, cell_freq)
-      reactVals$graph <- initTree()
+      reactVals$graph <- cyTree::initTree()
       
       # Create a Progress object
       progress <- shiny::Progress$new()
@@ -1511,7 +1509,7 @@ cycadas <- function() {
       
       progress$set(message = "loading Data Cluster Expression Demo Data...", value = 0.2)
       
-      reactVals$graph <- initTree()
+      reactVals$graph <- cyTree::initTree()
       
       set.seed(1234)
       progress$set(message = "Building the UMAP...", value = 0.3)
@@ -1546,7 +1544,7 @@ cycadas <- function() {
       lineage_marker_raw <<- paste0(lineage_marker, "_raw")
       
       df_expr <<- createExpressionDF(df_expr, cell_freq)
-      reactVals$graph <- initTree()
+      reactVals$graph <- cyTree::initTree()
       
       # Create a Progress object
       progress <- shiny::Progress$new()
@@ -1555,7 +1553,7 @@ cycadas <- function() {
       
       progress$set(message = "loading Data Cluster Expression Demo Data...", value = 0.2)
       
-      reactVals$graph <- initTree()
+      reactVals$graph <- cyTree::initTree()
       
       set.seed(1234)
       progress$set(message = "Building the UMAP...", value = 0.3)
@@ -1609,9 +1607,9 @@ cycadas <- function() {
       df_nodes <- nodes_demo_data
       df_edges <- edges_demo_data
 
-      reactVals$graph <- getGraphFromLoad(df_nodes, df_edges)
+      reactVals$graph <- cyTree::getGraphFromLoad(df_nodes, df_edges)
 
-      df_expr$cell <<- rebuiltTree(reactVals$graph, df_expr, reactVals$th)
+      df_expr$cell <<- cyTree::rebuiltTree(reactVals$graph, df_expr, reactVals$th, lineage_marker, filterHM)
       reactVals$annotationlist <- df_nodes$label
 
       reactVals$hm <- df_expr[, lineage_marker]
