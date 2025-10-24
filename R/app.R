@@ -1,39 +1,6 @@
-# usethis::use_package("shiny")
-# usethis::use_package("DT")
-# usethis::use_package("ggplot2")
-# usethis::use_package("matrixStats")
-# usethis::use_package("dplyr")
-# usethis::use_package("stats")
-# usethis::use_package("pheatmap")
-# usethis::use_package("Ckmeans.1d.dp")
-# usethis::use_package("umap")
-# usethis::use_package("RColorBrewer")
-# usethis::use_package("shinydashboard")
-# usethis::use_package("shinyWidgets")
-# usethis::use_package("visNetwork")
-# usethis::use_package("glue")
-# usethis::use_package("purrr")
-# usethis::use_package("reshape2")
-# usethis::use_package("mousetrap")
-# usethis::use_package("knitr")
 
 
-# List of packages you want to check and install if needed
-# packages_to_install <- c("shiny", "DT", "ggplot2", "matrixStats", "tidyverse", "stats", "knitr", "forcats",
-#                          "pheatmap", "Ckmeans.1d.dp", "umap", "RColorBrewer", "shinydashboard", "mixtools",
-#                          "shinyWidgets", "visNetwork", "glue", "purrr", "reshape2", "mousetrap", "ggpubr", 
-#                          "SingleCellExperiment", "CATALYST", "shinyjs", "cluster", "mclust")
-# 
-# 
-# # Check if each package is already installed, and install if not
-# for (package in packages_to_install) {
-#   if (!require(package, character.only = TRUE)) {
-#     install.packages(package)
-#     library(package, character.only = TRUE)
-#   }
-# }
-
-shiny::addResourcePath("images", "./www")
+# shiny::addResourcePath("images", "./www")
 
 #' @export
 cycadas <- function() {
@@ -1328,6 +1295,7 @@ cycadas <- function() {
 
     # Observe Interactive DA node selection -----------------------------------
     observeEvent(input$current_node_id, {
+      # browser()
       reactVals$myNode <- input$current_node_id
       
       if (reactVals$myNode != 1) {
@@ -1339,16 +1307,18 @@ cycadas <- function() {
     output$selectedNode <- renderText({reactVals$myNode})
     
     doInteractiveDA <- function() {  
+      
+      # browser()
 
+      # get selected "parent" first
+      selected_labels <- reactVals$graph$nodes$label[reactVals$graph$nodes$id == reactVals$myNode]
       children <- all_my_children(reactVals$graph, reactVals$myNode)
-
-      if (!is.null(children)) {
-        selected_labels <- c(reactVals$graph$nodes$label[children], reactVals$graph$nodes$label[reactVals$myNode])
-      } else {
-        selected_labels <- reactVals$graph$nodes$label[reactVals$myNode]
-        # TODO: find a better method 
-        # selected_labels <- "Unassigned"
-      }
+      # attach children 
+      if (!is.null(children) & !is_empty(children)) {
+        
+        row_ids <- reactVals$graph$nodes$id %in% children
+        selected_labels <- c(reactVals$graph$nodes$label[row_ids], selected_labels)
+      } 
 
       countsTable <- reactVals$counts_table
       ## aggregate the clusters by name:
@@ -1359,6 +1329,8 @@ cycadas <- function() {
       rownames(countsTable) <- countsTable$cell
       countsTable$cell <- NULL
       props_table <- t(t(countsTable) / colSums(countsTable)) * 100
+      
+      # browser()
 
       # check if any of the nodes is empty and therefore not in the props table
       # this cause the
@@ -1372,11 +1344,15 @@ cycadas <- function() {
         props_table <- t(as.data.frame(props_table[selected_labels,]))
       }
 
+      # browser()
+      
       ## subset the props table based on the selected node
       # props_table <- props_table[selected_labels, ]
       props_table <- t(as.data.frame(colSums(props_table)))
       mm <- match(colnames(props_table), md$sample_id)
       tmp_cond <- md$condition[mm]
+      
+      
 
       DA_df <- data.frame()
 
@@ -1400,13 +1376,15 @@ cycadas <- function() {
         plot(1, type = "n", main = "No Data Available")
       } else {
 
+        # get selected "parent" first
+        selected_labels <- reactVals$graph$nodes$label[reactVals$graph$nodes$id == reactVals$myNode]
         children <- all_my_children(reactVals$graph, reactVals$myNode)
-        
-        if (!is.null(children)) {
-          selected_labels <- c(reactVals$graph$nodes$label[children], reactVals$graph$nodes$label[reactVals$myNode])
-        } else {
-          selected_labels <- reactVals$graph$nodes$label[reactVals$myNode]
-        }
+        # attach children 
+        if (!is.null(children) & !is_empty(children)) {
+          
+          row_ids <- reactVals$graph$nodes$id %in% children
+          selected_labels <- c(reactVals$graph$nodes$label[row_ids], selected_labels)
+        } 
 
         countsTable <- reactVals$counts_table
         ## aggregate the clusters by name:

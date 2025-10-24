@@ -1,6 +1,8 @@
 
 ## **Cy**tometry **C**luster **A**nnotation and **D**ifferential **A**bundance **S**uite
 
+![](./www/logo4_small2.png)
+
 #### Efficient and reproducible annotation of cytometry data
 
 **Aims**:
