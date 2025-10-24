@@ -2,19 +2,8 @@
 # Estimate the threshold values -----------------------------------------------
 kmeansTH <- function(df, th_mode="km") {
   th <- data.frame(cell = colnames(df), threshold = 0.0, color = "blue", bi_mod = 0)
-  
-  # for debug
-  # i <- 1
 
   for (m in th$cell) {
-    
-    # if (i == 18) {
-    #   browser()
-    # }
-    # i <- i+1
-    
-    # browser()
-
     # check for bi-modal distribution, if not color = red to indicate
     # stated in Pfister et al., 2013
     bi_mod_value <- bimodality_coefficient(df[, m])
@@ -23,30 +12,17 @@ kmeansTH <- function(df, th_mode="km") {
       th[th$cell == m, "color"] <- "red"
     }
     
-    ############### K-Means
+    ######## K-Means
     set.seed(42)
-    # set.seed(123)
 
     z <- Ckmeans.1d.dp(df[, m], 2)
     midpoint_kmeans <- mean(z$centers)
     
     kmeans_silhouette <- silhouette(z$cluster, dist(df[, m]))
     kmeans_avg_silhouette <- mean(kmeans_silhouette[, 3])
-    
-    ############### GMM
-    # Fit a Gaussian mixture model using normalmixEM
-    # fit <- normalmixEM(df[, m], k = 2)  # Assuming 2 clusters
-    # # Extract means of the fitted components
-    # means <- fit$mu
-    # 
-    # midpoint_normalMix <- mean(means)
-    # 
-    # silhouette_result <- silhouette(fit$posterior[, 1] > 0.5, dist(df[, m]))
-    # gmm_normalMix_avg_silhouette <- mean(silhouette_result[,3])
-    
-    ###############
+
+    ###########################################################################
     # Perform GMM clustering ##################################################
-    # browser()
     gmm_result <- Mclust(df[, m], G = 2)
     
     # Extract means of the Gaussian components
@@ -69,11 +45,7 @@ kmeansTH <- function(df, th_mode="km") {
       # th[th$cell == m, "threshold"] <- midpoint_normalMix
       th[th$cell == m, "threshold"] <- midpoint_gmm
     }
-    
-
-    
   }
-
   rownames(th) <- th$cell
   return(th)
 }
@@ -91,8 +63,7 @@ updateTH <- function(df, th, th_mode) {
     }
   }
   else if (th_mode == "gmm_mid") {
-    
-    # browser()
+
     for (m in th$cell) {
       set.seed(42)
       fit <- normalmixEM(df[, m], k = 2)
@@ -105,8 +76,7 @@ updateTH <- function(df, th, th_mode) {
     }
   }
     else if (th_mode == "gmm_high") {
-      
-      # browser()
+
       for (m in th$cell) {
         set.seed(42)
         fit <- normalmixEM(df[, m], k = 2)
@@ -114,12 +84,10 @@ updateTH <- function(df, th, th_mode) {
         means <- fit$mu
         # Define high expression threshold (e.g., mean of high component + standard deviation)
         th[th$cell == m, "threshold"] <- round(means[2] - fit$sigma[2], 3)
-        # th[th$cell == m, "threshold"] <- round((means[2] - means[1]) / 2, 3)
       }
     }
     else if (th_mode == "gmm_low") {
-      
-      # browser()
+
       for (m in th$cell) {
         set.seed(42)
         fit <- normalmixEM(df[, m], k = 2)
@@ -127,12 +95,10 @@ updateTH <- function(df, th, th_mode) {
         means <- fit$mu
         # Define high expression threshold (e.g., mean of high component + standard deviation)
         th[th$cell == m, "threshold"] <- round(means[1] + fit$sigma[1], 3)
-        # th[th$cell == m, "threshold"] <- round((means[2] - means[1]) / 2, 3)
       }
     }
     else if (th_mode == "mclust") {
-      
-      # browser()
+
       for (m in th$cell) {
         set.seed(42)
         
@@ -144,14 +110,12 @@ updateTH <- function(df, th, th_mode) {
         
         # Calculate the midpoint between the means
         # midpoint_gmm <- mean(means)
-
         th[th$cell == m, "threshold"] <- mean(means)
 
       }
     }
     else if (th_mode == "kde") {
-      
-      # browser()
+
       for (m in th$cell) {
         set.seed(42)
         
@@ -177,7 +141,6 @@ updateTH <- function(df, th, th_mode) {
     }
   return(th)
 }
-
 
 # Scale the expression values between 0 and 1 ---------------------------------
 normalize01 <- function(hm) {
@@ -238,7 +201,6 @@ filterColor <- function(DF,hm) {
   tmp[as.numeric(rownames(hm))] <- "selected phenotype"
 
   return(unname(tmp))
-
 }
 
 # TODO: check if needed!
@@ -288,7 +250,6 @@ add_node <- function(graph,parent,name,pos_m,neg_m,color) {
 # define recursive function to delete a node and all its children -------------
 delete_child_nodes <- function(graph_data, node_id) {
   # find the children nodes
-  # browser()
   children <- graph_data$edges$from[graph_data$edges$to == node_id]
 
   # recursively delete children nodes
@@ -392,7 +353,6 @@ delete_leaf_node <- function(graph_data, node_id) {
 
     return(graph_data)
   }
-
 }
 
 # Rebuild Tree ----------------------------------------------------------------
@@ -465,100 +425,4 @@ get_pairs <- function(vec) {
     pairs_list <- split(pairs, col(pairs))
     return(pairs_list)
 }
-
-
-
-# deleteChildNodes <- function(graph, node) {
-#   children <- successors(graph, node)  # Get the immediate children of the node
-#   if (length(children) > 0) {  # If the node has children, recursively delete them
-#     for (child in children) {
-#       graph <- delete.edges(graph, c(node, child))  # Remove the edge between the node and its child
-#       graph <- deleteChildNodes(graph, child)  # Recursively delete the child's children
-#     }
-#   }
-#   return(graph)  # Return the modified graph
-# }
-#
-#
-#
-# getUpstreamMarkers <- function(label, nodes, edges) {
-#
-#   node <- nodes %>% filter(label == label)
-#   myid <- node$id
-#
-#   filterPosMarkers <- unlist(node$pm)
-#   filterNegMarkers <- unlist(node$nm)
-#
-#   # collect all positive and negative markers
-#   # upwards from parent
-#   # go through edges until we reach one level below master node
-#   while (myid > 1) {
-#     print(myid)
-#
-#     edge <- edges %>% filter(from == myid)
-#     next_id <- edge$to
-#
-#     myid <- next_id
-#     next_node <- nodes %>% filter(id == next_id)
-#     filterPosMarkers <- append(filterPosMarkers, unlist(next_node$pm))
-#     filterNegMarkers <- c(filterNegMarkers, unlist(next_node$nm))
-#
-#   }
-#   print(filterPosMarkers)
-#   print(filterNegMarkers)
-#
-#   # remove the empty strings in the markers
-#   filterPosMarkers <- filterPosMarkers[nzchar(filterPosMarkers)]
-#   filterNegMarkers <- filterNegMarkers[nzchar(filterNegMarkers)]
-#
-#   return(list(filterPosMarkers,filterNegMarkers))
-# }
-
-# plotTree <- function(mygraph) {
-#
-#   # browser()
-#
-#   # before plotting the tree, update its properties
-#   # based on the annotated DF
-#   if (!is.null(mygraph)) {
-#     for(i in 1:nrow(mygraph$nodes)) {
-#       l <- mygraph$nodes$label[i]
-#
-#       # get the number of clusters with that label
-#       nLabel <- sum(df01Tree$cell == l)
-#       if (nLabel == 0) {
-#         browser()
-#         mygraph$nodes$color[i] <- "red"
-#       }
-#     }
-#   }
-#
-#   if(input$treeSwitch == T) {
-#     output$mynetworkid <- renderVisNetwork({
-#
-#       visNetwork(mygraph$nodes, mygraph$edges, width = "100%") %>%
-#         visEdges(arrows = "from")
-#     })
-#
-#   } else {
-#     output$mynetworkid <- renderVisNetwork({
-#
-#       visNetwork(mygraph$nodes, mygraph$edges, width = "100%") %>%
-#         visEdges(arrows = "from") %>%
-#         visHierarchicalLayout()
-#     })
-#   }
-#
-# }
-#
-
-
-
-
-
-
-
-
-
-
 
