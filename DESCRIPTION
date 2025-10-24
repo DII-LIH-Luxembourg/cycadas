@@ -1,6 +1,6 @@
 Package: cycadas
 Title: Cluster Annotation
-Version: 0.1
+Version: 1.0
 Authors@R: 
     person("Oliver", "Hunewald", , "oliver.hunewald@lih.lu", role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID"))
