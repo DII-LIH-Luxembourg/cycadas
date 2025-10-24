@@ -5,7 +5,7 @@ ui <- dashboardPage(
   sidebar <- dashboardSidebar(
     sidebarMenu(id = "tabs",
                 menuItem("Home", tabName = "home"),
-                menuItem("Load", tabName = "settings"),
+                menuItem("Workspace", tabName = "settings"),
                 menuItem("Thresholds", tabName = "thresholds"),
                 menuItem("Tree-Annotation", tabName = "treeannotation"),
                 menuItem("UMAP interactive", tabName = "umap_reactive"),
@@ -56,7 +56,6 @@ ui <- dashboardPage(
                          box(title = "Optional - Annotation Tree",collapsible = TRUE,solidHeader = TRUE,status = "warning",width = NULL,collapsed = T,
                              fileInput("fNodes","Choose Nodes File",multiple = FALSE,accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
                              fileInput("fEdges","Choose Edges File",multiple = FALSE,accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
-                             # fileInput("fAnno","Choose Annotation File",multiple = FALSE,accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
                              actionButton("btnImportTree", "Import")),
                          box(title = "Optional - Metadata",collapsible = TRUE,solidHeader = TRUE,status = "warning",width = NULL,collapsed = T,
                              fileInput("metadata","Choose CSV File",multiple = F,accept = c("text/csv","text/comma-separated-values,text/plain",".csv"))),
@@ -64,6 +63,10 @@ ui <- dashboardPage(
                              fileInput("counts_table","Choose CSV File",multiple = F,accept = c("text/csv","text/comma-separated-values,text/plain",".csv")))
                   ),
                   column(width = 4,
+                         box(title = "Workspace",collapsible = TRUE,solidHeader = TRUE,status = "success",width = NULL,collapsed = F,
+                             splitLayout(cellWidths = c("50%", "50%"),
+                                         downloadButton("btnSaveWorkspace", "Save Workspace"),
+                                         actionButton("btnLoadWorkspace", "Load Workspace"))),
                          box(title = "Load Demo Data",collapsible = TRUE,solidHeader = TRUE,status = "success",width = NULL,collapsed = F,
                              splitLayout(cellWidths = c("50%", "50%"),
                                          actionButton("btnLoadDemoData", "Unannotated"),

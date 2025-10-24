@@ -1435,6 +1435,92 @@ cycadas <- function() {
 
       reactVals$hm <- df_expr[, lineage_marker]
     })
+    
+    # reactVals <- reactiveValues(th = NULL,
+    #                             myTH = NULL, # user selected threshold
+    #                             md = NULL,
+    #                             counts_table = NULL,
+    #                             DA_result_table = NULL,
+    #                             DA_interactive_table = NULL,
+    #                             myNode = "", # selected node for interactive DA
+    #                             graph = NULL,
+    #                             hm = NULL,
+    #                             annotationlist = NULL,
+    #                             sce = NULL,
+    #                             metaClustLevel = NULL
+    # )
+    
+    # SAVE
+    output$btnSaveWorkspace <- downloadHandler(
+      filename = function() {
+        paste0("cycadas-workspace_", format(Sys.time(), "%Y%m%d-%H%M%S"), ".rds")
+      },
+      content = function(file) {
+        
+        # browser()
+        
+        # helpers ----
+        has_df <- function(x) {
+          is.data.frame(x) && nrow(x) > 0 && ncol(x) > 0
+        }
+        
+        if (!is.null(reactVals$graph$nodes)) {
+          export_df_nodes <- reactVals$graph$nodes
+          # Use apply() to concatenate the pm column for each row of the nodes dataframe
+          pm_concatenated <- apply(export_df_nodes, 1, function(row) {
+            pm_vector <- unlist(row["pm"])
+            pm_vector <- paste(pm_vector, collapse = "|")
+          })
+          
+          nm_concatenated <- apply(export_df_nodes, 1, function(row) {
+            nm_vector <- unlist(row["nm"])
+            nm_vector <- paste(nm_vector, collapse = "|")
+          })
+          
+          # Add the concatenated pm column as a new column to the nodes dataframe
+          export_df_nodes$pm <- pm_concatenated
+          export_df_nodes$nm <- nm_concatenated          
+        } else {
+          export_df_nodes <- NULL
+        }
+
+        
+        state <- list(
+          schema_version = "1.0",
+          app_version    = as.character(utils::packageVersion("cycadas")),
+          saved_at       = Sys.time(),
+          median_expr    = if (has_df(df_expr)) df_expr else NULL,
+          metadata       = if (has_df(reactVals$md)) reactVals$md else NULL,
+          thresholds     = if (has_df(reactVals$th)) reactVals$th else NULL,
+          counts_table   = if (has_df(reactVals$counts_table)) reactVals$counts_table else NULL,
+          nodes_df       = export_df_nodes,
+          edges_df       = if (has_df(reactVals$graph$edges)) reactVals$graph$edges else NULL
+        )
+        save_workspace(file, state)
+      }
+    )
+    
+    # LOAD
+    observeEvent(input$btnLoadWorkspace, {
+      req(input$load_ws$datapath)
+      ws <- load_workspace(input$load_ws$datapath)
+      
+      # restore into your app's reactives
+      rv$median_expr <- ws$median_expr
+      rv$metadata    <- ws$metadata
+      rv$thresholds  <- ws$thresholds
+      rv$annotations <- ws$annotations
+      rv$graph       <- cyTree::import_tree_from_list(ws$tree)
+      rv$input_files <- ws$input_files
+      rv$ui_prefs    <- ws$ui_prefs
+      
+      # optional: navigate to last tab
+      if (!is.null(ws$ui_prefs$last_tab)) updateTabItems(inputId = "tabs", selected = ws$ui_prefs$last_tab)
+      
+      showNotification("Workspace loaded.", type = "message")
+    })
+    
+    
   }
 
   shinyApp(
