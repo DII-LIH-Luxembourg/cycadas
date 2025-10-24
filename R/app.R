@@ -1490,6 +1490,7 @@ cycadas <- function() {
           app_version    = as.character(utils::packageVersion("cycadas")),
           saved_at       = Sys.time(),
           median_expr    = if (has_df(df_expr)) df_expr else NULL,
+          cl_freq        = if (has_df(cell_freq)) cell_freq else NULL,
           metadata       = if (has_df(reactVals$md)) reactVals$md else NULL,
           thresholds     = if (has_df(reactVals$th)) reactVals$th else NULL,
           counts_table   = if (has_df(reactVals$counts_table)) reactVals$counts_table else NULL,
