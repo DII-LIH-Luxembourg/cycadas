@@ -1,4 +1,3 @@
-
 ## **Cy**tometry **C**luster **A**nnotation and **D**ifferential **A**bundance **S**uite
 
 ![](./www/logo4_small2.png)
@@ -23,9 +22,11 @@
 
 • differential abundance analysis.
 
+## **Workspace:**
+
 ### Demo dataset
 
-To enable tool exploration, we provide the demo dataset that can be loaded (**Load** tab → **Demo Data**) either as  cluster expression data only (**Load Cluster Expression Demo Data**, allowing the user to create the annotation) or as annotated data (**Load Annotated Demo Data** which include the annotation tree).
+To enable tool exploration, we provide the demo dataset that can be loaded (**Load** tab → **Demo Data**) either as cluster expression data only (**Load Cluster Expression Demo Data**, allowing the user to create the annotation) or as annotated data (**Load Annotated Demo Data** which include the annotation tree).
 
 *This demo dataset is generated from the publicly available mass cytometry data of patients with idiopathic Parkinson’s disease and healthy controls (Capelle, C.M. et al., Nat Commun, 2023) that were clustered with GigaSOM to generate 1600 clusters.*
 
@@ -47,15 +48,15 @@ Additionally, if performing differential abundance analysis is desired, 2 additi
 
 If the analysis is being continued, the threshold values and annotation tree can be exported from CyCadas (see: **Data export** below) and uploaded into the software.
 
-### Data exploration
+### Explore Data:
 
-The **UMAP interactive** tab allows the preview of marker expression in the clusters selected by the user on the UMAP:
-
-![](./www/umap_interactive.png)
-
-In the **UMAP Marker expression** tab, user can investigate the expression level of the selected marker across all the clusters.
+In this Section the User can explore UMAP Marker expression of the selected marker across all the clusters.
 
 ![](./www/umap_marker_expression.png)
+
+Below the User can select a Area of the UMAP (left)and preview the marker expression in a Heatmap (right)
+
+![](./www/umap_interactive.png)
 
 ### Thresholds
 
