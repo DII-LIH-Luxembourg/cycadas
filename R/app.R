@@ -19,7 +19,8 @@ cycadas <- function() {
   lineage_marker <<- character(0)
   df_expr <<- NULL
   cell_freq <<- NULL
-  dr_umap <<- NULL
+  # dr_umap <<- NULL
+  dr_umap <- reactiveVal(NULL)   # starts empty
   init_app <<- TRUE
   # 2 column data.frame containing old_cluster and new_cluster IDs
   mergeTableCatalyst <<- NULL
@@ -74,7 +75,8 @@ cycadas <- function() {
       
       set.seed(1234)
       progress$set(message = "Building the UMAP...", value = 0.3)
-      dr_umap <<- buildUMAP(df_expr[, lineage_marker_raw]) 
+      umap_result <- buildUMAP(df_expr[, lineage_marker_raw]) 
+      dr_umap(umap_result)
 
     }
     
@@ -208,7 +210,8 @@ cycadas <- function() {
       
       set.seed(1234)
       progress$set(message = "Building the UMAP...", value = 0.3)
-      dr_umap <<- buildUMAP(df_expr[, lineage_marker_raw]) 
+      umap_result <- buildUMAP(df_expr[, lineage_marker_raw]) 
+      dr_umap(umap_result)
 
       updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
 
@@ -264,9 +267,10 @@ cycadas <- function() {
         set.seed(1234)
 
         if (nrow(df_expr) > 20) {
-          dr_umap <<- buildUMAP(df_expr[, lineage_marker_raw])   
+          umap_result <- buildUMAP(df_expr[, lineage_marker_raw])   
+          dr_umap(umap_result)
         } else {
-          dr_umap <<- NULL
+          dr_umap(NULL)
         }
         
         updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
@@ -518,7 +522,7 @@ cycadas <- function() {
       #---- UMAP Annotation Tree
       output$umap_tree <-
         renderPlot(
-          cbind(dr_umap,ClusterSelection) %>%
+          cbind(dr_umap(),ClusterSelection) %>%
             dplyr::mutate(ClusterSelection=as.factor(ClusterSelection)) %>%
             dplyr::mutate(ClusterSelection=fct_relevel(ClusterSelection,"other clusters","selected phenotype")) %>%
             arrange(desc(ClusterSelection)) %>%
@@ -582,7 +586,7 @@ cycadas <- function() {
       #---- UMAP Annotation Tree
       output$umap_tree <-
         renderPlot(
-          cbind(dr_umap,ClusterSelection) %>%
+          cbind(dr_umap(),ClusterSelection) %>%
             dplyr::mutate(ClusterSelection=as.factor(ClusterSelection)) %>%
             dplyr::mutate(ClusterSelection=fct_relevel(ClusterSelection,"other clusters","selected phenotype")) %>%
             arrange(desc(ClusterSelection)) %>%
@@ -1016,21 +1020,25 @@ cycadas <- function() {
     })
 
     # UMAP interactive Tab ----------------------------------------------------
-    output$umap2 <- renderPlot(
-      ggplot(dr_umap, aes(x = u1, y = u2)) +
+    output$umap2 <- renderPlot({
+
+      req(dr_umap())
+
+      ggplot(dr_umap(), aes(x = u1, y = u2)) +
         geom_point(size = 1.0) +
         theme_classic() +
         theme(legend.text=element_text(size=8),
               legend.title = element_text(size = 20),
               axis.text = element_text(size = 12),
               axis.title = element_text(size = 20)) +
-        guides(color = guide_legend(override.aes = list(size = 4)))
-    )
+        guides(color = guide_legend(override.aes = list(size = 4)))        
+    })
 
     # Heatmap from UMAP selection ---------------------------------------------
     output$hm2 <- renderPlot({
       
-      my_new_hm <- round(brushedPoints(dr_umap, input$umap2_brush), 2)
+      req(dr_umap())
+      my_new_hm <- round(brushedPoints(dr_umap(), input$umap2_brush), 2)
 
       if (dim(my_new_hm)[1] > 0) {
 
@@ -1041,31 +1049,47 @@ cycadas <- function() {
     })
 
     # Data Table from UMAP selection ------------------------------------------
-    output$umap_data <-
-      DT::renderDT(server = FALSE, {
-        DT::datatable(
-          round(brushedPoints(dr_umap, input$umap2_brush), 2),
-          filter = 'top',
-          extensions = 'Buttons',
-          options = list(
-            scrollY = 600,
-            scrollX = TRUE,
-            dom = '<"float-left"l><"float-right"f>rt<"row"<"col-sm-4"B><"col-sm-4"i><"col-sm-4"p>>',
-            lengthMenu =  list(c(10, 25, 50,-1),
-                               c('10', '25', '50', 'All')),
-            scrollCollapse = TRUE,
-            lengthChange = TRUE,
-            widthChange = TRUE,
-            rownames = TRUE
-          )
+
+    output$umap_data <- DT::renderDT(server = FALSE, {
+      
+      req(dr_umap)
+
+      # 2) No selection (or empty selection)
+      brushed <- brushedPoints(dr_umap(), input$umap2_brush)
+      if (is.null(brushed) || nrow(brushed) == 0) {
+        return(DT::datatable(
+          data.frame(Message = "No points selected"),
+          rownames = FALSE,
+          options = list(dom = 't', paging = FALSE)
+        ))
+      }
+      
+      # 3) Show selected points
+      DT::datatable(
+        round(brushed, 2),
+        filter = 'top',
+        extensions = 'Buttons',
+        options = list(
+          scrollY = 600,
+          scrollX = TRUE,
+          dom = '<"float-left"l><"float-right"f>rt<"row"<"col-sm-4"B><"col-sm-4"i><"col-sm-4"p>>',
+          lengthMenu = list(c(10, 25, 50, -1), c('10', '25', '50', 'All')),
+          scrollCollapse = TRUE,
+          lengthChange = TRUE,
+          widthChange = TRUE,
+          rownames = TRUE
         )
-      })
+      )
+    })
+    
 
     # UMAP Marker Expression Tab ----------------------------------------------
     output$umap3 <-
-      renderPlot(
-        
-        ggplot(dr_umap, aes_string(
+      renderPlot({
+
+      req(dr_umap())
+
+        ggplot(dr_umap(), aes_string(
           x = "u1",
           y = "u2",
           color = paste0(input$markerSelect, "_raw")
@@ -1080,7 +1104,9 @@ cycadas <- function() {
                                 colours = colorRampPalette(rev(brewer.pal(
                                   n = 11, name = "Spectral"
                                 )))(50))
-      )
+      })
+    
+    
 
     # Differential Abundance Tab ----------------------------------------------
     output$md_table <-
@@ -1330,7 +1356,8 @@ cycadas <- function() {
       
       set.seed(1234)
       progress$set(message = "Building the UMAP...", value = 0.3)
-      dr_umap <<- buildUMAP(df_expr[, lineage_marker_raw]) 
+      umap_result <- buildUMAP(df_expr[, lineage_marker_raw]) 
+      dr_umap(umap_result)
       
     }
 
@@ -1357,7 +1384,8 @@ cycadas <- function() {
       
       set.seed(1234)
       progress$set(message = "Building the UMAP...", value = 0.3)
-      dr_umap <<- buildUMAP(df_expr[, lineage_marker_raw]) 
+      umap_results <- buildUMAP(df_expr[, lineage_marker_raw]) 
+      dr_umap(umap_results)
 
       updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
 
@@ -1387,7 +1415,8 @@ cycadas <- function() {
       
       set.seed(1234)
       progress$set(message = "Building the UMAP...", value = 0.3)
-      dr_umap <<- buildUMAP(df_expr[, lineage_marker_raw]) 
+      umap_result <- buildUMAP(df_expr[, lineage_marker_raw]) 
+      dr_umap(umap_result)
 
       updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
 
@@ -1486,7 +1515,7 @@ cycadas <- function() {
           nodes_df       = export_df_nodes,
           edges_df       = if (has_df(reactVals$graph$edges)) reactVals$graph$edges else NULL,
           annotation     = if (!is.null(reactVals$annotationlist)) reactVals$annotationlist else NULL,
-          umap_coords    = if (has_df(dr_umap)) dr_umap else NULL  
+          umap_coords    = if (has_df(dr_umap())) dr_umap() else NULL  
         )
         save_workspace(file, state)
       }
@@ -1512,7 +1541,7 @@ cycadas <- function() {
         reactVals$graph <- initTree()
       } 
       
-      if (!is.null(ws$umap_coords)) dr_umap <<- ws$umap_coords
+      if (!is.null(ws$umap_coords)) dr_umap(ws$umap_coords)
       if (!is.null(ws$annotation)) reactVals$annotationlist <- ws$annotation
       if (!is.null(ws$counts_table)) reactVals$counts_table <- ws$counts_table
       if (!is.null(ws$metadata)) reactVals$md <- ws$metadata

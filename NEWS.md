@@ -1,3 +1,7 @@
+# CyCadas 1.3
+
+-   merging the umap exploration into a single page: "Explore Data"
+
 # CyCadas 1.2
 
 -   adding Workspace Status Box

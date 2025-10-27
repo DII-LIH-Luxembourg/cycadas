@@ -6,10 +6,10 @@ ui <- dashboardPage(
     sidebarMenu(id = "tabs",
                 menuItem("Home", tabName = "home"),
                 menuItem("Workspace", tabName = "settings"),
+                menuItem("Explore Data", tabName = "umap_reactive"),
                 menuItem("Thresholds", tabName = "thresholds"),
                 menuItem("Tree-Annotation", tabName = "treeannotation"),
-                menuItem("UMAP interactive", tabName = "umap_reactive"),
-                menuItem("UMAP Marker expression", tabName = "UMAP_Marker_expression"),
+                # menuItem("UMAP Marker expression", tabName = "UMAP_Marker_expression"),
                 menuItem("Differential Abundance", tabName = "DA_tab"),
                 menuItem("DA interactive Tree", tabName = "DA_tree")
     )
@@ -212,6 +212,16 @@ ui <- dashboardPage(
               ))),
       # umap Reactive  Tab ----------------------------------------------------
       tabItem(tabName = "umap_reactive",
+              fluidRow(column(width = 10,
+                              box(
+                                width = NULL,
+                                plotOutput("umap3")
+                              )),
+                       column(width = 2,
+                              box(
+                                width = NULL,
+                                selectInput("markerSelect", "Select:", choices = NULL)
+                              ))),
               fluidRow(column(width = 6,
                               box(
                                 width = NULL,
@@ -228,17 +238,17 @@ ui <- dashboardPage(
                                 DTOutput("umap_data")
                               )))),
       # Umap Marker expression Tab --------------------------------------------
-      tabItem(tabName = "UMAP_Marker_expression",
-              fluidRow(column(width = 10,
-                              box(
-                                width = NULL,
-                                plotOutput("umap3")
-                              )),
-                       column(width = 2,
-                              box(
-                                width = NULL,
-                                selectInput("markerSelect", "Select:", choices = NULL)
-                              )))),
+      # tabItem(tabName = "UMAP_Marker_expression",
+      #         fluidRow(column(width = 10,
+      #                         box(
+      #                           width = NULL,
+      #                           plotOutput("umap3")
+      #                         )),
+      #                  column(width = 2,
+      #                         box(
+      #                           width = NULL,
+      #                           selectInput("markerSelect", "Select:", choices = NULL)
+      #                         )))),
       # Differential Abundance Tab --------------------------------------------
       tabItem(tabName = "DA_tab",
               fluidRow(column(width = 6, # left column
