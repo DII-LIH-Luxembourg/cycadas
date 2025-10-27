@@ -35,7 +35,7 @@ ui <- dashboardPage(
               fluidPage(
                 fluidRow(
                   column(width = 4,
-                         box(title = "Requried",collapsible = TRUE,solidHeader = TRUE,status = "info",width = NULL,collapsed = F,
+                         box(title = "GigaSOM / FlowSOM import",collapsible = TRUE,solidHeader = TRUE,status = "info",width = NULL,collapsed = F,
                              fileInput("fMarkerExpr","Upload Marker Expressions",
                                        placeholder = "Choose CSV File",
                                        multiple = FALSE,
@@ -44,9 +44,30 @@ ui <- dashboardPage(
                                        placeholder = "Choose CSV File",
                                        multiple = FALSE,
                                        accept = c("text/csv","text/comma-separated-values,text/plain",".csv"))),
-                         box(title = "From Catalyst",collapsible = TRUE,solidHeader = TRUE,status = "info",width = NULL,collapsed = F,
+                         box(title = "Catalyst import",collapsible = TRUE,solidHeader = TRUE,status = "info",width = NULL,collapsed = F,
                              uiOutput("test")
-                         )),
+                         ),
+                         box(
+                           title = "RemoteSOM import", collapsible = TRUE,solidHeader = TRUE,status = "info",width = NULL,collapsed = T,
+                           fileInput(
+                             "remotesom_features","Features",
+                             multiple = FALSE,
+                             accept = c(".json")
+                           ),
+                           fileInput(
+                             "remotesom_medians","Median Expression",
+                             multiple = FALSE,
+                             accept = c(".json")
+                           ),
+                           fileInput(
+                             "remotesom_vars","Vars",
+                             multiple = FALSE,
+                             accept = c(".json")
+                           ),
+                           # tags$hr(),
+                           # uiOutput("remotesom_status")
+                         )
+                         ),
                   column(width = 4,
                          box(title = "Optional - Marker-thresholds",collapsible = TRUE,solidHeader = TRUE,status = "warning",width = NULL,collapsed = T,
                              fileInput("fTH","Choose CSV File",multiple = FALSE,accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
