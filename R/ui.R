@@ -70,11 +70,17 @@ ui <- dashboardPage(
                                                    placeholder = "Choose Workspace File",
                                                    multiple = FALSE,
                                                    accept = c(".rds", ".RDS")))
-                                         ),
+                              ),
                          box(title = "Load Demo Data",collapsible = TRUE,solidHeader = TRUE,status = "success",width = NULL,collapsed = F,
                              splitLayout(cellWidths = c("50%", "50%"),
                                          actionButton("btnLoadDemoData", "Unannotated"),
-                                         actionButton("btnLoadAnnoData", "Annotated")))
+                                         actionButton("btnLoadAnnoData", "Annotated"))
+                             ),
+                         box(
+                           title = "Workspace status",
+                           width = NULL, solidHeader = TRUE, status = "primary",
+                           uiOutput("ws_status")
+                         )
                   )
                 )
               )
