@@ -18,6 +18,7 @@ cycadas <- function() {
   # Global static values
   lineage_marker <<- character(0)
   df_expr <<- NULL
+  cell_freq <<- NULL
   dr_umap <<- NULL
   init_app <<- TRUE
   # 2 column data.frame containing old_cluster and new_cluster IDs
@@ -46,7 +47,7 @@ cycadas <- function() {
     })
     
 
-    # Load Expression Data and UMAP -------------------------------------------------
+    # Load Expression Data and UMAP -------------------------------------------
     loadExprData <- function(path_expr, path_freq) {
       
       # Create a Progress object
@@ -1436,7 +1437,8 @@ cycadas <- function() {
       reactVals$hm <- df_expr[, lineage_marker]
     })
     
-    # SAVE
+    # Save Workspace ----------------------------------------------------------
+    
     output$btnSaveWorkspace <- downloadHandler(
       filename = function() {
         paste0("cycadas-workspace_", format(Sys.time(), "%Y%m%d-%H%M%S"), ".rds")
@@ -1490,7 +1492,7 @@ cycadas <- function() {
       }
     )
     
-    # LOAD
+    # Load Workspace ----------------------------------------------------------
     observeEvent(input$btnLoadWorkspace, {
       
       # browser()
@@ -1548,6 +1550,62 @@ cycadas <- function() {
 
       showNotification("Workspace loaded.", type = "message")
     })
+    
+    
+    # Workspace status --------------------------------------------------------
+    # 
+    # -------------------------------------------------------------------------
+    has_df <- function(x) is.data.frame(x) && nrow(x) > 0 && ncol(x) > 0
+    has_val <- function(x) !is.null(x) && length(x) > 0
+    
+    status_df <- reactive({
+      data.frame(
+        Item    = c("Median expression",
+                    "Metadata",
+                    "Thresholds",
+                    "Cell Frequencies",
+                    "Cluster Counts table",
+                    "CATALYST object"),
+        Present = c(has_df(df_expr),
+                    has_df(reactVals$md),
+                    has_df(reactVals$th),
+                    has_val(cell_freq),
+                    has_df(reactVals$counts_table),
+                    has_val(reactVals$sce)),
+        Details = c(
+          if (has_df(df_expr))      sprintf("%d×%d", nrow(df_expr), ncol(df_expr)) else "-",
+          if (has_df(reactVals$md)) sprintf("%d×%d", nrow(reactVals$md), ncol(reactVals$md)) else "-",
+          if (has_df(reactVals$th)) sprintf("%d×%d", nrow(reactVals$th), ncol(reactVals$th)) else "-",
+          if (has_df(cell_freq)) sprintf("%d×%d", nrow(cell_freq), ncol(cell_freq)) else "-",
+          if (has_df(reactVals$counts_table)) sprintf("%d×%d", nrow(reactVals$counts_table), ncol(reactVals$counts_table)) else "-",
+          if (has_val(reactVals$sce)) class(reactVals$sce)[1] else "-"
+        ),
+        stringsAsFactors = FALSE
+      )
+    })
+    
+    output$ws_status <- renderUI({
+      df <- status_df()
+      # pretty HTML list with colored badges
+      items <- lapply(seq_len(nrow(df)), function(i) {
+        ok <- isTRUE(df$Present[i])
+        badge_cl <- if (ok) "bg-green" else "bg-red"
+        icon_cl  <- if (ok) "check-circle" else "times-circle"
+        tags$li(
+          style = "margin: 6px 0;",
+          strong(df$Item[i]), " — ",
+          tags$span(class = paste("badge", badge_cl), if (ok) "Present" else "Missing"),
+          " ",
+          tags$i(class = paste("fa", icon_cl), style = "margin-left:6px;"),
+          tags$span(style="margin-left:10px;color:#666;", df$Details[i])
+        )
+      })
+      tags$ul(class = "list-unstyled", items)
+    })
+    
+    
+    
+    
   }
 
   shinyApp(
