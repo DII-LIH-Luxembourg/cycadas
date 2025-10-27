@@ -438,12 +438,7 @@ load_workspace <- function(path) {
   
   # minimal validation
   stopifnot(is.list(ws), !is.null(ws$schema_version))
-  required <- c("median_expr", "annotations", "thresholds")
-  missing  <- setdiff(required, names(ws))
-  if (length(missing)) stop("Workspace missing: ", paste(missing, collapse = ", "))
-  
-  # optional migration hooks by schema_version
-  # if (ws$schema_version == "0.9") ws <- migrate_0_9_to_1_0(ws)
+
   
   ws
 }

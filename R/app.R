@@ -1436,20 +1436,6 @@ cycadas <- function() {
       reactVals$hm <- df_expr[, lineage_marker]
     })
     
-    # reactVals <- reactiveValues(th = NULL,
-    #                             myTH = NULL, # user selected threshold
-    #                             md = NULL,
-    #                             counts_table = NULL,
-    #                             DA_result_table = NULL,
-    #                             DA_interactive_table = NULL,
-    #                             myNode = "", # selected node for interactive DA
-    #                             graph = NULL,
-    #                             hm = NULL,
-    #                             annotationlist = NULL,
-    #                             sce = NULL,
-    #                             metaClustLevel = NULL
-    # )
-    
     # SAVE
     output$btnSaveWorkspace <- downloadHandler(
       filename = function() {
@@ -1484,18 +1470,21 @@ cycadas <- function() {
           export_df_nodes <- NULL
         }
 
-        
         state <- list(
           schema_version = "1.0",
           app_version    = as.character(utils::packageVersion("cycadas")),
           saved_at       = Sys.time(),
           median_expr    = if (has_df(df_expr)) df_expr else NULL,
+          lineage_marker = if (!is.null(lineage_marker)) lineage_marker else NULL,
+          lineage_marker_raw = if (!is.null(lineage_marker_raw)) lineage_marker_raw else NULL,
           cl_freq        = if (has_df(cell_freq)) cell_freq else NULL,
           metadata       = if (has_df(reactVals$md)) reactVals$md else NULL,
           thresholds     = if (has_df(reactVals$th)) reactVals$th else NULL,
           counts_table   = if (has_df(reactVals$counts_table)) reactVals$counts_table else NULL,
           nodes_df       = export_df_nodes,
-          edges_df       = if (has_df(reactVals$graph$edges)) reactVals$graph$edges else NULL
+          edges_df       = if (has_df(reactVals$graph$edges)) reactVals$graph$edges else NULL,
+          annotation     = if (!is.null(reactVals$annotationlist)) reactVals$annotationlist else NULL,
+          umap_coords    = if (has_df(dr_umap)) dr_umap else NULL  
         )
         save_workspace(file, state)
       }
@@ -1503,25 +1492,60 @@ cycadas <- function() {
     
     # LOAD
     observeEvent(input$btnLoadWorkspace, {
-      req(input$load_ws$datapath)
-      ws <- load_workspace(input$load_ws$datapath)
+      
+      browser()
+      
+      req(input$btnLoadWorkspace$datapath)
+      ws <- load_workspace(input$btnLoadWorkspace$datapath)
       
       # restore into your app's reactives
-      rv$median_expr <- ws$median_expr
-      rv$metadata    <- ws$metadata
-      rv$thresholds  <- ws$thresholds
-      rv$annotations <- ws$annotations
-      rv$graph       <- cyTree::import_tree_from_list(ws$tree)
-      rv$input_files <- ws$input_files
-      rv$ui_prefs    <- ws$ui_prefs
+      if (!is.null(ws$median_expr) && !is.null(ws$cl_freq)) {
+        df_expr <<- ws$median_expr
+        cell_freq <<- ws$cl_freq
+        
+        # Assign column names to variables
+        lineage_marker <<- ws$lineage_marker
+        lineage_marker_raw <<- ws$lineage_marker_raw
+        
+        reactVals$graph <- initTree()
+      } 
+      # if (!is.null(ws$cl_freq)) 
+      if (!is.null(ws$umap_coords)) dr_umap <<- ws$umap_coords
+      if (!is.null(ws$annotation)) reactVals$annotationlist <- ws$annotation
+      # reactVals$md    <- ws$metadata
+      if (!is.null(ws$thresholds)) {
+        ws$thresholds$X <- NULL
+        reactVals$th  <- ws$thresholds
+      }
       
-      # optional: navigate to last tab
-      if (!is.null(ws$ui_prefs$last_tab)) updateTabItems(inputId = "tabs", selected = ws$ui_prefs$last_tab)
+      updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
       
+      updateCheckboxGroupButtons(
+        session,
+        inputId = "treePickerPos",
+        choices = lineage_marker,
+        selected = NULL
+      )
+      updateCheckboxGroupButtons(
+        session,
+        inputId = "treePickerNeg",
+        choices = lineage_marker,
+        selected = NULL
+      )
+      
+      # reactVals$counts_table <- ws$counts_table
+      # 
+      if (!is.null(ws$nodes_df) && !is.null(ws$edges_df)) {
+        reactVals$graph <- getGraphFromLoad(ws$nodes_df, ws$edges_df)
+        # df_expr$cell <<- rebuiltTree(reactVals$graph, df_expr, reactVals$th)
+        # browser()
+        # reactVals$annotationlist <- df_expr$cell
+      } else {
+        # reactVals$annotationlist <- c("Unassigned")  
+      }
+
       showNotification("Workspace loaded.", type = "message")
     })
-    
-    
   }
 
   shinyApp(
