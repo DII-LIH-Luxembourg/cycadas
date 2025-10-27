@@ -1493,7 +1493,7 @@ cycadas <- function() {
     # LOAD
     observeEvent(input$btnLoadWorkspace, {
       
-      browser()
+      # browser()
       
       req(input$btnLoadWorkspace$datapath)
       ws <- load_workspace(input$btnLoadWorkspace$datapath)
@@ -1509,10 +1509,12 @@ cycadas <- function() {
         
         reactVals$graph <- initTree()
       } 
-      # if (!is.null(ws$cl_freq)) 
+      
       if (!is.null(ws$umap_coords)) dr_umap <<- ws$umap_coords
       if (!is.null(ws$annotation)) reactVals$annotationlist <- ws$annotation
-      # reactVals$md    <- ws$metadata
+      if (!is.null(ws$counts_table)) reactVals$counts_table <- ws$counts_table
+      if (!is.null(ws$metadata)) reactVals$md <- ws$metadata
+      
       if (!is.null(ws$thresholds)) {
         ws$thresholds$X <- NULL
         reactVals$th  <- ws$thresholds
