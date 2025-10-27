@@ -5,7 +5,7 @@ ui <- dashboardPage(
   sidebar <- dashboardSidebar(
     sidebarMenu(id = "tabs",
                 menuItem("Home", tabName = "home"),
-                menuItem("Load", tabName = "settings"),
+                menuItem("Workspace", tabName = "settings"),
                 menuItem("Thresholds", tabName = "thresholds"),
                 menuItem("Tree-Annotation", tabName = "treeannotation"),
                 menuItem("UMAP interactive", tabName = "umap_reactive"),
@@ -45,10 +45,6 @@ ui <- dashboardPage(
                                        multiple = FALSE,
                                        accept = c("text/csv","text/comma-separated-values,text/plain",".csv"))),
                          box(title = "From Catalyst",collapsible = TRUE,solidHeader = TRUE,status = "info",width = NULL,collapsed = F,
-                             # fileInput("sce","Upload RDS",
-                             #           placeholder = "Choose RDS File",
-                             #           multiple = FALSE,
-                             #           accept = c(".rds"))
                              uiOutput("test")
                          )),
                   column(width = 4,
@@ -60,7 +56,6 @@ ui <- dashboardPage(
                          box(title = "Optional - Annotation Tree",collapsible = TRUE,solidHeader = TRUE,status = "warning",width = NULL,collapsed = T,
                              fileInput("fNodes","Choose Nodes File",multiple = FALSE,accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
                              fileInput("fEdges","Choose Edges File",multiple = FALSE,accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
-                             # fileInput("fAnno","Choose Annotation File",multiple = FALSE,accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
                              actionButton("btnImportTree", "Import")),
                          box(title = "Optional - Metadata",collapsible = TRUE,solidHeader = TRUE,status = "warning",width = NULL,collapsed = T,
                              fileInput("metadata","Choose CSV File",multiple = F,accept = c("text/csv","text/comma-separated-values,text/plain",".csv"))),
@@ -68,6 +63,14 @@ ui <- dashboardPage(
                              fileInput("counts_table","Choose CSV File",multiple = F,accept = c("text/csv","text/comma-separated-values,text/plain",".csv")))
                   ),
                   column(width = 4,
+                         box(title = "Workspace",collapsible = TRUE,solidHeader = TRUE,status = "success",width = NULL,collapsed = F,
+                             splitLayout(cellWidths = c("50%", "50%"),
+                                         downloadButton("btnSaveWorkspace", "Save Workspace"),
+                                         fileInput("btnLoadWorkspace",label = NULL,
+                                                   placeholder = "Choose Workspace File",
+                                                   multiple = FALSE,
+                                                   accept = c(".rds", ".RDS")))
+                                         ),
                          box(title = "Load Demo Data",collapsible = TRUE,solidHeader = TRUE,status = "success",width = NULL,collapsed = F,
                              splitLayout(cellWidths = c("50%", "50%"),
                                          actionButton("btnLoadDemoData", "Unannotated"),
@@ -85,7 +88,6 @@ ui <- dashboardPage(
                   width = NULL,
                   title = "Create Node", 
                   textOutput("progressBox"),
-                  # textOutput("totalSelection"),
                   textOutput("progressBox2"),
                   textInput("newNode", "Set Name..."),
                   pickerInput(
@@ -143,91 +145,29 @@ ui <- dashboardPage(
 
                 box(
                   width = NULL,
-                  # switchInput(
-                  #   inputId = "treeSwitch",
-                  #   label = "Change Layout",
-                  #   value = FALSE,
-                  #   onLabel = "Hierarchical",
-                  #   offLabel = "Loose"
-                  # ),
                   title = "Create New Node",
                   actionButton("createNodeBtn", "Create Node")
               ),
-              # box(
-              #   width = NULL,
-              #   title = "Update Node",
-              #   actionButton("updateNodeBtn", "Update Node"),
-              #
-              # ),
               box(
                 width = NULL,
                 title = "Delete Node",
                 actionButton("deleteNodeBtn", "Delete Node")
               ),
-              # box(
-              #   width = NULL,
-              #   title = "Update Node",
-              #   pickerInput(
-              #     inputId = "updateNodePicker",
-              #     label = "Select Node:",
-              #     choices = NULL,
-              #     options = list(
-              #       `actions-box` = TRUE,
-              #       size = 10,
-              #       `selected-text-format` = "count > 3"
-              #     ),
-              #     multiple = F
-              #   ),
-              #   textInput("renameNode", "Rename..."),
-              #   # select markers
-              #   pickerInput(
-              #     inputId = "updatePickerPos",
-              #     label = "Update Positive Markers",
-              #     choices = NULL,
-              #     options = list(
-              #       `actions-box` = TRUE,
-              #       size = 10,
-              #       `selected-text-format` = "count > 3"
-              #     ),
-              #     multiple = TRUE
-              #   ),
-              #   pickerInput(
-              #     inputId = "updatePickerNeg",
-              #     label = "Update Negative Markers",
-              #     choices = NULL,
-              #     options = list(
-              #       `actions-box` = TRUE,
-              #       size = 10,
-              #       `selected-text-format` = "count > 3"
-              #     ),
-              #     multiple = TRUE
-              #   ),
-              #   actionButton("updateNodeBtn", "Update Node"),
-              #   actionButton("deleteNodeBtn", "Delete Node")
-              # ),
               box(
                 width = NULL,
                 title = "Export Annotation",
-                # actionButton("exportAnnotationBtn", "Export Annotation")
                 downloadButton("exportAnnotationBtn", "Export Annotation")
               ),
               box(
                 width = NULL,
                 title = "Merge CATALYST Annotation",
-                # actionButton("exportAnnotationBtn", "Export Annotation")
                 actionButton("mergeCatalystBtn", "Merge Annotation")
               ),
               box(
                 width = NULL,
                 title = "Export CATALYST Annotation",
-                # actionButton("exportAnnotationBtn", "Export Annotation")
                 downloadButton("exportCatalystBtn", "Export Annotation")
               )
-              # box(
-              #   width = NULL,
-              #   title = "Export Tree as Image",
-              #   actionButton("exportTreeGraphics", "Export Tree Image")
-              # )
               ), # end column
               column(
                 width = 8,
@@ -245,7 +185,6 @@ ui <- dashboardPage(
                     plotOutput("umap_tree"))
               ) # end column
               ) # end row
-
               ),
       # Thresholds Tab --------------------------------------------------------
       tabItem(tabName = "thresholds",
@@ -262,35 +201,6 @@ ui <- dashboardPage(
               ),
               column(
                 width = 6,
-                # box(
-                #   width = NULL,
-                #   id = "transformationBox",
-                #   title = "Data transformation",
-                #   radioButtons(
-                #     "radio",
-                #     label = NULL,
-                #     choices = list("0 to 1" = "1"),
-                #     selected = "1"
-                #   )
-                # ),
-                # box(width = NULL,
-                #     selectInput(
-                #       "th_method",
-                #       "Threshold Method:",
-                #       c("K-means" = "km",
-                #         "GMM midpoint" = "gmm_mid"),
-                #       # c("K-means" = "km",
-                #       #   "GMM mid" = "gmm_mid",
-                #       #   "GMM-high" = "gmm_high",
-                #       #   "GMM-low" = "gmm_low",
-                #       #   "Mclust" = "mclust",
-                #       #   "KDE" = "kde"),
-                #       selected = "km",
-                #       multiple = FALSE,
-                #       selectize = TRUE,
-                #       width = NULL,
-                #       size = NULL
-                #     )),
                 box(width = NULL,
                     DTOutput('table'))
               ))),
@@ -343,7 +253,6 @@ ui <- dashboardPage(
                                     )  
                                   ),
                               ),
-
                               box(
                                 width = NULL,
                                 fluidRow(column(width = 6,
@@ -360,7 +269,6 @@ ui <- dashboardPage(
                                                    actionButton("doDA", "Calculate")
                                                  )
                                          )
-                                
                                 )
                               ),
                               box(
@@ -380,7 +288,6 @@ ui <- dashboardPage(
                                                  downloadButton("exportProp", "Download")
                                                )
                                         ),
-                                
                                 )  
                               ),
                               
