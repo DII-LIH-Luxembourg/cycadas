@@ -66,7 +66,7 @@ ui <- dashboardPage(
                          box(title = "Workspace",collapsible = TRUE,solidHeader = TRUE,status = "success",width = NULL,collapsed = F,
                              splitLayout(cellWidths = c("50%", "50%"),
                                          downloadButton("btnSaveWorkspace", "Save Workspace"),
-                                         fileInput("btnLoadWorkspace","Load Workspace",
+                                         fileInput("btnLoadWorkspace",label = NULL,
                                                    placeholder = "Choose Workspace File",
                                                    multiple = FALSE,
                                                    accept = c(".rds", ".RDS")))
