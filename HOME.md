@@ -34,7 +34,7 @@ The required files depend on the **source of input data**.
 
     -   **Median marker expression table** (cluster × marker)
 
-    -    **Cluster frequency table** (cluster counts per sample or condition)
+    -   **Cluster frequency table** (cluster counts per sample or condition)
 
     **Optional** files (highlighted as *orange boxes* in the UI):
 
@@ -62,9 +62,9 @@ During the annotation process, all data and user-defined settings can be **saved
 
 This includes:
 
--    Thresholds
+-   Thresholds
 
--    Annotation tree
+-   Annotation tree
 
 -   Metadata
 

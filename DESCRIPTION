@@ -39,5 +39,6 @@ Imports:
     cluster,
     mclust,
     ggsignif,
-    markdown
+    markdown,
+    jsonlite
 LazyData: true

@@ -144,6 +144,8 @@ updateTH <- function(df, th, th_mode) {
 
 # Scale the expression values between 0 and 1 ---------------------------------
 normalize01 <- function(hm) {
+  
+  # browser()
 
   eDR <- as.matrix(hm)
   rng <- colQuantiles(eDR, probs = c(0.01, 0.99))

@@ -48,9 +48,14 @@ ui <- dashboardPage(
                              uiOutput("test")
                          ),
                          box(
-                           title = "RemoteSOM import", collapsible = TRUE,solidHeader = TRUE,status = "info",width = NULL,collapsed = T,
+                           title = "RemoteSOM import", collapsible = TRUE,solidHeader = TRUE,status = "info",width = NULL,collapsed = F,
                            fileInput(
                              "remotesom_features","Features",
+                             multiple = FALSE,
+                             accept = c(".json")
+                           ),
+                           fileInput(
+                             "remotesom_counts","Cluster Counts",
                              multiple = FALSE,
                              accept = c(".json")
                            ),
@@ -59,12 +64,12 @@ ui <- dashboardPage(
                              multiple = FALSE,
                              accept = c(".json")
                            ),
-                           fileInput(
-                             "remotesom_vars","Vars",
-                             multiple = FALSE,
-                             accept = c(".json")
-                           ),
-                           # tags$hr(),
+                           # fileInput(
+                           #   "remotesom_vars","Vars",
+                           #   multiple = FALSE,
+                           #   accept = c(".json")
+                           # ),
+                           tags$hr(),
                            # uiOutput("remotesom_status")
                          )
                          ),

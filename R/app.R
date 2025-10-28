@@ -21,6 +21,7 @@ cycadas <- function() {
   cell_freq <<- NULL
   # dr_umap <<- NULL
   dr_umap <- reactiveVal(NULL)   # starts empty
+  rFreqs <- reactiveVal(NULL)
   init_app <<- TRUE
   # 2 column data.frame containing old_cluster and new_cluster IDs
   mergeTableCatalyst <<- NULL
@@ -1623,7 +1624,7 @@ cycadas <- function() {
         tags$li(
           style = "margin: 6px 0;",
           strong(df$Item[i]), " — ",
-          tags$span(class = paste("badge", badge_cl), if (ok) "Present" else "Missing"),
+          tags$span(class = paste("badge", badge_cl), if (ok) "Present" else "Empty"),
           " ",
           tags$i(class = paste("fa", icon_cl), style = "margin-left:6px;"),
           tags$span(style="margin-left:10px;color:#666;", df$Details[i])
@@ -1632,9 +1633,83 @@ cycadas <- function() {
       tags$ul(class = "list-unstyled", items)
     })
     
+    ## feature-names.json
+    observeEvent(input$remotesom_features, {
+      
+      # browser()
+      
+      req(input$remotesom_features$datapath)
+      
+      feat <- tryCatch(read_json(input$remotesom_features$datapath, 
+                                 simplifyVector = TRUE), 
+                       error = function(e) NULL)
+      
+      if (length(feat)) {
+        lineage_marker <<- feat
+        lineage_marker_raw <<- paste0(lineage_marker, "_raw")
+
+      } else {
+        showNotification("feature-names.json could not be parsed.", type = "error")
+      }
+    })
     
+
+    observeEvent(input$remotesom_medians, {
+      
+      # browser()
+      
+      req(input$remotesom_medians$datapath)
+      
+      # rMat: remotesom matrix
+      rMat <- tryCatch(read_json(input$remotesom_medians$datapath, 
+                                 simplifyVector = TRUE), 
+                       error = function(e) NULL)
+      
+      rMat <- as.data.frame(rMat)
+      colnames(rMat) <- lineage_marker
+      df_expr <<- createExpressionDF(as.data.frame(rMat), cell_freq)
     
+      x <- 1
+      # createExpressionDF <- function(df_expr, cell_freq) 
+      reactVals$graph <- initTree()
+      
+      # Create a Progress object
+      progress <- shiny::Progress$new()
+      # Make sure it closes when we exit this reactive, even if there's an error
+      on.exit(progress$close())
+      
+      progress$set(message = "loading Data Cluster Expression Demo Data...", value = 0.2)
+      
+      reactVals$graph <- initTree()
+      
+      set.seed(1234)
+      progress$set(message = "Building the UMAP...", value = 0.3)
+      umap_results <- buildUMAP(df_expr[, lineage_marker_raw]) 
+      dr_umap(umap_results)
+      
+      updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
+      
+      initExprData()
+      
+    })
     
+    observeEvent(input$remotesom_counts, {
+      
+      # browser()
+      
+      req(input$remotesom_counts$datapath)
+      
+      rCounts <- tryCatch(read_json(input$remotesom_counts$datapath, 
+                                  simplifyVector = TRUE), 
+                        error = function(e) NULL)
+      
+      tmp <- as.data.frame(rCounts / sum(rCounts))
+      tmp$cluster <- 1:nrow(tmp)
+      colnames(tmp) <- c("clustering_prop", "cluster")
+      # rFreqs(tmp)
+      cell_freq <<- tmp
+      
+    })
   }
 
   shinyApp(
