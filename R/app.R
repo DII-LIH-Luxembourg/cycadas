@@ -1132,51 +1132,177 @@ cycadas <- function() {
     
     # Do the differential abundance ------------------------------------------
     observeEvent(input$doDA, {
-      
       req(reactVals$counts_table, reactVals$md)
-
-      countsTable <- reactVals$counts_table
-      # aggregate the clusters by name:
-      countsTable['cell'] <- df_expr$cell
-      # merge and aggregate by cell
-      countsTable <- aggregate(. ~ cell, countsTable, sum)
-
-      rownames(countsTable) <- countsTable$cell
-      countsTable$cell <- NULL
-
-      props_table <- t(t(countsTable) / colSums(countsTable)) * 100
-
-      mm <- match(colnames(props_table), md$sample_id)
-      tmp_cond <- md$condition[mm]
-
-      DA_df <- data.frame()
+      md <- reactVals$md
       
-      for (i in 1:nrow(props_table)) {
-        foo <- pairwise.wilcox.test(as.numeric(props_table[i,]), tmp_cond, p.adjust.method=input$correction_method)
-
-        df <- subset(melt(foo$p.value), value!=0)
-        df$cell <- rownames(countsTable)[i]
-        DA_df <- rbind(DA_df, as.data.frame(df))
+      # --- 0) Sanity checks on metadata ----
+      if (!all(c("sample_id", "condition") %in% colnames(md))) {
+        showNotification("Metadata must contain 'sample_id' and 'condition'.", type = "error")
+        return()
       }
-
-      # change the name of nodes:
-      # if node has children add "_remaining"
-      my_list <- lapply(DA_df$cell, function(x) {
-            # get the id
-            nid <- reactVals$graph$nodes$id[reactVals$graph$nodes$label == x]
-            # check if the id has children
-            if(nid %in% reactVals$graph$edges$to) {
-              return (x <- paste0(x, "_remaining"))
+      md$sample_id <- as.character(md$sample_id)
+      
+      # --- 1) Build counts table aggregated by cell label ----
+      countsTable <- tryCatch({
+        ct <- reactVals$counts_table
+        # needs a 'cell' vector aligned with rows of df_expr
+        if (is.null(df_expr) || is.null(df_expr$cell)) {
+          showNotification("Missing 'cell' labels in expression table.", type = "error")
+          return(NULL)
+        }
+        if (nrow(ct) != nrow(df_expr)) {
+          # If your counts table is per-cluster (rows=clusters), this should match.
+          # If not, adapt aggregation logic here.
+          showNotification("Row mismatch between counts table and df_expr. Check inputs.", type = "error")
+          return(NULL)
+        }
+        ct$cell <- df_expr$cell
+        # aggregate by cell
+        agg <- aggregate(. ~ cell, ct, sum, na.rm = TRUE)
+        rownames(agg) <- agg$cell
+        agg$cell <- NULL
+        agg
+      }, error = function(e) {
+        showNotification(paste("Failed to prepare counts table:", e$message), type = "error")
+        NULL
+      })
+      req(!is.null(countsTable))
+      
+      # --- 2) Convert to proportions (%) with zero-sum guard ----
+      cs <- colSums(countsTable, na.rm = TRUE)
+      if (any(cs == 0)) {
+        zero_cols <- names(cs)[cs == 0]
+        showNotification(sprintf("Some samples have zero total counts and will be dropped: %s",
+                                 paste(zero_cols, collapse = ", ")), type = "warning")
+      }
+      keep_cols <- names(cs)[cs > 0]
+      if (length(keep_cols) == 0) {
+        showNotification("All samples have zero counts; cannot compute proportions.", type = "error")
+        return()
+      }
+      countsTable <- countsTable[, keep_cols, drop = FALSE]
+      props_table <- sweep(countsTable, 2, colSums(countsTable, na.rm = TRUE), "/") * 100
+      
+      # --- 3) Match props_table columns to metadata sample_id safely ----
+      mm <- match(colnames(props_table), md$sample_id)
+      if (anyNA(mm)) {
+        missing <- colnames(props_table)[is.na(mm)]
+        showNotification(sprintf("Samples missing in metadata and dropped: %s",
+                                 paste(missing, collapse = ", ")), type = "warning")
+      }
+      keep <- which(!is.na(mm))
+      if (length(keep) == 0) {
+        showNotification("No overlap between props_table columns and metadata sample_id.", type = "error")
+        return()
+      }
+      props_table <- props_table[, keep, drop = FALSE]
+      tmp_cond <- droplevels(as.factor(md$condition[mm[keep]]))
+      
+      # --- 4) Validate groups for testing ----
+      if (nlevels(tmp_cond) < 2) {
+        showNotification("Need at least two conditions to run DA tests.", type = "error")
+        return()
+      }
+      
+      # --- 5) Run pairwise Wilcoxon per row (cluster/cell) ----
+      DA_df <- data.frame(stringsAsFactors = FALSE)
+      for (i in seq_len(nrow(props_table))) {
+        y <- as.numeric(props_table[i, ])
+        # Skip if all NA or constant
+        if (all(!is.finite(y)) || length(unique(y[is.finite(y)])) < 2) next
+        
+        # Ensure each group has at least one finite value
+        ok_groups <- tapply(y, tmp_cond, function(v) sum(is.finite(v)) > 0)
+        if (any(!ok_groups)) next
+        
+        pw <- tryCatch(
+          pairwise.wilcox.test(y, tmp_cond, p.adjust.method = input$correction_method),
+          error = function(e) NULL
+        )
+        if (is.null(pw) || is.null(pw$p.value)) next
+        
+        # Melt p-value matrix (upper triangle); keep non-NA
+        m <- reshape2::melt(pw$p.value, varnames = c("Cond1", "Cond2"), value.name = "p.value")
+        m <- subset(m, is.finite(p.value))
+        
+        if (nrow(m) == 0) next
+        
+        m$Cell <- rownames(countsTable)[i]
+        
+        # --- 6) Optional: rename nodes with "_remaining" if node has children ----
+        nm <- m$Cell
+        if (!is.null(reactVals$graph) && !is.null(reactVals$graph$nodes) && !is.null(reactVals$graph$edges)) {
+          nodes <- reactVals$graph$nodes
+          edges <- reactVals$graph$edges
+          if (all(c("id", "label") %in% names(nodes)) && all(c("from", "to") %in% names(edges))) {
+            has_children <- function(label) {
+              nid <- nodes$id[nodes$label == label]
+              length(nid) > 0 && any(edges$to %in% nid)
             }
-            else {
-              return(x)
-            }
-          })
-
-      DA_df$list <- unlist(my_list)
+            nm <- vapply(m$Cell, function(x) if (has_children(x)) paste0(x, "_remaining") else x, character(1))
+          }
+        }
+        m$Naming <- nm
+        
+        DA_df <- rbind(DA_df, m)
+      }
+      
+      if (nrow(DA_df) == 0) {
+        showNotification("No significant pairwise results computed (check inputs/conditions).", type = "warning")
+      }
+      
+      # Standardize column order/names
       colnames(DA_df) <- c("Cond1", "Cond2", "p-value", "Cell", "Naming")
       reactVals$DA_result_table <- DA_df
+      showNotification("Differential abundance testing completed.", type = "message")
     })
+    
+    # observeEvent(input$doDA, {
+    #   
+    #   req(reactVals$counts_table, reactVals$md)
+    # 
+    #   countsTable <- reactVals$counts_table
+    #   # aggregate the clusters by name:
+    #   countsTable['cell'] <- df_expr$cell
+    #   # merge and aggregate by cell
+    #   countsTable <- aggregate(. ~ cell, countsTable, sum)
+    # 
+    #   rownames(countsTable) <- countsTable$cell
+    #   countsTable$cell <- NULL
+    # 
+    #   props_table <- t(t(countsTable) / colSums(countsTable)) * 100
+    # 
+    #   mm <- match(colnames(props_table), md$sample_id)
+    #   tmp_cond <- md$condition[mm]
+    # 
+    #   DA_df <- data.frame()
+    #   # browser()
+    #   for (i in 1:nrow(props_table)) {
+    #     foo <- pairwise.wilcox.test(as.numeric(props_table[i,]), tmp_cond, p.adjust.method=input$correction_method)
+    # 
+    #     df <- subset(melt(foo$p.value), value!=0)
+    #     df$cell <- rownames(countsTable)[i]
+    #     DA_df <- rbind(DA_df, as.data.frame(df))
+    #   }
+    # 
+    #   # change the name of nodes:
+    #   # if node has children add "_remaining"
+    #   my_list <- lapply(DA_df$cell, function(x) {
+    #         # get the id
+    #         nid <- reactVals$graph$nodes$id[reactVals$graph$nodes$label == x]
+    #         # check if the id has children
+    #         if(nid %in% reactVals$graph$edges$to) {
+    #           return (x <- paste0(x, "_remaining"))
+    #         }
+    #         else {
+    #           return(x)
+    #         }
+    #       })
+    # 
+    #   DA_df$list <- unlist(my_list)
+    #   colnames(DA_df) <- c("Cond1", "Cond2", "p-value", "Cell", "Naming")
+    #   reactVals$DA_result_table <- DA_df
+    # })
 
     # Render interactive Tree -------------------------------------------------
     output$interactiveTree <- renderVisNetwork({
@@ -1391,6 +1517,55 @@ cycadas <- function() {
       updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
 
       initExprData()
+    })
+    
+    blank_plot <- function(msg = "Workspace cleared") {
+      function() {
+        plot.new()
+        title(msg, line = -1)
+        box(col = "#ddd")
+      }
+    }
+    
+
+    observeEvent(input$btnClearWorkspace, {
+
+      # Global static values
+      lineage_marker <<- character(0)
+      lineage_marker_raw <<- NULL
+      df_expr <<- NULL
+      cell_freq <<- NULL
+      # dr_umap <<- NULL
+      dr_umap <- reactiveVal(NULL)   # starts empty
+      rFreqs <- reactiveVal(NULL)
+      init_app <<- TRUE
+      # 2 column data.frame containing old_cluster and new_cluster IDs
+      mergeTableCatalyst <<- NULL
+      
+      
+      reactVals$th <- NULL
+      reactVals$myTH <- NULL
+      reactVals$md <- NULL
+      reactVals$counts_table <- NULL
+      reactVals$DA_result_table <- NULL
+      reactVals$DA_interactive_table <- NULL
+      reactVals$graph <- NULL
+      reactVals$hm <- NULL
+      reactVals$annotationlist <- NULL
+      reactVals$sce <- NULL
+      reactVals$metaClustLevel <- NULL
+      
+      
+      # actively blank visible outputs (optional but nice)
+      output$umap_tree <- renderPlot(blank_plot()())
+      output$boxplot <- renderPlot(blank_plot()())
+      # output$marker   <- renderPlot(blank_plot("No marker plot")())
+      # output$da_plot  <- renderPlot(blank_plot("No DA plot")())
+      # output$umaply   <- plotly::renderPlotly(NULL)      # plotly accepts NULL
+      # output$tbl      <- DT::renderDT(data.frame())      # empty table
+      # output$status   <- renderUI(NULL)                  # any UI chunks
+      
+      showNotification("Workspace cleared.", type = "message")
     })
     
     # Load Annotated Expr Demo Data -----------------------------------------
