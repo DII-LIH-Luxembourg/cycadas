@@ -80,17 +80,6 @@ cycadas <- function() {
       
     }
     
-
-    # status_item <- function(ok, label) {
-    #   col  <- if (isTRUE(ok)) "#28a745" else "#dc3545"
-    #   icon <- if (isTRUE(ok)) "✔" else "✖"
-    #   tags$div(
-    #     style = "margin:4px 0;",
-    #     tags$span(style = sprintf("display:inline-block;width:10px;height:10px;border-radius:50%%;background:%s;margin-right:6px;", col)),
-    #     tags$span(icon, style = sprintf("color:%s;margin-right:6px;", col)),
-    #     tags$span(label)
-    #   )
-    # }
     
     # both files required
     gs_ready <- reactive({
@@ -216,20 +205,6 @@ cycadas <- function() {
       })
     }
     
-
-    # Load the marker expression file ---------------------------------------
-    # observeEvent(c(input$fMarkerExpr, input$cluster_freq), {
-    # 
-    #   req(input$fMarkerExpr)
-    #   req(input$cluster_freq)
-    # 
-    #   pathExpr <- input$fMarkerExpr$datapath
-    #   pathFreq <- input$cluster_freq$datapath
-    #   
-    #   loadExprData(pathExpr, pathFreq)
-    #   
-    #   initExprData()
-    # })
     
     # Load CATALYST data ----
     observeEvent(input$sce, {
