@@ -81,16 +81,16 @@ cycadas <- function() {
     }
     
 
-    status_item <- function(ok, label) {
-      col  <- if (isTRUE(ok)) "#28a745" else "#dc3545"
-      icon <- if (isTRUE(ok)) "✔" else "✖"
-      tags$div(
-        style = "margin:4px 0;",
-        tags$span(style = sprintf("display:inline-block;width:10px;height:10px;border-radius:50%%;background:%s;margin-right:6px;", col)),
-        tags$span(icon, style = sprintf("color:%s;margin-right:6px;", col)),
-        tags$span(label)
-      )
-    }
+    # status_item <- function(ok, label) {
+    #   col  <- if (isTRUE(ok)) "#28a745" else "#dc3545"
+    #   icon <- if (isTRUE(ok)) "✔" else "✖"
+    #   tags$div(
+    #     style = "margin:4px 0;",
+    #     tags$span(style = sprintf("display:inline-block;width:10px;height:10px;border-radius:50%%;background:%s;margin-right:6px;", col)),
+    #     tags$span(icon, style = sprintf("color:%s;margin-right:6px;", col)),
+    #     tags$span(label)
+    #   )
+    # }
     
     # both files required
     gs_ready <- reactive({
@@ -1844,18 +1844,6 @@ cycadas <- function() {
         has_file(input$remotesom_medians)
     })
     
-    # pretty status items ----
-    status_item <- function(ok, label) {
-      col <- if (ok) "#28a745" else "#dc3545"  # green/red
-      icon <- if (ok) "✔" else "✖"
-      tags$div(
-        style = "margin:4px 0;",
-        tags$span(style = sprintf(
-          "display:inline-block;width:10px;height:10px;border-radius:50%%;background:%s;margin-right:6px;", col)),
-        tags$span(icon, style = sprintf("color:%s;margin-right:6px;", col)),
-        tags$span(label)
-      )
-    }
     # Load Remotesom ----
     observeEvent(input$btnImportRemoteSom, {
       req(remote_ready())  # double safety

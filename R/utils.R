@@ -3,6 +3,19 @@
 has_file <- function(x) !is.null(x) && !is.null(x$datapath) && nzchar(x$datapath)
 
 
+# pretty status items ----
+status_item <- function(ok, label) {
+  col <- if (ok) "#28a745" else "#dc3545"  # green/red
+  icon <- if (ok) "✔" else "✖"
+  tags$div(
+    style = "margin:4px 0;",
+    tags$span(style = sprintf(
+      "display:inline-block;width:10px;height:10px;border-radius:50%%;background:%s;margin-right:6px;", col)),
+    tags$span(icon, style = sprintf("color:%s;margin-right:6px;", col)),
+    tags$span(label)
+  )
+}
+
 # Estimate the threshold values -----------------------------------------------
 kmeansTH <- function(df, th_mode="km") {
   th <- data.frame(cell = colnames(df), threshold = 0.0, color = "blue", bi_mod = 0)
