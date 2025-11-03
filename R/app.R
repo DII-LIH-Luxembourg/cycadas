@@ -21,6 +21,7 @@ cycadas <- function() {
   cell_freq <<- NULL
   # dr_umap <<- NULL
   dr_umap <- reactiveVal(NULL)   # starts empty
+  rFreqs <- reactiveVal(NULL)
   init_app <<- TRUE
   # 2 column data.frame containing old_cluster and new_cluster IDs
   mergeTableCatalyst <<- NULL
@@ -47,7 +48,6 @@ cycadas <- function() {
       }
     })
     
-
     # Load Expression Data and UMAP -------------------------------------------
     loadExprData <- function(path_expr, path_freq) {
       
@@ -77,8 +77,56 @@ cycadas <- function() {
       progress$set(message = "Building the UMAP...", value = 0.3)
       umap_result <- buildUMAP(df_expr[, lineage_marker_raw]) 
       dr_umap(umap_result)
-
+      
     }
+    
+    
+    # both files required
+    gs_ready <- reactive({
+      has_file(input$fMarkerExpr) && has_file(input$cluster_freq)
+    })
+    
+    # keep button state in sync
+    observe({
+      if (gs_ready()) shinyjs::enable("btnImportExpr") else shinyjs::disable("btnImportExpr")
+    })
+    
+    # live status lights
+    output$gs_status <- renderUI({
+      tagList(
+        status_item(has_file(input$fMarkerExpr), "Marker Expressions (CSV)"),
+        status_item(has_file(input$cluster_freq), "Cluster Frequencies (CSV)"),
+        tags$div(style="margin-top:8px;",
+                 if (gs_ready())
+                   tags$span("Both files present — ready to import.", style="color:#28a745;")
+                 else
+                   tags$span("Please select both files to enable Import.", style="color:#dc3545;")
+        )
+      )
+    })
+    
+    # Import click
+    observeEvent(input$btnImportExpr, {
+      req(gs_ready())  # safety
+      
+      ok <- try({
+        loadExprData(
+          path_expr = input$fMarkerExpr$datapath,
+          path_freq = input$cluster_freq$datapath
+        )
+      }, silent = TRUE)
+      
+      if (isTRUE(ok)) {
+        initExprData()
+        showNotification("GigaSOM / FlowSOM data imported.", type = "message")
+        # optional: disable until new files are chosen
+        shinyjs::disable("btnImportExpr")
+      } else {
+        showNotification("Import failed. Please check your CSVs.", type = "error", duration = 8)
+        # optional: clear the inputs so the user re-selects
+        shinyjs::reset("gs_upload_form")
+      }
+    })
     
     # This initializes the checkboxes and thresholds at start of a new 
     # Project or for the non-annotated demo data
@@ -157,20 +205,6 @@ cycadas <- function() {
       })
     }
     
-
-    # Load the marker expression file ---------------------------------------
-    observeEvent(c(input$fMarkerExpr, input$cluster_freq), {
-
-      req(input$fMarkerExpr)
-      req(input$cluster_freq)
-
-      pathExpr <- input$fMarkerExpr$datapath
-      pathFreq <- input$cluster_freq$datapath
-      
-      loadExprData(pathExpr, pathFreq)
-      
-      initExprData()
-    })
     
     # Load CATALYST data ----
     observeEvent(input$sce, {
@@ -1131,52 +1165,131 @@ cycadas <- function() {
     
     # Do the differential abundance ------------------------------------------
     observeEvent(input$doDA, {
-      
       req(reactVals$counts_table, reactVals$md)
-
-      countsTable <- reactVals$counts_table
-      # aggregate the clusters by name:
-      countsTable['cell'] <- df_expr$cell
-      # merge and aggregate by cell
-      countsTable <- aggregate(. ~ cell, countsTable, sum)
-
-      rownames(countsTable) <- countsTable$cell
-      countsTable$cell <- NULL
-
-      props_table <- t(t(countsTable) / colSums(countsTable)) * 100
-
-      mm <- match(colnames(props_table), md$sample_id)
-      tmp_cond <- md$condition[mm]
-
-      DA_df <- data.frame()
+      md <- reactVals$md
       
-      for (i in 1:nrow(props_table)) {
-        foo <- pairwise.wilcox.test(as.numeric(props_table[i,]), tmp_cond, p.adjust.method=input$correction_method)
-
-        df <- subset(melt(foo$p.value), value!=0)
-        df$cell <- rownames(countsTable)[i]
-        DA_df <- rbind(DA_df, as.data.frame(df))
+      # ---
+      if (!all(c("sample_id", "condition") %in% colnames(md))) {
+        showNotification("Metadata must contain 'sample_id' and 'condition'.", type = "error")
+        return()
       }
-
-      # change the name of nodes:
-      # if node has children add "_remaining"
-      my_list <- lapply(DA_df$cell, function(x) {
-            # get the id
-            nid <- reactVals$graph$nodes$id[reactVals$graph$nodes$label == x]
-            # check if the id has children
-            if(nid %in% reactVals$graph$edges$to) {
-              return (x <- paste0(x, "_remaining"))
+      md$sample_id <- as.character(md$sample_id)
+      
+      # --- 1) Build counts table aggregated by cell label ----
+      countsTable <- tryCatch({
+        ct <- reactVals$counts_table
+        # needs a 'cell' vector aligned with rows of df_expr
+        if (is.null(df_expr) || is.null(df_expr$cell)) {
+          showNotification("Missing 'cell' labels in expression table.", type = "error")
+          return(NULL)
+        }
+        if (nrow(ct) != nrow(df_expr)) {
+          # If your counts table is per-cluster (rows=clusters), this should match.
+          # If not, adapt aggregation logic here.
+          showNotification("Row mismatch between counts table and df_expr. Check inputs.", type = "error")
+          return(NULL)
+        }
+        ct$cell <- df_expr$cell
+        # aggregate by cell
+        agg <- aggregate(. ~ cell, ct, sum, na.rm = TRUE)
+        rownames(agg) <- agg$cell
+        agg$cell <- NULL
+        agg
+      }, error = function(e) {
+        showNotification(paste("Failed to prepare counts table:", e$message), type = "error")
+        NULL
+      })
+      req(!is.null(countsTable))
+      
+      # --- 2) Convert to proportions (%) with zero-sum guard ----
+      cs <- colSums(countsTable, na.rm = TRUE)
+      if (any(cs == 0)) {
+        zero_cols <- names(cs)[cs == 0]
+        showNotification(sprintf("Some samples have zero total counts and will be dropped: %s",
+                                 paste(zero_cols, collapse = ", ")), type = "warning")
+      }
+      keep_cols <- names(cs)[cs > 0]
+      if (length(keep_cols) == 0) {
+        showNotification("All samples have zero counts; cannot compute proportions.", type = "error")
+        return()
+      }
+      countsTable <- countsTable[, keep_cols, drop = FALSE]
+      props_table <- sweep(countsTable, 2, colSums(countsTable, na.rm = TRUE), "/") * 100
+      
+      # --- 3) Match props_table columns to metadata sample_id safely ----
+      mm <- match(colnames(props_table), md$sample_id)
+      if (anyNA(mm)) {
+        missing <- colnames(props_table)[is.na(mm)]
+        showNotification(sprintf("Samples missing in metadata and dropped: %s",
+                                 paste(missing, collapse = ", ")), type = "warning")
+      }
+      keep <- which(!is.na(mm))
+      if (length(keep) == 0) {
+        showNotification("No overlap between props_table columns and metadata sample_id.", type = "error")
+        return()
+      }
+      props_table <- props_table[, keep, drop = FALSE]
+      tmp_cond <- droplevels(as.factor(md$condition[mm[keep]]))
+      
+      # --- 4) Validate groups for testing ----
+      if (nlevels(tmp_cond) < 2) {
+        showNotification("Need at least two conditions to run DA tests.", type = "error")
+        return()
+      }
+      
+      # --- 5) Run pairwise Wilcoxon per row (cluster/cell) ----
+      DA_df <- data.frame(stringsAsFactors = FALSE)
+      for (i in seq_len(nrow(props_table))) {
+        y <- as.numeric(props_table[i, ])
+        # Skip if all NA or constant
+        if (all(!is.finite(y)) || length(unique(y[is.finite(y)])) < 2) next
+        
+        # Ensure each group has at least one finite value
+        ok_groups <- tapply(y, tmp_cond, function(v) sum(is.finite(v)) > 0)
+        if (any(!ok_groups)) next
+        
+        pw <- tryCatch(
+          pairwise.wilcox.test(y, tmp_cond, p.adjust.method = input$correction_method),
+          error = function(e) NULL
+        )
+        if (is.null(pw) || is.null(pw$p.value)) next
+        
+        # Melt p-value matrix (upper triangle); keep non-NA
+        m <- reshape2::melt(pw$p.value, varnames = c("Cond1", "Cond2"), value.name = "p.value")
+        m <- subset(m, is.finite(p.value))
+        
+        if (nrow(m) == 0) next
+        
+        m$Cell <- rownames(countsTable)[i]
+        
+        # --- 6) Optional: rename nodes with "_remaining" if node has children ----
+        nm <- m$Cell
+        if (!is.null(reactVals$graph) && !is.null(reactVals$graph$nodes) && !is.null(reactVals$graph$edges)) {
+          nodes <- reactVals$graph$nodes
+          edges <- reactVals$graph$edges
+          if (all(c("id", "label") %in% names(nodes)) && all(c("from", "to") %in% names(edges))) {
+            has_children <- function(label) {
+              nid <- nodes$id[nodes$label == label]
+              length(nid) > 0 && any(edges$to %in% nid)
             }
-            else {
-              return(x)
-            }
-          })
-
-      DA_df$list <- unlist(my_list)
+            nm <- vapply(m$Cell, function(x) if (has_children(x)) paste0(x, "_remaining") else x, character(1))
+          }
+        }
+        m$Naming <- nm
+        
+        DA_df <- rbind(DA_df, m)
+      }
+      
+      if (nrow(DA_df) == 0) {
+        showNotification("No significant pairwise results computed (check inputs/conditions).", type = "warning")
+      }
+      
+      # Standardize column order/names
       colnames(DA_df) <- c("Cond1", "Cond2", "p-value", "Cell", "Naming")
       reactVals$DA_result_table <- DA_df
+      showNotification("Differential abundance testing completed.", type = "message")
     })
-
+ 
     # Render interactive Tree -------------------------------------------------
     output$interactiveTree <- renderVisNetwork({
       visNetwork(reactVals$graph$nodes, reactVals$graph$edges, width = "100%") %>%
@@ -1329,37 +1442,8 @@ cycadas <- function() {
       }
     })
     
-    # Load Expression Data and UMAP -------------------------------------------------
-    loadExprData <- function(path_expr, path_freq) {
-      
-      # Create a Progress object
-      progress <- shiny::Progress$new()
-      # Make sure it closes when we exit this reactive, even if there's an error
-      on.exit(progress$close())
-      
-      progress$set(message = "loading Data...", value = 0)
-      
-      ## Load median expression and cell frequencies
-      ## add the 0-1 scaled columns to the DF
-      df_expr <<- read.csv(path_expr)
-      cell_freq <<- read.csv(path_freq)
-      
-      lineage_marker <<- colnames(df_expr)
-      lineage_marker_raw <<- paste0(lineage_marker, "_raw")
-      
-      df_expr <<- createExpressionDF(df_expr, cell_freq)
-      reactVals$graph <- initTree()
-      
-      progress$set(message = "loading Data Cluster Expression Demo Data...", value = 0.2)
-      
-      reactVals$graph <- initTree()
-      
-      set.seed(1234)
-      progress$set(message = "Building the UMAP...", value = 0.3)
-      umap_result <- buildUMAP(df_expr[, lineage_marker_raw]) 
-      dr_umap(umap_result)
-      
-    }
+
+
 
     # Load Expression Demo Data ---------------------------------------------
     observeEvent(input$btnLoadDemoData, {
@@ -1390,6 +1474,79 @@ cycadas <- function() {
       updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
 
       initExprData()
+    })
+    
+    blank_plot <- function(msg = "Workspace cleared") {
+      function() {
+        plot.new()
+        title(msg, line = -1)
+        box(col = "#ddd")
+      }
+    }
+    
+
+    observeEvent(input$btnClearWorkspace, {
+
+      # Global static values
+      lineage_marker <<- character(0)
+      lineage_marker_raw <<- NULL
+      df_expr <<- NULL
+      cell_freq <<- NULL
+      # dr_umap <<- NULL
+      dr_umap <- reactiveVal(NULL)   # starts empty
+      rFreqs <- reactiveVal(NULL)
+      init_app <<- TRUE
+      # 2 column data.frame containing old_cluster and new_cluster IDs
+      mergeTableCatalyst <<- NULL
+      
+      
+      reactVals$th <- NULL
+      reactVals$myTH <- NULL
+      reactVals$md <- NULL
+      reactVals$counts_table <- NULL
+      reactVals$DA_result_table <- NULL
+      reactVals$DA_interactive_table <- NULL
+      reactVals$graph <- NULL
+      reactVals$hm <- NULL
+      reactVals$annotationlist <- NULL
+      reactVals$sce <- NULL
+      reactVals$metaClustLevel <- NULL
+      
+      # actively blank visible outputs
+      output$umap_tree <- renderPlot(blank_plot()())
+      output$boxplot <- renderPlot(blank_plot()())
+      
+      # turn off any “ready” flags you use
+      reactVals$ready <- FALSE
+      
+      # reset file inputs -> status lights go red automatically
+      shinyjs::reset("gs_upload_form")
+      shinyjs::reset("remotesom_form")
+      
+      # disable import buttons until new files are picked
+      shinyjs::reset("fMarkerExpr")
+      shinyjs::reset("cluster_freq")
+      shinyjs::disable("btnImportExpr")
+      shinyjs::disable("btnImportRemoteSom")
+      shinyjs::reset("remotesom_features")
+      shinyjs::reset("remotesom_medians")
+      shinyjs::reset("remotesom_counts")
+      
+      # (optional) clear plots/tables you render
+      # output$umap <- renderPlot({ plot.new(); title("Workspace cleared") })
+      showNotification("Workspace cleared.", type = "message")
+      
+      # showNotification("Workspace cleared.", type = "message")
+    })
+    
+    observe({
+      if (has_file(input$fMarkerExpr) && has_file(input$cluster_freq))
+        shinyjs::enable("btnImportExpr") else shinyjs::disable("btnImportExpr")
+    })
+    
+    observe({
+      if (has_file(input$remotesom_features) && has_file(input$remotesom_counts) && has_file(input$remotesom_medians))
+        shinyjs::enable("btnImportRemoteSom") else shinyjs::disable("btnImportRemoteSom")
     })
     
     # Load Annotated Expr Demo Data -----------------------------------------
@@ -1583,7 +1740,6 @@ cycadas <- function() {
     
     # Workspace status --------------------------------------------------------
     # 
-    # -------------------------------------------------------------------------
     has_df <- function(x) is.data.frame(x) && nrow(x) > 0 && ncol(x) > 0
     has_val <- function(x) !is.null(x) && length(x) > 0
     
@@ -1623,7 +1779,7 @@ cycadas <- function() {
         tags$li(
           style = "margin: 6px 0;",
           strong(df$Item[i]), " — ",
-          tags$span(class = paste("badge", badge_cl), if (ok) "Present" else "Missing"),
+          tags$span(class = paste("badge", badge_cl), if (ok) "Present" else "Empty"),
           " ",
           tags$i(class = paste("fa", icon_cl), style = "margin-left:6px;"),
           tags$span(style="margin-left:10px;color:#666;", df$Details[i])
@@ -1633,8 +1789,107 @@ cycadas <- function() {
     })
     
     
+    # start disabled (optional; ensures correct state on app load)
+    shinyjs::disable("btnImportRemoteSom")
+    # toggle button enabled/disabled as files are chosen
+    observe({
+      if (remote_ready()) shinyjs::enable("btnImportRemoteSom") else shinyjs::disable("btnImportRemoteSom")
+    })
+    
+    # live status lights
+    output$remotesom_status <- renderUI({
+      tagList(
+        status_item(has_file(input$remotesom_features), "Feature Names"),
+        status_item(has_file(input$remotesom_counts),   "Cluster Counts"),
+        status_item(has_file(input$remotesom_medians),  "Median Expression"),
+        tags$div(style="margin-top:8px;",
+                 if (remote_ready())
+                   tags$span("All required files present — ready to import.", style="color:#28a745;")
+                 else
+                   tags$span("Select all three files to enable Import.", style="color:#dc3545;")
+        )
+      )
+    })
     
     
+    # all three required? ----
+    remote_ready <- reactive({
+      has_file(input$remotesom_features) &&
+        has_file(input$remotesom_counts) &&
+        has_file(input$remotesom_medians)
+    })
+    
+    # Load Remotesom ----
+    observeEvent(input$btnImportRemoteSom, {
+      req(remote_ready())  # double safety
+      
+      # read files
+      features_path <- input$remotesom_features$datapath
+      counts_path   <- input$remotesom_counts$datapath
+      medians_path  <- input$remotesom_medians$datapath
+      
+      # ---
+      req(input$remotesom_features$datapath)
+      
+      feat <- tryCatch(read_json(input$remotesom_features$datapath,
+                                 simplifyVector = TRUE),
+                       error = function(e) NULL)
+      
+      if (length(feat)) {
+        lineage_marker <<- feat
+        lineage_marker_raw <<- paste0(lineage_marker, "_raw")
+        
+      } else {
+        showNotification("feature-names.json could not be parsed.", type = "error")
+      }
+      # ---
+      rMat <- tryCatch(read_json(input$remotesom_medians$datapath,
+                                 simplifyVector = TRUE),
+                       error = function(e) NULL)
+      
+      rMat <- as.data.frame(rMat)
+      colnames(rMat) <- lineage_marker
+      df_expr <<- createExpressionDF(as.data.frame(rMat), cell_freq)
+
+      reactVals$graph <- initTree()
+      
+      # Create a Progress object
+      progress <- shiny::Progress$new()
+      # Make sure it closes when we exit this reactive, even if there's an error
+      on.exit(progress$close())
+      
+      progress$set(message = "loading Data Cluster Expression Demo Data...", value = 0.2)
+      
+      reactVals$graph <- initTree()
+      
+      set.seed(1234)
+      progress$set(message = "Building the UMAP...", value = 0.3)
+      umap_results <- buildUMAP(df_expr[, lineage_marker_raw])
+      dr_umap(umap_results)
+      
+      updateSelectInput(session, "markerSelect", "Select:", lineage_marker)
+      
+      initExprData()
+      # ---
+      req(input$remotesom_counts$datapath)
+      
+      rCounts <- tryCatch(read_json(input$remotesom_counts$datapath,
+                                    simplifyVector = TRUE),
+                          error = function(e) NULL)
+      
+      tmp <- as.data.frame(rCounts / sum(rCounts))
+      tmp$cluster <- 1:nrow(tmp)
+      colnames(tmp) <- c("clustering_prop", "cluster")
+
+      cell_freq <<- tmp
+      
+      showNotification("RemoteSOM data imported.", type = "message")
+      
+      # (optional) disable button until user changes files again
+      shinyjs::disable("btnImportRemoteSom")
+    })
+    
+
   }
 
   shinyApp(

@@ -1,4 +1,3 @@
-
 ## **Cy**tometry **C**luster **A**nnotation and **D**ifferential **A**bundance **S**uite
 
 ![](./www/logo4_small2.png)
@@ -23,9 +22,65 @@
 
 • differential abundance analysis.
 
-### Demo dataset
+## **Workspace:**
 
-To enable tool exploration, we provide the demo dataset that can be loaded (**Load** tab → **Demo Data**) either as  cluster expression data only (**Load Cluster Expression Demo Data**, allowing the user to create the annotation) or as annotated data (**Load Annotated Demo Data** which include the annotation tree).
+The **Workspace** section manages all data imports required to start or resume an annotation process.\
+
+The required files depend on the **source of input data**.
+
+-   **GigaSOM / FlowSOM** clustering data
+
+    To start a new annotation process, the following files are required
+
+    -   **Median marker expression table** (cluster × marker)
+
+    -   **Cluster frequency table** (cluster counts per sample or condition)
+
+    **Optional** files (highlighted as *orange boxes* in the UI):
+
+    -   Marker threshold - holding custom defined threshold values per marker
+
+    -   Annotation tree - from a previous annotation process
+
+    -   Metadata - for statistical analysis
+
+    -   Cluster count table - for statistical analysis
+
+Code examples for generating these files from GigaSOM or FlowSOM workflows are available on GitHub.
+
+-   **Catalyst data**
+
+    CyCadas can also be initialized using output from **CATALYST**.
+
+-   **RemosteSOM data**
+
+    CyCadas natively supports JSON outputs from RemoteSOM.
+
+### Saving CyCadas Workspace:
+
+During the annotation process, all data and user-defined settings can be **saved to a CyCadas workspace file (`.rds`)**.
+
+This includes:
+
+-   Thresholds
+
+-   Annotation tree
+
+-   Metadata
+
+-   Marker expression data
+
+-   UMAP coordinates (if computed)
+
+-   Counts tables
+
+-   RemoteSOM and Catalyst data (if loaded)
+
+The saved workspace can be reloaded at any time to continue the annotation exactly where it was left off.
+
+### Demo dataset:
+
+To enable tool exploration, we provide the demo dataset that can be loaded (**Load** tab → **Demo Data**) either as cluster expression data only (**Load Cluster Expression Demo Data**, allowing the user to create the annotation) or as annotated data (**Load Annotated Demo Data** which include the annotation tree).
 
 *This demo dataset is generated from the publicly available mass cytometry data of patients with idiopathic Parkinson’s disease and healthy controls (Capelle, C.M. et al., Nat Commun, 2023) that were clustered with GigaSOM to generate 1600 clusters.*
 
@@ -47,15 +102,15 @@ Additionally, if performing differential abundance analysis is desired, 2 additi
 
 If the analysis is being continued, the threshold values and annotation tree can be exported from CyCadas (see: **Data export** below) and uploaded into the software.
 
-### Data exploration
+### Explore Data:
 
-The **UMAP interactive** tab allows the preview of marker expression in the clusters selected by the user on the UMAP:
-
-![](./www/umap_interactive.png)
-
-In the **UMAP Marker expression** tab, user can investigate the expression level of the selected marker across all the clusters.
+In this Section the User can explore UMAP Marker expression of the selected marker across all the clusters.
 
 ![](./www/umap_marker_expression.png)
+
+Below the User can select a Area of the UMAP (left)and preview the marker expression in a Heatmap (right)
+
+![](./www/umap_interactive.png)
 
 ### Thresholds
 

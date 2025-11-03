@@ -24,7 +24,61 @@
 
 ## **Workspace:**
 
-### Demo dataset
+The **Workspace** section manages all data imports required to start or resume an annotation process.\
+
+The required files depend on the **source of input data**.
+
+-   **GigaSOM / FlowSOM** clustering data
+
+    To start a new annotation process, the following files are required
+
+    -   **Median marker expression table** (cluster × marker)
+
+    -   **Cluster frequency table** (cluster counts per sample or condition)
+
+    **Optional** files (highlighted as *orange boxes* in the UI):
+
+    -   Marker threshold - holding custom defined threshold values per marker
+
+    -   Annotation tree - from a previous annotation process
+
+    -   Metadata - for statistical analysis
+
+    -   Cluster count table - for statistical analysis
+
+Code examples for generating these files from GigaSOM or FlowSOM workflows are available on GitHub.
+
+-   **Catalyst data**
+
+    CyCadas can also be initialized using output from **CATALYST**.
+
+-   **RemosteSOM data**
+
+    CyCadas natively supports JSON outputs from RemoteSOM.
+
+### Saving CyCadas Workspace:
+
+During the annotation process, all data and user-defined settings can be **saved to a CyCadas workspace file (`.rds`)**.
+
+This includes:
+
+-   Thresholds
+
+-   Annotation tree
+
+-   Metadata
+
+-   Marker expression data
+
+-   UMAP coordinates (if computed)
+
+-   Counts tables
+
+-   RemoteSOM and Catalyst data (if loaded)
+
+The saved workspace can be reloaded at any time to continue the annotation exactly where it was left off.
+
+### Demo dataset:
 
 To enable tool exploration, we provide the demo dataset that can be loaded (**Load** tab → **Demo Data**) either as cluster expression data only (**Load Cluster Expression Demo Data**, allowing the user to create the annotation) or as annotated data (**Load Annotated Demo Data** which include the annotation tree).
 

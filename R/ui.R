@@ -35,32 +35,68 @@ ui <- dashboardPage(
               fluidPage(
                 fluidRow(
                   column(width = 4,
-                         box(title = "Requried",collapsible = TRUE,solidHeader = TRUE,status = "info",width = NULL,collapsed = F,
-                             fileInput("fMarkerExpr","Upload Marker Expressions",
-                                       placeholder = "Choose CSV File",
-                                       multiple = FALSE,
-                                       accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
-                             fileInput("cluster_freq","Upload Cluster Frequencies",
-                                       placeholder = "Choose CSV File",
-                                       multiple = FALSE,
-                                       accept = c("text/csv","text/comma-separated-values,text/plain",".csv"))),
-                         box(title = "From Catalyst",collapsible = TRUE,solidHeader = TRUE,status = "info",width = NULL,collapsed = F,
+                         box(title = "GigaSOM / FlowSOM import", collapsible = TRUE, solidHeader = TRUE,
+                             status = "info", width = NULL, collapsed = FALSE,
+                             useShinyjs(),
+                             tags$form(id = "gs_upload_form",
+                                       fileInput("fMarkerExpr","Upload Marker Expressions", accept = c("text/csv",".csv")),
+                                       fileInput("cluster_freq","Upload Cluster Frequencies", accept = c("text/csv",".csv"))
+                             ),
+                             tags$hr(),
+                             uiOutput("gs_status"),
+                             actionButton("btnImportExpr", "Import", class = "btn btn-success")
+                         ),
+                         
+                         box(title = "Catalyst import",collapsible = TRUE,solidHeader = TRUE,status = "info",width = NULL,collapsed = F,
                              uiOutput("test")
-                         )),
+                         ),
+                         box(
+                           title = "RemoteSOM import", collapsible = TRUE, solidHeader = TRUE,
+                           status = "info", width = NULL, collapsed = T,
+                           useShinyjs(),
+                           
+                           fileInput("remotesom_features","Features Names", accept = ".json"),
+                           fileInput("remotesom_counts","Cluster Counts", accept = ".json"),
+                           fileInput("remotesom_medians","Median Expression", accept = ".json"),
+                           
+                           tags$hr(),
+                           uiOutput("remotesom_status"),  # <-- status lights here
+                           actionButton("btnImportRemoteSom", "Import", class = "btn btn-success")
+                         )
+                      ),
+                         
+                         # box(
+                         #   title = "RemoteSOM import", collapsible = TRUE,solidHeader = TRUE,status = "info",width = NULL,collapsed = F,
+                         #   fileInput(
+                         #     "remotesom_features","Features",
+                         #     multiple = FALSE,
+                         #     accept = c(".json")
+                         #   ),
+                         #   fileInput(
+                         #     "remotesom_counts","Cluster Counts",
+                         #     multiple = FALSE,
+                         #     accept = c(".json")
+                         #   ),
+                         #   fileInput(
+                         #     "remotesom_medians","Median Expression",
+                         #     multiple = FALSE,
+                         #     accept = c(".json")
+                         #   ),
+                         #   tags$hr(),
+                         #   actionButton("btnImportRemoteSom", "Import")
+                         # )
+                         # ),
                   column(width = 4,
                          box(title = "Optional - Marker-thresholds",collapsible = TRUE,solidHeader = TRUE,status = "warning",width = NULL,collapsed = T,
-                             fileInput("fTH","Choose CSV File",multiple = FALSE,accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
-                             tags$hr(),
-                             checkboxInput("header", "Header", TRUE),
-                             radioButtons("sep","Separator",choices = c(Comma = ",",Semicolon = ";",Tab = "\t"),selected = ",",inline = T)),
+                             fileInput("fTH","Choose CSV File",multiple = FALSE,accept = c("text/csv",".csv"))),
                          box(title = "Optional - Annotation Tree",collapsible = TRUE,solidHeader = TRUE,status = "warning",width = NULL,collapsed = T,
-                             fileInput("fNodes","Choose Nodes File",multiple = FALSE,accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
-                             fileInput("fEdges","Choose Edges File",multiple = FALSE,accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
+                             fileInput("fNodes","Choose Nodes File",multiple = FALSE,accept = c("text/csv",".csv")),
+                             fileInput("fEdges","Choose Edges File",multiple = FALSE,accept = c("text/csv",".csv")),
                              actionButton("btnImportTree", "Import")),
                          box(title = "Optional - Metadata",collapsible = TRUE,solidHeader = TRUE,status = "warning",width = NULL,collapsed = T,
-                             fileInput("metadata","Choose CSV File",multiple = F,accept = c("text/csv","text/comma-separated-values,text/plain",".csv"))),
+                             fileInput("metadata","Choose CSV File",multiple = F,accept = c("text/csv",".csv"))),
                          box(title = "Optional - Count Table",collapsible = TRUE,solidHeader = TRUE,status = "warning",width = NULL,collapsed = T,
-                             fileInput("counts_table","Choose CSV File",multiple = F,accept = c("text/csv","text/comma-separated-values,text/plain",".csv")))
+                             fileInput("counts_table","Choose CSV File",multiple = F,accept = c("text/csv",".csv")))
                   ),
                   column(width = 4,
                          box(title = "Workspace",collapsible = TRUE,solidHeader = TRUE,status = "success",width = NULL,collapsed = F,
@@ -69,12 +105,16 @@ ui <- dashboardPage(
                                          fileInput("btnLoadWorkspace",label = NULL,
                                                    placeholder = "Choose Workspace File",
                                                    multiple = FALSE,
-                                                   accept = c(".rds", ".RDS")))
+                                                   accept = c(".rds", ".RDS"))
+                                         ),
+                             tags$hr(),
+                             actionButton("btnClearWorkspace", "Clear Workspace")
                               ),
                          box(title = "Load Demo Data",collapsible = TRUE,solidHeader = TRUE,status = "success",width = NULL,collapsed = F,
                              splitLayout(cellWidths = c("50%", "50%"),
-                                         actionButton("btnLoadDemoData", "Unannotated"),
-                                         actionButton("btnLoadAnnoData", "Annotated"))
+                                           actionButton("btnLoadDemoData", "Unannotated"),
+                                           actionButton("btnLoadAnnoData", "Annotated")
+                                         ),
                              ),
                          box(
                            title = "Workspace status",
