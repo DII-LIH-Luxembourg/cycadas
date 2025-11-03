@@ -107,6 +107,7 @@ ui <- dashboardPage(
                                                    multiple = FALSE,
                                                    accept = c(".rds", ".RDS"))
                                          ),
+                             tags$hr(),
                              actionButton("btnClearWorkspace", "Clear Workspace")
                               ),
                          box(title = "Load Demo Data",collapsible = TRUE,solidHeader = TRUE,status = "success",width = NULL,collapsed = F,

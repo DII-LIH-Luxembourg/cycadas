@@ -1549,8 +1549,13 @@ cycadas <- function() {
       shinyjs::reset("remotesom_form")
       
       # disable import buttons until new files are picked
+      shinyjs::reset("fMarkerExpr")
+      shinyjs::reset("cluster_freq")
       shinyjs::disable("btnImportExpr")
       shinyjs::disable("btnImportRemoteSom")
+      shinyjs::reset("remotesom_features")
+      shinyjs::reset("remotesom_medians")
+      shinyjs::reset("remotesom_counts")
       
       # (optional) clear plots/tables you render
       # output$umap <- renderPlot({ plot.new(); title("Workspace cleared") })
@@ -1760,7 +1765,6 @@ cycadas <- function() {
     
     # Workspace status --------------------------------------------------------
     # 
-    # -------------------------------------------------------------------------
     has_df <- function(x) is.data.frame(x) && nrow(x) > 0 && ncol(x) > 0
     has_val <- function(x) !is.null(x) && length(x) > 0
     
