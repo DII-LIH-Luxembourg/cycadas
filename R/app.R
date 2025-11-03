@@ -1484,7 +1484,7 @@ cycadas <- function() {
       }
     }
     
-
+    # Clear Workspace ----
     observeEvent(input$btnClearWorkspace, {
 
       # Global static values
@@ -1514,7 +1514,7 @@ cycadas <- function() {
       
       # actively blank visible outputs
       output$umap_tree <- renderPlot(blank_plot()())
-      output$boxplot <- renderPlot(blank_plot()())
+      # output$boxplot <- renderPlot(blank_plot()())
       
       # turn off any “ready” flags you use
       reactVals$ready <- FALSE
