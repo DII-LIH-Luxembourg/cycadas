@@ -1,4 +1,8 @@
 
+# truthy fileInput?
+has_file <- function(x) !is.null(x) && !is.null(x$datapath) && nzchar(x$datapath)
+
+
 # Estimate the threshold values -----------------------------------------------
 kmeansTH <- function(df, th_mode="km") {
   th <- data.frame(cell = colnames(df), threshold = 0.0, color = "blue", bi_mod = 0)
