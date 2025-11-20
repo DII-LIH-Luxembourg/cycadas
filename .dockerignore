@@ -1,0 +1,8 @@
+.git
+.gitignore
+*.Rproj
+.Rproj.user
+*.Rhistory
+*.RData
+docker-compose.yml
+README.md
