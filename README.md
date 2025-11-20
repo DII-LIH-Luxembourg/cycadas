@@ -51,6 +51,46 @@ BiocManager::install("CATALYST")
 BiocManager::install("SingleCellExperiment")
 ```
 
+## 🐳 Run with Docker (Recommended)
+
+To avoid issues with R package dependencies and system libraries, you can run **Cycadas** in a Docker container.
+
+### Prerequisites
+*   [Docker Desktop](https://www.docker.com/products/docker-desktop) installed and running.
+
+### 1. Get the Code
+If you haven't already, clone the repository and enter the directory:
+```bash
+git clone https://github.com/DII-LIH-Luxembourg/cycadas.git
+cd cycadas
+```
+
+### 2. Build the Image
+Build the Docker image using the provided Dockerfile.
+```bash
+docker build -t cycadas .
+```
+*> **Note:** The first build may take 15-20 minutes because it compiles necessary bioinformatics packages (CATALYST, etc.).*
+
+### 3. Run the Application
+Start the container with the following command:
+```bash
+docker run -p 3838:3838 cycadas
+```
+
+### 4. Access the App
+Once the terminal says `Listening on http://0.0.0.0:3838`, open your web browser and go to:
+
+**http://localhost:3838**
+
+*> **Tip:** If your terminal shows `0.0.0.0`, do not type that in your browser. Always use `localhost`.*
+
+---
+
+### Stopping the App
+To stop the application, simply press `Ctrl + C` in your terminal window.
+```
+
 ### Data input, Single Cell Format
 
 ```{r}
