@@ -93,7 +93,7 @@ To stop the application, simply press `Ctrl + C` in your terminal window.
 
 ### Data input, Single Cell Format
 
-```{r}
+``` r
 
 # CATALYST Workflow using Single Cell Experiment data object
 # Preprocessing ...
