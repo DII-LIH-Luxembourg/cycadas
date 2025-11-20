@@ -89,7 +89,7 @@ Once the terminal says `Listening on http://0.0.0.0:3838`, open your web browser
 
 ### Stopping the App
 To stop the application, simply press `Ctrl + C` in your terminal window.
-```
+
 
 ### Data input, Single Cell Format
 
