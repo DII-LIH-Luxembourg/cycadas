@@ -26,10 +26,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install build tools
-RUN R -e "install.packages(c('remotes', 'BiocManager'), repos='https://cloud.r-project.org/')"
+RUN R -e "install.packages(c('remotes', 'BiocManager', 'readr', 'zip'), repos='https://cloud.r-project.org/')"
 
 # Install heavy Bioconductor dependencies first (this layer is cached, so it won't rebuild next time)
 RUN R -e "BiocManager::install(c('CATALYST', 'FlowSOM', 'SingleCellExperiment', 'ComplexHeatmap', 'flowCore', 'ConsensusClusterPlus'))"
+RUN apt-get update && apt-get install -y zip
 
 # --- CHANGED SECTION STARTS HERE ---
 
