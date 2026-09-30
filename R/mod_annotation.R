@@ -1,54 +1,53 @@
-# Tree-Annotation tab ---------------------------------------------------------
+# Annotation tab --------------------------------------------------------------
 # Build the annotation tree: pick a parent node and positive / negative markers,
 # preview the matching clusters, and create or delete nodes. Also holds the
 # CATALYST meta-cluster level and the CATALYST merge / export.
 
 mod_annotation_ui <- function(id) {
   ns <- NS(id)
-  fluidRow(
-    column(
-      width = 4,
-      box(
-        width = NULL,
-        title = "Create Node",
-        textOutput(ns("selection_freq")),
-        textOutput(ns("selection_n")),
-        textInput(ns("newNode"), "Set Name..."),
-        pickerInput(ns("parentPicker"), label = "Select Parent:", choices = NULL,
-                    options = picker_options(), multiple = F)
-      ),
-      box(
-        width = NULL,
-        title = "Select MetaCluster Level (CATALYST)",
-        div(id = ns("metadiv"),
-            pickerInput(ns("metaLevel"), label = "Select Cluster Level:", choices = NULL,
-                        options = picker_options(), multiple = F))
-      ),
-      box(
-        width = NULL,
-        column(width = 4,
-               checkboxGroupButtons(ns("treePickerPos"), label = "Positive:",
-                                    choices = c("A"), direction = "vertical")),
-        column(width = 4,
-               checkboxGroupButtons(ns("treePickerNeg"), label = "Negative:",
-                                    choices = c("A"), direction = "vertical"))
-      ),
-      box(width = NULL, title = "Create New Node",
-          actionButton(ns("createNodeBtn"), "Create Node")),
-      box(width = NULL, title = "Delete Node",
-          actionButton(ns("deleteNodeBtn"), "Delete Node")),
-      box(width = NULL, title = "Export Annotation",
-          downloadButton(ns("exportAnnotationBtn"), "Export Annotation")),
-      box(width = NULL, title = "Merge CATALYST Annotation",
-          actionButton(ns("mergeCatalystBtn"), "Merge Annotation")),
-      box(width = NULL, title = "Export CATALYST Annotation",
-          downloadButton(ns("exportCatalystBtn"), "Export Annotation"))
+  layout_sidebar(
+    fillable = FALSE,
+    sidebar = sidebar(
+      width = 400, open = "always", title = "Build a phenotype",
+      tags$div(class = "section-label", "Parent node"),
+      pickerInput(ns("parentPicker"), label = NULL, choices = NULL,
+                  options = picker_options(), multiple = FALSE),
+      uiOutput(ns("lineage")),
+      tags$div(class = "section-label", "Markers"),
+      marker_selector_input(ns("markers")),
+      uiOutput(ns("summary")),
+      textInput(ns("newNode"), "Phenotype name", placeholder = "e.g. CD4 T cells"),
+      actionButton(ns("createNodeBtn"), "Create node", icon = icon("plus"),
+                   class = "btn-primary w-100"),
+      shinyjs::hidden(tags$div(
+        id = ns("catalyst_panel"),
+        tags$hr(),
+        tags$div(class = "section-label", "CATALYST"),
+        pickerInput(ns("metaLevel"), label = "Meta-cluster level", choices = NULL,
+                    options = picker_options(), multiple = FALSE),
+        tags$div(class = "d-flex gap-2",
+                 actionButton(ns("mergeCatalystBtn"), "Merge annotation",
+                              class = "btn-outline-primary btn-sm"),
+                 downloadButton(ns("exportCatalystBtn"), "Export object",
+                                class = "btn-outline-secondary btn-sm"))
+      ))
     ),
-    column(
-      width = 8,
-      box(width = NULL, title = "Annotation Tree", visNetworkOutput(ns("tree"))),
-      box(width = NULL, title = "Heatmap", plotOutput(ns("heatmap"))),
-      box(width = NULL, plotOutput(ns("umap")))
+    uiOutput(ns("notice")),
+    card(
+      full_screen = TRUE,
+      card_title("Annotation tree",
+                 actionButton(ns("deleteNodeBtn"), "Delete node", icon = icon("trash"),
+                              class = "btn-outline-danger btn-sm"),
+                 downloadButton(ns("exportAnnotationBtn"), "Export annotation",
+                                class = "btn-outline-secondary btn-sm")),
+      card_body(class = "p-1", visNetworkOutput(ns("tree"), height = "500px"))
+    ),
+    layout_columns(
+      col_widths = c(7, 5),
+      card(full_screen = TRUE, card_header("Heatmap of the selection"),
+           plotOutput(ns("heatmap"), height = "480px")),
+      card(full_screen = TRUE, card_header("Selection on the UMAP"),
+           plotOutput(ns("umap"), height = "480px"))
     )
   )
 }
@@ -57,8 +56,10 @@ mod_annotation_server <- function(id, state) {
   moduleServer(id, function(input, output, session) {
 
     show_error <- function(title, msg) {
-      showModal(modalDialog(title = title, msg, easyClose = TRUE, footer = NULL))
+      showModal(modalDialog(title = title, msg, easyClose = TRUE, footer = modalButton("OK")))
     }
+
+    output$notice <- renderUI(if (is.null(state$expr)) no_data_notice())
 
     # Selected node -----------------------------------------------------------
     # `selected_label` is the source of truth; the parent picker and clicks on
@@ -106,52 +107,70 @@ mod_annotation_server <- function(id, state) {
       node
     })
 
-    # Marker pickers ----------------------------------------------------------
-    # Markers already used by the selected node are disabled, and a marker
-    # picked on one side is disabled on the other.
-    update_marker_picker <- function(inputId, selected, disabled) {
-      updateCheckboxGroupButtons(session, inputId = inputId, choices = state$markers,
-                                 selected = selected, disabledChoices = disabled)
-    }
+    lineage <- reactive(lineage_markers(state$graph, current_node()$id))
 
-    observeEvent(list(state$markers, current_node()), {
+    output$lineage <- renderUI({
       node <- current_node()
-      update_marker_picker("treePickerPos", NULL, unlist(node$pm))
-      update_marker_picker("treePickerNeg", NULL, unlist(node$nm))
+      path <- state$graph$nodes$label[match(node_lineage(state$graph, node$id), state$graph$nodes$id)]
+      def <- lineage()
+      tags$div(
+        class = "lineage",
+        tags$div(lapply(seq_along(path), function(i) {
+          tagList(if (i > 1) tags$span(class = "sep", "\u203a"),
+                  if (i == length(path)) tags$strong(path[i]) else path[i])
+        })),
+        if (length(def$pos) + length(def$neg) > 0) tags$div(marker_chips(def$pos, def$neg))
+      )
     })
 
-    observeEvent(input$treePickerPos, {
-      req(length(state$markers) > 0)
-      update_marker_picker("treePickerNeg", input$treePickerNeg,
-                           union(unlist(current_node()$nm), input$treePickerPos))
-    }, ignoreNULL = FALSE, ignoreInit = TRUE)
+    # Marker selector ---------------------------------------------------------
+    # Markers already defined by the lineage are locked.
+    observeEvent(state$markers, {
+      flagged <- if (!is.null(state$th)) state$th$cell[state$th$color == "red"] else character(0)
+      update_marker_selector(session, "markers", markers = state$markers, flagged = flagged)
+    }, ignoreNULL = FALSE)
 
-    observeEvent(input$treePickerNeg, {
-      req(length(state$markers) > 0)
-      update_marker_picker("treePickerPos", input$treePickerPos,
-                           union(unlist(current_node()$pm), input$treePickerNeg))
-    }, ignoreNULL = FALSE, ignoreInit = TRUE)
+    observeEvent(state$th, {
+      update_marker_selector(session, "markers", flagged = state$th$cell[state$th$color == "red"],
+                             clear = FALSE)
+    })
+
+    observeEvent(list(state$markers, current_node()), {
+      def <- lineage()
+      locked <- c(setNames(rep("pos", length(def$pos)), def$pos),
+                  setNames(rep("neg", length(def$neg)), def$neg))
+      update_marker_selector(session, "markers", locked = locked)
+    })
+
+    picked <- reactive(marker_selection(input$markers))
 
     # Clusters of the selected node filtered by the picked markers ------------
     preview <- reactive({
       req(state$expr, state$th, selected_label())
       expr <- state$expr
       filterHM(expr[expr$cell == selected_label(), state$markers, drop = FALSE],
-               input$treePickerPos, input$treePickerNeg, state$th)
+               picked()$pos, picked()$neg, state$th)
+    })
+
+    output$summary <- renderUI({
+      req(state$expr)
+      n_parent <- sum(state$expr$cell == selected_label())
+      tags$div(
+        class = "selection-summary my-2",
+        tags$div(tags$div(class = "value", nrow(preview())),
+                 tags$div(class = "label", sprintf("of %d clusters in parent", n_parent))),
+        tags$div(tags$div(class = "value",
+                          sprintf("%.2f%%", sum(state$expr[rownames(preview()), "freq"]))),
+                 tags$div(class = "label", "of all cells"))
+      )
     })
 
     # the plots follow the marker toggles with a short delay
     preview_plot <- debounce(preview, 400)
 
-    output$selection_freq <- renderText({
-      paste0(round(sum(state$expr[rownames(preview()), "freq"]), 3), "% in selection")
-    })
-    output$selection_n <- renderText({
-      paste0(nrow(preview()), " Cluster in selection")
-    })
-
     output$heatmap <- renderPlot({
-      if (is.null(state$expr)) plot_message("No Data Available") else plot_cluster_heatmap(preview_plot())
+      req(state$expr)
+      plot_cluster_heatmap(preview_plot())
     })
 
     output$umap <- renderPlot({
@@ -159,54 +178,78 @@ mod_annotation_server <- function(id, state) {
       plot_umap_selection(state$umap, filterColor(state$expr, preview_plot()))
     })
 
+    # Tree --------------------------------------------------------------------
     output$tree <- renderVisNetwork({
       req(state$graph, state$expr)
-      graph <- state$graph
-      graph$nodes <- color_nodes_by_usage(graph$nodes, state$expr$cell)
-      tree_network(graph, session$ns("tree_click"), hierarchical = TRUE)
+      tree_network(state$graph, session$ns("tree_click"), expr = state$expr,
+                   selected = isolate(current_node()$id))
+    })
+
+    observeEvent(current_node(), {
+      visNetworkProxy(session$ns("tree")) %>%
+        visUpdateNodes(tree_selection_style(state$graph$nodes, state$expr, current_node()$id))
     })
 
     # Create node -------------------------------------------------------------
     observeEvent(input$createNodeBtn, {
       req(state$expr)
-      name <- input$newNode
+      name <- trimws(input$newNode)
       parent <- selected_label()
 
-      if (is.null(input$treePickerPos) && is.null(input$treePickerNeg)) {
-        return(show_error("No Marker Selection", "Select positive and / or negative markers!"))
+      if (length(picked()$pos) + length(picked()$neg) == 0) {
+        return(show_error("No marker selection", "Select positive and / or negative markers."))
       }
       if (name == "") {
-        return(show_error("Phenotype Name", "Set a Name for this Phenotype!"))
+        return(show_error("Phenotype name", "Set a name for this phenotype."))
       }
       if (name %in% state$graph$nodes$label) {
-        return(show_error("Naming Error!", "The Name for this Phenotype is already taken!"))
+        return(show_error("Name taken", sprintf("A phenotype named '%s' already exists.", name)))
       }
       selection <- preview()
       if (nrow(selection) == 0) {
-        return(show_error("No Result", "The Selection for this Phenotype is empty!"))
+        return(show_error("Empty selection", "No cluster of the parent matches this marker selection."))
       }
 
       state$expr[rownames(selection), "cell"] <- name
       selected_label(name)
       state$graph <- add_node(state$graph, parent, name,
-                              list(input$treePickerPos), list(input$treePickerNeg), "blue")
+                              list(picked()$pos), list(picked()$neg), "blue")
+      updateTextInput(session, "newNode", value = "")
+      showNotification(sprintf("Created '%s' with %d clusters.", name, nrow(selection)),
+                       type = "message")
     })
 
     # Delete node -------------------------------------------------------------
     observeEvent(input$deleteNodeBtn, {
       node <- current_node()
-      graph <- state$graph
 
-      if (node_has_children(graph, node$id)) {
-        return(show_error("Cannot delete Node", "The selected Node is not a Leaf Node!"))
+      if (node_has_children(state$graph, node$id)) {
+        return(show_error("Cannot delete node",
+                          sprintf("'%s' has child nodes. Only leaf nodes can be deleted.", node$label)))
       }
+      parent_id <- state$graph$edges$to[state$graph$edges$from == node$id]
+      showModal(modalDialog(
+        title = "Delete node",
+        sprintf("Delete '%s'? Its %d clusters are returned to '%s'.", node$label,
+                sum(state$expr$cell == node$label),
+                state$graph$nodes$label[state$graph$nodes$id == parent_id]),
+        easyClose = TRUE,
+        footer = tagList(modalButton("Cancel"),
+                         actionButton(session$ns("confirmDelete"), "Delete", class = "btn-danger"))
+      ))
+    })
+
+    observeEvent(input$confirmDelete, {
+      removeModal()
+      node <- current_node()
+      graph <- state$graph
+      req(!node_has_children(graph, node$id))
 
       # give the clusters of the node back to its parent
       parent_id <- graph$edges$to[graph$edges$from == node$id]
       parent_label <- graph$nodes$label[graph$nodes$id == parent_id]
       state$expr$cell[state$expr$cell == node$label] <- parent_label
 
-      updateTextInput(session, "newNode", value = "")
       selected_label(parent_label)
       state$graph <- delete_leaf_node(graph, node$id)
     })
@@ -224,14 +267,11 @@ mod_annotation_server <- function(id, state) {
 
     # CATALYST ----------------------------------------------------------------
     observeEvent(state$sce, {
-      if (is.null(state$sce)) {
-        shinyjs::disable("metadiv")
-        updatePickerInput(session, "metaLevel", choices = character(0))
-      } else {
+      shinyjs::toggle("catalyst_panel", condition = !is.null(state$sce))
+      if (!is.null(state$sce)) {
         updatePickerInput(session, "metaLevel",
                           choices = catalyst_meta_levels(state$sce),
                           selected = state$meta_level)
-        shinyjs::enable("metadiv")
       }
     }, ignoreNULL = FALSE)
 

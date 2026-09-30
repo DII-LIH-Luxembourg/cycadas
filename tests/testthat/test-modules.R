@@ -23,7 +23,7 @@ test_that("annotation: creating a node labels the selected clusters", {
 
   state <- small_state()
   testServer(mod_annotation_server, args = list(state = state), {
-    session$setInputs(parentPicker = "Unassigned", treePickerPos = "m1", treePickerNeg = "m2")
+    session$setInputs(parentPicker = "Unassigned", markers = list(pos = "m1", neg = "m2"))
     expect_equal(rownames(preview()), c("2", "5"))
 
     session$setInputs(newNode = "m1+m2-", createNodeBtn = 1)
@@ -39,11 +39,11 @@ test_that("annotation: duplicate names and empty selections are rejected", {
 
   state <- small_state()
   testServer(mod_annotation_server, args = list(state = state), {
-    session$setInputs(parentPicker = "Unassigned", treePickerPos = "m1",
+    session$setInputs(parentPicker = "Unassigned", markers = list(pos = "m1"),
                       newNode = "Unassigned", createNodeBtn = 1)
     expect_equal(nrow(state$graph$nodes), 1)
 
-    session$setInputs(treePickerPos = NULL, treePickerNeg = NULL,
+    session$setInputs(markers = list(pos = list(), neg = list()),
                       newNode = "x", createNodeBtn = 2)
     expect_equal(nrow(state$graph$nodes), 1)
   })
@@ -53,11 +53,11 @@ test_that("annotation: deleting a leaf gives its clusters back to the parent", {
 
   state <- small_state()
   testServer(mod_annotation_server, args = list(state = state), {
-    session$setInputs(parentPicker = "Unassigned", treePickerPos = "m1",
+    session$setInputs(parentPicker = "Unassigned", markers = list(pos = "m1"),
                       newNode = "m1+", createNodeBtn = 1)
     expect_equal(sum(state$expr$cell == "m1+"), 3)
 
-    session$setInputs(parentPicker = "m1+", deleteNodeBtn = 1)
+    session$setInputs(parentPicker = "m1+", deleteNodeBtn = 1, confirmDelete = 1)
     expect_equal(state$graph$nodes$label, "Unassigned")
     expect_true(all(state$expr$cell == "Unassigned"))
     expect_equal(selected_label(), "Unassigned")
@@ -72,6 +72,7 @@ test_that("annotation: a tree click selects the node", {
     session$setInputs(tree_click = 2)
     expect_equal(selected_label(), "A")
     expect_equal(current_node()$id, 2)
+    expect_equal(lineage(), list(pos = "m1", neg = character(0)))
   })
 })
 

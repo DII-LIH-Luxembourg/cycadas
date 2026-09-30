@@ -3,16 +3,16 @@
 
 mod_import_remotesom_ui <- function(id) {
   ns <- NS(id)
-  settings_box(
-    "RemoteSOM import", collapsed = TRUE,
+  tagList(
+    tags$p(class = "text-body-secondary small",
+           "Feature names, cluster counts and median expression exported by RemoteSOM, as JSON files."),
     tags$form(id = ns("upload_form"),
               fileInput(ns("features"), "Features Names", accept = ".json"),
               fileInput(ns("counts"), "Cluster Counts", accept = ".json"),
               fileInput(ns("medians"), "Median Expression", accept = ".json")
     ),
-    tags$hr(),
     uiOutput(ns("status")),
-    actionButton(ns("btnImport"), "Import", class = "btn btn-success")
+    actionButton(ns("btnImport"), "Import", icon = icon("file-import"), class = "btn-primary mt-3")
   )
 }
 
@@ -26,7 +26,7 @@ mod_import_remotesom_server <- function(id, state) {
     output$status <- renderUI({
       file_status_ui(files$present(),
                      c("Feature Names", "Cluster Counts", "Median Expression"),
-                     "All required files present — ready to import.",
+                     "All files present, ready to import.",
                      "Select all three files to enable Import.")
     })
 

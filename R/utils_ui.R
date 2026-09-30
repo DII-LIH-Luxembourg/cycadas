@@ -3,29 +3,29 @@
 # truthy fileInput?
 has_file <- function(x) !is.null(x) && !is.null(x$datapath) && nzchar(x$datapath)
 
-# pretty status items ----
-status_item <- function(ok, label) {
-  col <- if (ok) "#28a745" else "#dc3545"  # green/red
-  icon <- if (ok) "✔" else "✖"
-  tags$div(
-    style = "margin:4px 0;",
-    tags$span(style = sprintf(
-      "display:inline-block;width:10px;height:10px;border-radius:50%%;background:%s;margin-right:6px;", col)),
-    tags$span(icon, style = sprintf("color:%s;margin-right:6px;", col)),
-    tags$span(label)
+# JavaScript and CSS in inst/app/www
+cycadas_dependency <- function() {
+  htmltools::htmlDependency(
+    "cycadas", as.character(utils::packageVersion("cycadas")),
+    src = c(file = app_file("www")),
+    script = "cycadas.js", stylesheet = "cycadas.css"
+  )
+}
+
+# Status light with a label ----
+status_item <- function(ok, label, detail = NULL) {
+  tags$li(
+    tags$span(tags$span(class = paste("status-dot", if (ok) "ok" else "missing")), label),
+    if (!is.null(detail)) tags$span(class = "detail", detail)
   )
 }
 
 # Status lights for a set of required files plus a summary line
 file_status_ui <- function(present, labels, ready_msg, missing_msg) {
   tagList(
-    Map(status_item, present, labels),
-    tags$div(style = "margin-top:8px;",
-             if (all(present))
-               tags$span(ready_msg, style = "color:#28a745;")
-             else
-               tags$span(missing_msg, style = "color:#dc3545;")
-    )
+    tags$ul(class = "status-list", Map(status_item, present, labels)),
+    tags$p(class = paste("small mt-2 mb-0", if (all(present)) "text-success" else "text-body-secondary"),
+           if (all(present)) ready_msg else missing_msg)
   )
 }
 
@@ -49,12 +49,66 @@ file_tracker <- function(input, ids) {
 }
 
 # Dropdown options shared by the pickers
-picker_options <- function() {
-  list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
+picker_options <- function(...) {
+  list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3",
+       `live-search` = TRUE, ...)
 }
 
-# Collapsible dashboard box with the settings used on the Workspace tab
-settings_box <- function(title, ..., status = "info", collapsed = FALSE) {
-  box(title = title, collapsible = TRUE, solidHeader = TRUE, status = status,
-      width = NULL, collapsed = collapsed, ...)
+# Card header with a title and optional actions on the right
+card_title <- function(title, ...) {
+  card_header(class = "d-flex align-items-center gap-2", tags$span(title),
+              if (length(list(...))) tags$span(class = "card-actions ms-auto", ...))
+}
+
+# Shown on analysis tabs before any data is loaded ----
+no_data_notice <- function() {
+  tags$div(
+    class = "no-data",
+    icon("database"),
+    tags$h5("No data loaded"),
+    tags$p(class = "text-body-secondary",
+           "Import cluster data or load the demo data on the Workspace tab.")
+  )
+}
+
+# Marker selector input -------------------------------------------------------
+# Value: list(pos = character, neg = character). Filled by
+# update_marker_selector(); the behaviour is in inst/app/www/cycadas.js.
+marker_selector_input <- function(id) {
+  tags$div(
+    id = id, class = "marker-selector",
+    tags$div(class = "marker-tools",
+             tags$input(type = "search", class = "form-control form-control-sm marker-search",
+                        placeholder = "Filter markers"),
+             tags$span(class = "marker-count"),
+             tags$button(type = "button", class = "btn btn-link marker-clear", hidden = NA, "Clear")),
+    tags$p(class = "marker-empty small text-body-secondary", "No markers loaded."),
+    tags$div(class = "marker-grid"),
+    tags$div(class = "marker-legend",
+             HTML("&minus; below threshold &middot; + above threshold &middot; "),
+             tags$span(class = "dot", HTML("&#9679;")), " not bimodal")
+  )
+}
+
+# `locked` is a named character vector: marker = "pos" / "neg"
+update_marker_selector <- function(session, id, markers = NULL, locked = NULL,
+                                   flagged = NULL, clear = TRUE) {
+  msg <- list(clear = clear)
+  if (!is.null(markers)) msg$markers <- I(markers)
+  if (!is.null(locked)) msg$locked <- if (length(locked)) as.list(locked) else setNames(list(), character(0))
+  if (!is.null(flagged)) msg$flagged <- I(flagged)
+  session$sendInputMessage(id, msg)
+}
+
+# Selected markers as list(pos, neg) with character(0) for none
+marker_selection <- function(value) {
+  list(pos = as.character(unlist(value$pos)), neg = as.character(unlist(value$neg)))
+}
+
+# Marker definition chips, e.g. CD3+ CD8-
+marker_chips <- function(pos, neg) {
+  tagList(
+    lapply(pos, function(m) tags$span(class = "marker-chip pos", paste0(m, "+"))),
+    lapply(neg, function(m) tags$span(class = "marker-chip neg", paste0(m, "\u2212")))
+  )
 }

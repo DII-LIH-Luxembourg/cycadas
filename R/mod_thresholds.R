@@ -4,15 +4,25 @@
 
 mod_thresholds_ui <- function(id) {
   ns <- NS(id)
-  fluidRow(
-    column(width = 6,
-           box(width = NULL, title = "Marker Expression:",
-               plotOutput(ns("scatter"), click = ns("scatter_click"))),
-           box(width = NULL, title = "Histogram:",
-               plotOutput(ns("histogram")))
-    ),
-    column(width = 6,
-           box(width = NULL, DTOutput(ns("table"))))
+  tags$div(
+    class = "container-fluid py-3",
+    uiOutput(ns("notice")),
+    layout_columns(
+      col_widths = c(5, 7),
+      card(card_header("Markers",
+                       tags$span(class = "small text-body-secondary fw-normal ms-2",
+                                 "Select a marker to adjust its threshold")),
+           DTOutput(ns("table"))),
+      tagList(
+        card(full_screen = TRUE,
+             card_header(uiOutput(ns("title"), inline = TRUE)),
+             plotOutput(ns("scatter"), click = ns("scatter_click"), height = "300px"),
+             card_footer(class = "small text-body-secondary",
+                         "Click the plot to move the threshold. Phenotypes are re-assigned immediately.")),
+        card(full_screen = TRUE, card_header("Histogram"),
+             plotOutput(ns("histogram"), height = "260px"))
+      )
+    )
   )
 }
 
@@ -20,6 +30,17 @@ mod_thresholds_server <- function(id, state) {
   moduleServer(id, function(input, output, session) {
 
     th_columns <- c("cell", "threshold", "bi_mod")
+
+    output$notice <- renderUI(if (is.null(state$expr)) no_data_notice())
+
+    output$title <- renderUI({
+      if (is.null(input$table_rows_selected) || is.null(state$th)) return("Marker expression")
+      sel <- selected()
+      tagList(sel$cell,
+              tags$span(class = "badge text-bg-light ms-2", sprintf("threshold %.3f", sel$threshold)),
+              if (sel$color == "red")
+                tags$span(class = "badge text-bg-warning ms-1", "not bimodal"))
+    })
 
     # Re-render the table only when the set of markers changes; threshold edits
     # are pushed through the proxy so that selection and scroll position stay.
@@ -30,6 +51,9 @@ mod_thresholds_server <- function(id, state) {
       req(th_cells())
       DT::datatable(
         isolate(state$th)[, th_columns],
+        rownames = FALSE,
+        colnames = c("Marker", "Threshold", "Bimodality"),
+        class = "compact hover",
         editable = F,
         extensions = c('Buttons', 'Scroller'),
         selection = 'single',
@@ -39,15 +63,19 @@ mod_thresholds_server <- function(id, state) {
           scrollY = 500,
           scroller = TRUE,
           buttons = list(
-            list(extend = 'csv', filename = "MarkerThresholds")
+            list(extend = 'csv', text = "Download CSV", filename = "MarkerThresholds",
+                 className = "btn-sm btn-outline-secondary")
           )
         )
-      )
+      ) %>%
+        DT::formatRound("threshold", 3) %>%
+        DT::formatStyle("bi_mod", color = DT::styleInterval(BIMODALITY_CUTOFF, c("#e8590c", "inherit")))
     })
 
     proxy <- DT::dataTableProxy("table")
     observeEvent(state$th, {
-      DT::replaceData(proxy, state$th[, th_columns], resetPaging = FALSE, clearSelection = "none")
+      DT::replaceData(proxy, state$th[, th_columns], resetPaging = FALSE, clearSelection = "none",
+                      rownames = FALSE)
     })
 
     selected <- reactive({

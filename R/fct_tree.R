@@ -153,25 +153,103 @@ rebuiltTree <- function(graph, df_expr, th, markers) {
   return(df_expr$cell)
 }
 
+# Ancestors of a node, from the root down to the node itself ----------------
+node_lineage <- function(graph_data, node_id) {
+  ids <- node_id
+  repeat {
+    parent <- graph_data$edges$to[match(ids[1], graph_data$edges$from)]
+    if (is.na(parent) || parent %in% ids) break
+    ids <- c(parent, ids)
+  }
+  ids
+}
+
+# Markers that define a node, collected along its lineage ---------------------
+lineage_markers <- function(graph_data, node_id) {
+  rows <- match(node_lineage(graph_data, node_id), graph_data$nodes$id)
+  collect <- function(col) {
+    m <- unlist(graph_data$nodes[[col]][rows])
+    unique(m[!is.na(m) & nzchar(m)])
+  }
+  list(pos = collect("pm"), neg = collect("nm"))
+}
+
 # Node colors: grey if no cluster carries the label, blue otherwise -----------
+TREE_COLOR_USED <- "#2c7be5"
+TREE_COLOR_EMPTY <- "#adb5bd"
+
 color_nodes_by_usage <- function(nodes, cells) {
-  nodes$color <- ifelse(nodes$label %in% cells, "blue", "grey")
+  nodes$color <- ifelse(nodes$label %in% cells, TREE_COLOR_USED, TREE_COLOR_EMPTY)
   nodes
 }
 
-# visNetwork widget of the tree -----------------------------------------------
-# Clicking a node sets the Shiny input `input_id` to the node id.
-tree_network <- function(graph, input_id, hierarchical = FALSE) {
+# Hover text: own marker definition, cluster count and frequency -------------
+node_tooltips <- function(nodes, expr) {
+  vapply(seq_len(nrow(nodes)), function(i) {
+    pm <- unlist(nodes$pm[i]); nm <- unlist(nodes$nm[i])
+    def <- c(if (length(pm)) paste0(pm[nzchar(pm)], "+"), if (length(nm)) paste0(nm[nzchar(nm)], "\u2212"))
+    in_node <- expr$cell == nodes$label[i]
+    paste0("<b>", htmltools::htmlEscape(nodes$label[i]), "</b><br>",
+           if (length(def)) paste0(paste(def, collapse = " "), "<br>"),
+           sum(in_node), " clusters, ", round(sum(expr$freq[in_node]), 2), "%")
+  }, character(1))
+}
 
-  net <- visNetwork(graph$nodes, graph$edges, width = "100%")
-  if (hierarchical) {
-    net <- net %>%
-      visEdges(arrows = "from") %>%
-      visHierarchicalLayout()
-  }
-  net %>%
-    visEvents(select = sprintf(
-      "function(nodes) { Shiny.setInputValue('%s', nodes.nodes, {priority: 'event'}); }",
-      input_id
-    ))
+# Node styles: fill by usage, a dark ring around the selected node -----------
+tree_selection_style <- function(nodes, expr, selected = NULL) {
+  fill <- if (is.null(expr)) rep(TREE_COLOR_USED, nrow(nodes)) else
+    color_nodes_by_usage(nodes, expr$cell)$color
+  is_sel <- nodes$id %in% selected
+  data.frame(id = nodes$id,
+             color.background = fill,
+             color.border = ifelse(is_sel, "#0b1f3a", fill),
+             color.highlight.background = fill,
+             color.highlight.border = "#0b1f3a",
+             font.color = ifelse(fill == TREE_COLOR_EMPTY, "#343a40", "#ffffff"),
+             borderWidth = ifelse(is_sel, 3, 1))
+}
+
+# visNetwork widget of the tree -----------------------------------------------
+# Clicking a node sets the Shiny input `input_id` to the node id. With `expr`
+# the nodes are colored by usage and get hover details.
+tree_network <- function(graph, input_id, expr = NULL, selected = NULL, height = NULL) {
+
+  nodes <- data.frame(tree_selection_style(graph$nodes, expr, selected),
+                      label = graph$nodes$label, check.names = FALSE)
+  if (!is.null(expr)) nodes$title <- node_tooltips(graph$nodes, expr)
+
+  # edges point from parent to child for the layout; the root's self-loop is
+  # not drawn
+  edges <- graph$edges[graph$edges$from != graph$edges$to, ]
+  edges <- data.frame(from = edges$to, to = edges$from)
+
+  visNetwork(nodes, edges, width = "100%", height = height) %>%
+    visNodes(shape = "box", margin = list(top = 6, bottom = 6, left = 10, right = 10),
+             shapeProperties = list(borderRadius = 6),
+             font = list(size = 15, face = "system-ui, sans-serif")) %>%
+    visEdges(color = list(color = "#ced4da", highlight = TREE_COLOR_USED), width = 1.5,
+             smooth = list(type = "cubicBezier", forceDirection = "horizontal", roundness = 0.5)) %>%
+    visHierarchicalLayout(direction = "LR", sortMethod = "directed", shakeTowards = "roots",
+                          levelSeparation = 230, nodeSpacing = 42) %>%
+    visPhysics(enabled = FALSE) %>%
+    visInteraction(hover = TRUE, tooltipDelay = 150) %>%
+    visEvents(
+      select = sprintf(
+        "function(nodes) { Shiny.setInputValue('%s', nodes.nodes, {priority: 'event'}); }",
+        input_id),
+      # keep labels readable: when fitting, zoom out no further than 0.65 (large
+      # trees, anchored at the root) and zoom in no further than 1 (small trees)
+      afterDrawing = "function() {
+        if (this.cycadasFitted) return;
+        this.cycadasFitted = true;
+        var scale = this.getScale();
+        if (scale < 0.65) {
+          var root = this.getPositions([1])[1];
+          var width = this.body.container.clientWidth;
+          this.moveTo({scale: 0.65, position: {x: root.x + width / 2 / 0.65 - 90, y: root.y}});
+        } else if (scale > 1) {
+          this.moveTo({scale: 1});
+        }
+      }"
+    )
 }

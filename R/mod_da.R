@@ -3,40 +3,27 @@
 
 mod_da_ui <- function(id) {
   ns <- NS(id)
-  fluidRow(
-    column(width = 6,
-           box(width = NULL,
-               fluidRow(
-                 column(width = 5,
-                        box(width = NULL, title = "Metadata preview", tableOutput(ns("md_table")))),
-                 column(width = 5,
-                        box(width = NULL, title = "Counts Table preview", tableOutput(ns("counts_table"))))
-               )
-           ),
-           box(width = NULL,
-               fluidRow(
-                 column(width = 6,
-                        box(width = NULL,
-                            selectInput(ns("correction_method"), "Select:",
-                                        choices = c("holm", "hochberg", "hommel", "bonferroni",
-                                                    "BH", "BY", "fdr", "none")))),
-                 column(width = 6,
-                        box(width = NULL, title = "Do Analysis", actionButton(ns("doDA"), "Calculate")))
-               )
-           ),
-           box(width = NULL,
-               fluidRow(
-                 column(width = 6,
-                        box(width = NULL, title = "Export DA Result",
-                            downloadButton(ns("exportDA"), "Download"))),
-                 column(width = 6,
-                        box(width = NULL, title = "Export Proportion Table",
-                            downloadButton(ns("exportProp"), "Download")))
-               )
-           )
+  layout_sidebar(
+    fillable = FALSE,
+    sidebar = sidebar(
+      width = 320, open = "always", title = "Differential abundance",
+      tags$p(class = "small text-body-secondary",
+             "Pairwise Wilcoxon tests of phenotype proportions between conditions."),
+      uiOutput(ns("inputs")),
+      selectInput(ns("correction_method"), "P-value adjustment",
+                  choices = c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none")),
+      actionButton(ns("doDA"), "Run tests", icon = icon("play"), class = "btn-primary w-100"),
+      tags$hr(),
+      tags$div(class = "section-label", "Export"),
+      downloadButton(ns("exportDA"), "Test results (CSV)", class = "btn-outline-secondary btn-sm w-100 mb-2"),
+      downloadButton(ns("exportProp"), "Proportion table (CSV)", class = "btn-outline-secondary btn-sm w-100")
     ),
-    column(width = 6,
-           box(width = NULL, title = "DA Result", tableOutput(ns("DA_result_table"))))
+    card(full_screen = TRUE, card_header("Results"), DTOutput(ns("DA_result_table"))),
+    accordion(
+      open = FALSE,
+      accordion_panel("Metadata preview", tableOutput(ns("md_table"))),
+      accordion_panel("Counts preview", tableOutput(ns("counts_table")))
+    )
   )
 }
 
@@ -48,7 +35,21 @@ mod_da_server <- function(id, state) {
 
     output$md_table <- renderTable(state$md[1:5, ])
     output$counts_table <- renderTable(state$counts[1:5, 1:5])
-    output$DA_result_table <- renderTable(result())
+    output$inputs <- renderUI({
+      tags$ul(class = "status-list mb-3",
+              status_item(!is.null(state$expr), "Annotated clusters"),
+              status_item(has_df(state$md), "Sample metadata"),
+              status_item(has_df(state$counts), "Cluster counts"))
+    })
+
+    observe(shinyjs::toggleState("doDA", condition = has_df(state$md) && has_df(state$counts)))
+
+    output$DA_result_table <- DT::renderDT({
+      req(result())
+      DT::datatable(result(), rownames = FALSE, filter = "top",
+                    options = list(pageLength = 25, scrollX = TRUE)) %>%
+        DT::formatSignif("p-value", digits = 3)
+    })
 
     observeEvent(input$doDA, {
       req(state$counts, state$md)

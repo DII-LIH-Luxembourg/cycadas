@@ -4,24 +4,41 @@
 
 mod_da_tree_ui <- function(id) {
   ns <- NS(id)
-  fluidRow(
-    tags$head(tags$style(sprintf("#%s{height:700px !important;}", ns("treebox")))),
-    column(width = 8,
-           box(id = ns("treebox"), width = NULL, title = "Interactive DA Tree",
-               visNetworkOutput(ns("tree"), width = "100%", height = "700px"))),
-    column(width = 4,
-           box(width = NULL, tableOutput(ns("DA_table"))),
-           box(width = NULL, plotOutput(ns("boxplot"))))
+  tags$div(
+    class = "container-fluid py-3",
+    uiOutput(ns("notice")),
+    layout_columns(
+      col_widths = c(8, 4),
+      card(full_screen = TRUE,
+           card_header("Annotation tree",
+                       tags$span(class = "small text-body-secondary fw-normal ms-2",
+                                 "Click a node to compare its proportion between conditions")),
+           card_body(class = "p-1", visNetworkOutput(ns("tree"), width = "100%", height = "640px"))),
+      tagList(
+        card(full_screen = TRUE, card_header(textOutput(ns("title"), inline = TRUE)),
+             plotOutput(ns("boxplot"), height = "380px")),
+        card(card_header("Pairwise tests"), tableOutput(ns("DA_table")))
+      )
+    )
   )
 }
 
 mod_da_tree_server <- function(id, state) {
   moduleServer(id, function(input, output, session) {
 
-    output$tree <- renderVisNetwork({
-      req(state$graph)
-      tree_network(state$graph, session$ns("tree_click"))
+    output$notice <- renderUI({
+      if (is.null(state$expr)) no_data_notice()
+      else if (!has_df(state$md) || !has_df(state$counts))
+        tags$div(class = "alert alert-secondary",
+                 "Load sample metadata and cluster counts on the Workspace tab to compare conditions.")
     })
+
+    output$tree <- renderVisNetwork({
+      req(state$graph, state$expr)
+      tree_network(state$graph, session$ns("tree_click"), expr = state$expr)
+    })
+
+    output$title <- renderText(if (is.null(node_id())) "Proportion per condition" else node_label())
 
     node_id <- reactiveVal(NULL)
     observeEvent(input$tree_click, node_id(input$tree_click[1]))
@@ -45,7 +62,7 @@ mod_da_tree_server <- function(id, state) {
 
     output$boxplot <- renderPlot({
       if (is.null(node_id())) {
-        plot_message("No Data Available")
+        plot_message("Click a node in the tree")
       } else {
         plot_da_boxplot(props(), node_label())
       }

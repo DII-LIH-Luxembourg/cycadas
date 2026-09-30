@@ -4,28 +4,34 @@
 mod_workspace_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    settings_box(
-      "Workspace", status = "success",
-      splitLayout(cellWidths = c("50%", "50%"),
-                  downloadButton(ns("btnSaveWorkspace"), "Save Workspace"),
-                  tags$div(id = ns("load_form"),
-                           fileInput(ns("btnLoadWorkspace"), label = NULL,
-                                     placeholder = "Choose Workspace File",
-                                     multiple = FALSE,
-                                     accept = c(".rds", ".RDS")))
-      ),
-      tags$hr(),
-      actionButton(ns("btnClearWorkspace"), "Clear Workspace")
+    card(
+      card_header("Workspace"),
+      tags$p(class = "small text-body-secondary",
+             "A workspace file holds the data, thresholds and annotation tree of this session."),
+      tags$div(class = "d-flex gap-2 align-items-start flex-wrap",
+               downloadButton(ns("btnSaveWorkspace"), "Save workspace", class = "btn-primary"),
+               actionButton(ns("btnClearWorkspace"), "Clear", icon = icon("eraser"),
+                            class = "btn-outline-danger")),
+      tags$div(id = ns("load_form"), class = "mt-3",
+               fileInput(ns("btnLoadWorkspace"), "Load workspace",
+                         placeholder = "cycadas-workspace_*.rds",
+                         multiple = FALSE, accept = c(".rds", ".RDS")))
     ),
-    settings_box(
-      "Load Demo Data", status = "success",
-      splitLayout(cellWidths = c("50%", "50%"),
-                  actionButton(ns("btnLoadDemoData"), "Unannotated"),
-                  actionButton(ns("btnLoadAnnoData"), "Annotated")
-      )
-    ),
-    box(title = "Workspace status", width = NULL, solidHeader = TRUE, status = "primary",
-        uiOutput(ns("status")))
+    card(card_header("Loaded data"), uiOutput(ns("status")))
+  )
+}
+
+# Demo data buttons, shown on the import card
+mod_workspace_demo_ui <- function(id) {
+  ns <- NS(id)
+  tagList(
+    tags$p(class = "text-body-secondary small",
+           "1,600 clusters and 27 markers from a PBMC mass cytometry dataset."),
+    tags$div(class = "d-flex gap-2",
+             actionButton(ns("btnLoadDemoData"), "Load unannotated", class = "btn-outline-primary"),
+             actionButton(ns("btnLoadAnnoData"), "Load annotated", class = "btn-primary")),
+    tags$p(class = "text-body-secondary small mt-2 mb-0",
+           "The annotated version includes thresholds, an annotation tree, metadata and counts.")
   )
 }
 
@@ -72,32 +78,19 @@ mod_workspace_server <- function(id, state) {
 
     # Status ----
     output$status <- renderUI({
-      dims <- function(x) if (has_df(x)) sprintf("%d×%d", nrow(x), ncol(x)) else "-"
-      df <- data.frame(
-        Item    = c("Median expression", "Metadata", "Thresholds", "Cell Frequencies",
-                    "Cluster Counts table", "CATALYST object"),
-        Present = c(has_df(state$expr), has_df(state$md), has_df(state$th),
-                    has_val(state$cell_freq), has_df(state$counts), has_val(state$sce)),
-        Details = c(dims(state$expr), dims(state$md), dims(state$th), dims(state$cell_freq),
-                    dims(state$counts),
-                    if (has_val(state$sce)) class(state$sce)[1] else "-"),
-        stringsAsFactors = FALSE
+      dims <- function(x) if (has_df(x)) sprintf("%d \u00d7 %d", nrow(x), ncol(x)) else "empty"
+      tags$ul(
+        class = "status-list",
+        status_item(has_df(state$expr), "Cluster expression", dims(state$expr)),
+        status_item(has_val(state$cell_freq), "Cluster frequencies", dims(state$cell_freq)),
+        status_item(has_df(state$th), "Thresholds", dims(state$th)),
+        status_item(!is.null(state$graph), "Annotation tree",
+                    if (!is.null(state$graph)) sprintf("%d phenotypes", nrow(state$graph$nodes)) else "empty"),
+        status_item(has_df(state$md), "Sample metadata", dims(state$md)),
+        status_item(has_df(state$counts), "Cluster counts", dims(state$counts)),
+        status_item(has_val(state$sce), "CATALYST object",
+                    if (has_val(state$sce)) class(state$sce)[1] else "empty")
       )
-
-      items <- lapply(seq_len(nrow(df)), function(i) {
-        ok <- isTRUE(df$Present[i])
-        tags$li(
-          style = "margin: 6px 0;",
-          strong(df$Item[i]), " — ",
-          tags$span(class = paste("badge", if (ok) "bg-green" else "bg-red"),
-                    if (ok) "Present" else "Empty"),
-          " ",
-          tags$i(class = paste("fa", if (ok) "check-circle" else "times-circle"),
-                 style = "margin-left:6px;"),
-          tags$span(style = "margin-left:10px;color:#666;", df$Details[i])
-        )
-      })
-      tags$ul(class = "list-unstyled", items)
     })
   })
 }

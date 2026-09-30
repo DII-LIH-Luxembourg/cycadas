@@ -3,15 +3,15 @@
 
 mod_import_gigasom_ui <- function(id) {
   ns <- NS(id)
-  settings_box(
-    "GigaSOM / FlowSOM import",
+  tagList(
+    tags$p(class = "text-body-secondary small",
+           "Median marker expression per cluster and the cluster frequencies, as CSV files."),
     tags$form(id = ns("upload_form"),
               fileInput(ns("fMarkerExpr"), "Upload Marker Expressions", accept = c("text/csv", ".csv")),
               fileInput(ns("cluster_freq"), "Upload Cluster Frequencies", accept = c("text/csv", ".csv"))
     ),
-    tags$hr(),
     uiOutput(ns("status")),
-    actionButton(ns("btnImport"), "Import", class = "btn btn-success")
+    actionButton(ns("btnImport"), "Import", icon = icon("file-import"), class = "btn-primary mt-3")
   )
 }
 
@@ -25,7 +25,7 @@ mod_import_gigasom_server <- function(id, state) {
     output$status <- renderUI({
       file_status_ui(files$present(),
                      c("Marker Expressions (CSV)", "Cluster Frequencies (CSV)"),
-                     "Both files present — ready to import.",
+                     "Both files present, ready to import.",
                      "Please select both files to enable Import.")
     })
 

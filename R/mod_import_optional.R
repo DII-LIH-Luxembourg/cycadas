@@ -7,16 +7,31 @@ mod_import_optional_ui <- function(id) {
   csv <- c("text/csv", ".csv")
   tags$form(
     id = ns("upload_form"),
-    settings_box("Optional - Marker-thresholds", status = "warning", collapsed = TRUE,
-                 fileInput(ns("fTH"), "Choose CSV File", multiple = FALSE, accept = csv)),
-    settings_box("Optional - Annotation Tree", status = "warning", collapsed = TRUE,
-                 fileInput(ns("fNodes"), "Choose Nodes File", multiple = FALSE, accept = csv),
-                 fileInput(ns("fEdges"), "Choose Edges File", multiple = FALSE, accept = csv),
-                 actionButton(ns("btnImportTree"), "Import")),
-    settings_box("Optional - Metadata", status = "warning", collapsed = TRUE,
-                 fileInput(ns("metadata"), "Choose CSV File", multiple = F, accept = csv)),
-    settings_box("Optional - Count Table", status = "warning", collapsed = TRUE,
-                 fileInput(ns("counts_table"), "Choose CSV File", multiple = F, accept = csv))
+    accordion(
+      open = FALSE,
+      accordion_panel(
+        "Marker thresholds", icon = icon("sliders"),
+        tags$p(class = "small text-body-secondary",
+               "Replaces the estimated thresholds. Existing phenotypes are re-assigned."),
+        fileInput(ns("fTH"), NULL, multiple = FALSE, accept = csv)),
+      accordion_panel(
+        "Annotation tree", icon = icon("sitemap"),
+        tags$p(class = "small text-body-secondary",
+               "Nodes and edges files from a previous annotation export."),
+        fileInput(ns("fNodes"), "Nodes file", multiple = FALSE, accept = csv),
+        fileInput(ns("fEdges"), "Edges file", multiple = FALSE, accept = csv),
+        actionButton(ns("btnImportTree"), "Import tree", class = "btn-outline-primary btn-sm")),
+      accordion_panel(
+        "Sample metadata", icon = icon("table-list"),
+        tags$p(class = "small text-body-secondary",
+               "CSV with the columns sample_id and condition. Needed for differential abundance."),
+        fileInput(ns("metadata"), NULL, multiple = FALSE, accept = csv)),
+      accordion_panel(
+        "Cluster counts", icon = icon("table-cells"),
+        tags$p(class = "small text-body-secondary",
+               "Cells per cluster (rows) and sample (columns). Needed for differential abundance."),
+        fileInput(ns("counts_table"), NULL, multiple = FALSE, accept = csv))
+    )
   )
 }
 

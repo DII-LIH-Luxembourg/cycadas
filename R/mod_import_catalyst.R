@@ -4,7 +4,12 @@
 
 mod_import_catalyst_ui <- function(id) {
   ns <- NS(id)
-  settings_box("Catalyst import", uiOutput(ns("upload")))
+  tagList(
+    tags$p(class = "text-body-secondary small",
+           "A SingleCellExperiment clustered with CATALYST, saved as RDS. The meta-cluster",
+           "level is chosen on the Annotation tab."),
+    uiOutput(ns("upload"))
+  )
 }
 
 mod_import_catalyst_server <- function(id, state) {
@@ -18,7 +23,8 @@ mod_import_catalyst_server <- function(id, state) {
                   multiple = FALSE,
                   accept = c(".rds"))
       } else {
-        p("The CATALYST package is not available.")
+        tags$div(class = "alert alert-secondary mb-0",
+                 "Install the Bioconductor packages CATALYST and SingleCellExperiment to import CATALYST objects.")
       }
     })
 

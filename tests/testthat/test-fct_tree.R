@@ -77,3 +77,28 @@ test_that("rebuiltTree() matches a node created by hand", {
   expect_equal(rebuiltTree(g, expr, th, markers),
                c("Unassigned", "m1+m2-", "m1+", "Unassigned"))
 })
+
+test_that("node_lineage() and lineage_markers() follow the path to the root", {
+
+  g <- initTree()
+  g <- add_node(g, "Unassigned", "A", list("m1"), list(""), "blue")
+  g <- add_node(g, "A", "B", list(""), list("m2"), "blue")
+  g <- add_node(g, "B", "C", list("m3"), list("m4"), "blue")
+
+  expect_equal(node_lineage(g, 4), c(1, 2, 3, 4))
+  expect_equal(node_lineage(g, 1), 1)
+  expect_equal(lineage_markers(g, 4), list(pos = c("m1", "m3"), neg = c("m2", "m4")))
+  expect_equal(lineage_markers(g, 1), list(pos = character(0), neg = character(0)))
+})
+
+test_that("tree_network() draws edges from parent to child without the root loop", {
+
+  g <- add_node(initTree(), "Unassigned", "A", list("m1"), list(""), "blue")
+  expr <- data.frame(cell = c("A", "A", "Unassigned"), freq = c(10, 20, 70))
+  net <- tree_network(g, "tree_click", expr = expr, selected = 2)
+
+  expect_equal(net$x$edges$from, 1)
+  expect_equal(net$x$edges$to, 2)
+  expect_equal(net$x$nodes$borderWidth, c(1, 3))
+  expect_match(net$x$nodes$title[2], "2 clusters, 30%")
+})

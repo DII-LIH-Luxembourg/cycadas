@@ -12,4 +12,15 @@ app_server <- function(input, output, session) {
   mod_annotation_server("treeannotation", state)
   mod_da_server("DA_tab", state)
   mod_da_tree_server("DA_tree", state)
+
+  # Size of the loaded dataset, shown on the right of the navbar
+  output$dataset_badge <- renderUI({
+    if (is.null(state$expr)) {
+      tags$span(class = "badge text-bg-light dataset-badge", "No data loaded")
+    } else {
+      tags$span(class = "badge text-bg-primary dataset-badge",
+                sprintf("%d clusters \u00b7 %d markers \u00b7 %d phenotypes",
+                        nrow(state$expr), length(state$markers), nrow(state$graph$nodes)))
+    }
+  })
 }

@@ -194,11 +194,11 @@ Detailed workflow for each method can be found in the data section.
 
 The **UMAP interactive** tab allows the preview of marker expression in the clusters selected by the user on the UMAP:
 
-![](./www/umap_interactive.png)
+![](./inst/app/www/umap_interactive.png)
 
 In the **UMAP Marker expression** tab, user can investigate the expression level of the selected marker across all the clusters.
 
-![](./www/umap_marker_expression.png)
+![](./inst/app/www/umap_marker_expression.png)
 
 ### Thresholds
 
@@ -206,11 +206,11 @@ In the **Thresholds** tab, the estimation of threshold value defining negative a
 
 *Expression of CD8a with blue threshold line indicating the bimodal distribution:*
 
-![](./www/thresholds_bimodal_cd8.png)
+![](./inst/app/www/thresholds_bimodal_cd8.png)
 
 *Expression of TCRgd with red threshold line indicating that this marker expression does not follow the bimodal distribution:*
 
-![](./www/thresholds_notbimodal_tcrgd.png)
+![](./inst/app/www/thresholds_notbimodal_tcrgd.png)
 
 ### Annotation
 
@@ -220,46 +220,46 @@ All the clusters are initially defined as "unassigned". Then, upon the selection
 
 *Scheme depicting the process of building the annotation tree:*
 
-![](./www/annotation_building_tree.png)
+![](./inst/app/www/annotation_building_tree.png)
 
 *Cropped fragment of the completed annotation tree:*
 
-![](./www/annotation_tree.png)
+![](./inst/app/www/annotation_tree.png)
 
 Upon selection of the node, heatmap displaying the expression of all the markers in all the clusters belonging to this node is shown.
 
 *Heatmap depicting phenotype of clusters annotated as CD8+ TEM cells:*
 
-![](./www/annotation_heatmap.png)
+![](./inst/app/www/annotation_heatmap.png)
 
 ### Differential abundance analysis
 
 In the **Differential Abundance** tab, a pairwise Wilcoxon test on all the nodes is performed upon selecting the desired multiple testing correction method:
 
-![](./www/differential_abundance.png)
+![](./inst/app/www/differential_abundance.png)
 
 **DA Interactive Tree** allows exploration of abundance of all the defined subpopulations across the conditions by selecting the node on the annotation tree.
 
 *Upon clicking on the desired node...*
 
-![](./www/DA_interactive_tree_tree.png)
+![](./inst/app/www/DA_interactive_tree_tree.png)
 
 *... proportion of the selected celltype across the condition is plotted.*
 
-![](./www/DA_interactive_tree_plot.png)
+![](./inst/app/www/DA_interactive_tree_plot.png)
 
 ### Data export
 
 Differential abundance analysis results, as well as proportion table (% of defined cell populations across all the samples) can be exported in the **Differential Abundance** tab.
 
-![](./www/differential_abundance_export.png)
+![](./inst/app/www/differential_abundance_export.png)
 
 Files enabling the continuation of the analysis - modified threshold values, as well as annotation tree structure, can be exported from the **Thresholds** and **Annotation** tabs, respectively, and re-loaded (**Load** tab) to continue the analysis.
 
 *Exporting annotation tree:*
 
-![](./www/annotation_export.png)
+![](./inst/app/www/annotation_export.png)
 
 *Exporting threshold values:*
 
-![](./www/thresholds_export.png)
+![](./inst/app/www/thresholds_export.png)
