@@ -183,15 +183,20 @@ color_nodes_by_usage <- function(nodes, cells) {
   nodes
 }
 
-# Hover text: own marker definition, cluster count and frequency -------------
-node_tooltips <- function(nodes, expr) {
+# Hover text: own marker definition, cluster count and cell share -----------
+node_tooltips <- function(graph, expr) {
+  comp <- phenotype_composition(graph, expr)
+  comp <- comp[match(graph$nodes$id, comp$id), ]
+  nodes <- graph$nodes
   vapply(seq_len(nrow(nodes)), function(i) {
     pm <- unlist(nodes$pm[i]); nm <- unlist(nodes$nm[i])
     def <- c(if (length(pm)) paste0(pm[nzchar(pm)], "+"), if (length(nm)) paste0(nm[nzchar(nm)], "\u2212"))
-    in_node <- expr$cell == nodes$label[i]
     paste0("<b>", htmltools::htmlEscape(nodes$label[i]), "</b><br>",
            if (length(def)) paste0(paste(def, collapse = " "), "<br>"),
-           sum(in_node), " clusters, ", round(sum(expr$freq[in_node]), 2), "%")
+           sprintf("%.2f%% of cells (%d clusters)<br>remaining %.2f%% (%d clusters)",
+                   comp$total[i], comp$clusters_total[i], comp$remaining[i], comp$clusters_remaining[i]),
+           if (!is.na(comp$of_parent[i])) sprintf("<br>%.1f%% of %s", comp$of_parent[i],
+                                                  htmltools::htmlEscape(comp$parent[i])))
   }, character(1))
 }
 
@@ -216,7 +221,7 @@ tree_network <- function(graph, input_id, expr = NULL, selected = NULL, height =
 
   nodes <- data.frame(tree_selection_style(graph$nodes, expr, selected),
                       label = graph$nodes$label, check.names = FALSE)
-  if (!is.null(expr)) nodes$title <- node_tooltips(graph$nodes, expr)
+  if (!is.null(expr)) nodes$title <- node_tooltips(graph, expr)
 
   # edges point from parent to child for the layout; the root's self-loop is
   # not drawn

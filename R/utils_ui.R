@@ -154,3 +154,39 @@ tree_output <- function(widget_id, height) {
            tree_toolbar(widget_id),
            visNetworkOutput(widget_id, width = "100%", height = height))
 }
+
+# Phenotype composition list ---------------------------------------------------
+# Indented rows in tree order with a bar for the total share (light) and the
+# remaining share (dark). Clicking a row sets `input_id` to the node id.
+composition_list <- function(comp, selected = NULL, input_id) {
+  rows <- lapply(seq_len(nrow(comp)), function(i) {
+    r <- comp[i, ]
+    tags$div(
+      class = paste("comp-row", if (isTRUE(r$id == selected)) "selected"),
+      `data-id` = r$id,
+      title = sprintf("%s: %.2f%% of cells, remaining %.2f%%, %d clusters",
+                      r$phenotype, r$total, r$remaining, r$clusters_total),
+      onclick = sprintf("Shiny.setInputValue('%s', [%s], {priority: 'event'})", input_id, r$id),
+      tags$span(class = "comp-name", style = sprintf("padding-left: %.1frem", r$depth * 0.8),
+                r$phenotype),
+      tags$span(class = "comp-bar",
+                tags$span(class = "comp-total", style = sprintf("width: %.1f%%", r$total)),
+                tags$span(class = "comp-own", style = sprintf("width: %.1f%%", r$remaining))),
+      tags$span(class = "comp-value", sprintf("%.1f%%", r$total)),
+      tags$span(class = "comp-parent",
+                if (is.na(r$of_parent)) "" else sprintf("%.0f%%", r$of_parent))
+    )
+  })
+  tags$div(
+    class = "composition",
+    tags$div(class = "comp-row comp-head",
+             tags$span(class = "comp-name", "Phenotype"),
+             tags$span(class = "comp-bar", ""),
+             tags$span(class = "comp-value", title = "Share of all cells, incl. subpopulations", "Cells"),
+             tags$span(class = "comp-parent", title = "Share of the parent phenotype", "Parent")),
+    rows,
+    tags$div(class = "comp-legend",
+             tags$span(class = "swatch total"), "incl. subpopulations",
+             tags$span(class = "swatch own ms-2"), "remaining")
+  )
+}

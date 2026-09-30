@@ -98,6 +98,8 @@ restore_workspace <- function(state, ws) {
   reset_app_state(state)
 
   if (!is.null(ws$median_expr) && !is.null(ws$cl_freq)) {
+    # workspaces saved before 1.5 may hold fractions
+    ws$median_expr$freq <- freq_percent(ws$median_expr$freq)
     state$expr <- ws$median_expr
     state$cell_freq <- ws$cl_freq
     state$markers <- ws$lineage_marker

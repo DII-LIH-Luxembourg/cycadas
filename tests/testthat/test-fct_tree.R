@@ -100,5 +100,5 @@ test_that("tree_network() draws edges from parent to child without the root loop
   expect_equal(net$x$edges$from, 1)
   expect_equal(net$x$edges$to, 2)
   expect_equal(net$x$nodes$borderWidth, c(1, 3))
-  expect_match(net$x$nodes$title[2], "2 clusters, 30%")
+  expect_match(net$x$nodes$title[2], "30.00% of cells (2 clusters)", fixed = TRUE)
 })

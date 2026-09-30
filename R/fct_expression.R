@@ -3,7 +3,7 @@
 # The expression table ("expr") has one row per cluster and the columns
 #   <marker>_raw  median expression as imported
 #   <marker>      the same values scaled to 0-1
-#   freq          cluster frequency (clustering_prop)
+#   freq          cluster frequency in percent of all cells (clustering_prop)
 #   cell          current annotation label of the cluster
 
 # Column names of the raw (unscaled) marker values
@@ -13,7 +13,7 @@ raw_markers <- function(markers) paste0(markers, "_raw")
 normalize01 <- function(hm) {
 
   eDR <- as.matrix(hm)
-  rng <- colQuantiles(eDR, probs = c(0.01, 0.99))
+  rng <- colQuantiles(eDR, probs = c(0.01, 0.99), drop = FALSE)
   expr01 <- t((t(eDR) - rng[, 1]) / (rng[, 2] - rng[, 1]))
   expr01[expr01 < 0] <- 0
   expr01[expr01 > 1] <- 1
@@ -33,7 +33,7 @@ createExpressionDF <- function(df_expr, cell_freq, markers) {
   df_expr <- cbind(df_expr, df01_expr)
 
   ## Add frequencies and annotation
-  df_expr$freq <- cell_freq$clustering_prop
+  df_expr$freq <- freq_percent(cell_freq$clustering_prop)
   df_expr$cell <- "Unassigned"
 
   return(df_expr)

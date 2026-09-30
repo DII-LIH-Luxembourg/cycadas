@@ -90,3 +90,27 @@
 
 /* Selected table rows: keep text readable over column colours */
 table.dataTable tbody tr.selected td { color: #fff !important; }
+
+/* Composition list -------------------------------------------------------- */
+.composition { font-size: .8rem; max-height: 470px; overflow-y: auto; }
+.comp-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) 60px 46px 50px; gap: .4rem;
+  align-items: center; padding: .15rem .3rem; border-radius: .3rem; cursor: pointer;
+}
+.comp-row:hover { background: var(--bs-tertiary-bg); }
+.comp-row.selected { background: #e7f0fd; font-weight: 600; }
+.comp-head { cursor: default; color: var(--bs-secondary-color); font-size: .7rem;
+  text-transform: uppercase; letter-spacing: .03em; position: sticky; top: 0; background: var(--bs-body-bg); }
+.comp-head:hover { background: var(--bs-body-bg); }
+.comp-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.comp-bar { position: relative; height: .55rem; background: var(--bs-tertiary-bg); border-radius: .2rem; overflow: hidden; }
+.comp-head .comp-bar { background: none; }
+.comp-total, .comp-own { position: absolute; left: 0; top: 0; bottom: 0; min-width: 1px; }
+.comp-total { background: #b6cff5; }
+.comp-own { background: #2c7be5; }
+.comp-value, .comp-parent { text-align: right; font-variant-numeric: tabular-nums; }
+.comp-parent { color: var(--bs-secondary-color); }
+.comp-legend { font-size: .72rem; color: var(--bs-secondary-color); margin-top: .5rem; }
+.comp-legend .swatch { display: inline-block; width: .7rem; height: .5rem; border-radius: .15rem; margin-right: .25rem; }
+.comp-legend .swatch.total { background: #b6cff5; }
+.comp-legend .swatch.own { background: #2c7be5; }
