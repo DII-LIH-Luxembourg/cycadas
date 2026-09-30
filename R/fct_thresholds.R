@@ -4,6 +4,8 @@
 #   threshold  cut-off on the 0-1 scale
 #   color      "blue" for bimodal markers, "red" otherwise
 #   bi_mod     bimodality coefficient
+#   estimated  threshold estimated by kmeansTH(), kept when the threshold is
+#              changed by hand; NA if unknown
 
 # Bimodality cut-off as stated in Pfister et al., 2013
 BIMODALITY_CUTOFF <- 0.555
@@ -45,6 +47,7 @@ kmeansTH <- function(df, th_mode="km") {
       th[th$cell == m, "threshold"] <- midpoint_gmm
     }
   }
+  th$estimated <- th$threshold
   rownames(th) <- th$cell
   return(th)
 }
@@ -99,7 +102,39 @@ prepare_thresholds <- function(th) {
 
   th$X <- NULL
   th$color <- ifelse(th$bi_mod < BIMODALITY_CUTOFF, "red", "blue")
+  if (is.null(th$estimated)) th$estimated <- NA_real_
   rownames(th) <- th$cell
 
   return(th)
+}
+
+# Fill in missing estimates -------------------------------------------------
+# Thresholds from a CSV or an older workspace have no estimate; run
+# kmeansTH() for those markers.
+add_estimates <- function(th, expr, markers) {
+
+  if (is.null(th$estimated)) th$estimated <- NA_real_
+  missing <- intersect(th$cell[is.na(th$estimated)], markers)
+  if (length(missing) > 0) {
+    est <- kmeansTH(expr[, missing, drop = FALSE])
+    th$estimated[match(missing, th$cell)] <- est$threshold[match(missing, est$cell)]
+  }
+  th
+}
+
+# TRUE for markers whose threshold differs from the estimate
+threshold_modified <- function(th) {
+  !is.na(th$estimated) & abs(th$threshold - th$estimated) > 5e-4
+}
+
+# Set the thresholds of `cells` back to their estimates
+reset_thresholds <- function(th, cells = th$cell) {
+  idx <- th$cell %in% cells & !is.na(th$estimated)
+  th$threshold[idx] <- th$estimated[idx]
+  th
+}
+
+# Threshold table as written by the download and read by prepare_thresholds()
+write_thresholds <- function(th, file) {
+  write.csv(th[, c("cell", "threshold", "estimated", "bi_mod")], file)
 }

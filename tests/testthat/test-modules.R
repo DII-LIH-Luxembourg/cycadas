@@ -13,7 +13,7 @@ small_state <- function() {
     state$cell_freq <- cell_freq
     state$expr <- expr
     state$th <- data.frame(cell = markers, threshold = c(0.5, 0.5), color = "blue",
-                           bi_mod = 0.6, row.names = markers)
+                           bi_mod = 0.6, estimated = c(0.5, 0.5), row.names = markers)
     state$graph <- initTree()
   })
   state
@@ -91,7 +91,17 @@ test_that("thresholds: clicking the plot moves the threshold and re-assigns clus
 
     session$setInputs(scatter_click = list(x = 0.95))
     expect_equal(state$th["m1", "threshold"], 0.95)
+    expect_equal(state$th["m1", "estimated"], 0.5)
+    expect_equal(n_modified(), 1)
     expect_equal(sum(state$expr$cell == "m1+"), 1)
+
+    session$setInputs(resetOne = 1)
+    expect_equal(state$th["m1", "threshold"], 0.5)
+    expect_equal(n_modified(), 0)
+    expect_equal(sum(state$expr$cell == "m1+"), 3)
+
+    session$setInputs(scatter_click = list(x = 0.95), resetAll = 1, confirmResetAll = 1)
+    expect_equal(state$th["m1", "threshold"], 0.5)
   })
 })
 

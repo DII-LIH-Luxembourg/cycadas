@@ -70,13 +70,29 @@ plot_umap_selection <- function(umap, selection) {
 
 # Threshold plots -------------------------------------------------------------
 # `points` is data.frame(x, y): the 0-1 marker expression and a random jitter
-# `color` is the threshold table color: "blue" bimodal, "red" not bimodal
-threshold_vline <- function(threshold, color) {
-  geom_vline(xintercept = threshold, linetype = "dashed", linewidth = 1,
-             color = if (identical(color, "red")) "#e8590c" else COLOR_SELECTED)
+# `color` is the threshold table color: "blue" bimodal, "red" not bimodal.
+# When `estimated` is given and differs, it is drawn as a thin grey line; both
+# lines are labelled, each label on the side facing away from the other line.
+COLOR_ESTIMATE <- "#868e96"
+
+threshold_vline <- function(threshold, color, estimated = NA) {
+  col <- if (identical(color, "red")) "#e8590c" else COLOR_SELECTED
+  layers <- list(geom_vline(xintercept = threshold, linetype = "dashed", linewidth = 1, color = col))
+  if (!is.na(estimated) && abs(threshold - estimated) > 5e-4) {
+    right <- threshold > estimated
+    layers <- c(
+      geom_vline(xintercept = estimated, linewidth = .6, color = COLOR_ESTIMATE),
+      annotate("text", x = estimated, y = Inf, label = "estimate", vjust = 1.5,
+               hjust = if (right) 1.1 else -0.1, size = 3.5, color = COLOR_ESTIMATE),
+      layers,
+      annotate("text", x = threshold, y = Inf, label = "threshold", vjust = 1.5,
+               hjust = if (right) -0.1 else 1.1, size = 3.5, color = col, fontface = "bold")
+    )
+  }
+  layers
 }
 
-plot_threshold_scatter <- function(points, threshold, color) {
+plot_threshold_scatter <- function(points, threshold, color, estimated = NA) {
   ggplot(points, aes(x = x, y = y, color = x >= threshold)) +
     geom_point(size = 1.2, alpha = .7) +
     scale_color_manual(values = c(`FALSE` = "#adb5bd", `TRUE` = COLOR_SELECTED), guide = "none") +
@@ -85,15 +101,15 @@ plot_threshold_scatter <- function(points, threshold, color) {
           axis.text.y = element_blank(),
           panel.grid.major.y = element_blank()) +
     labs(x = "Expression (scaled 0 to 1)") +
-    threshold_vline(threshold, color)
+    threshold_vline(threshold, color, estimated)
 }
 
-plot_threshold_histogram <- function(points, threshold, color) {
+plot_threshold_histogram <- function(points, threshold, color, estimated = NA) {
   ggplot(points, aes(x = x)) +
     geom_histogram(bins = 80, fill = "#adb5bd") +
     labs(x = "Expression (scaled 0 to 1)", y = "Clusters") +
     theme_cycadas() +
-    threshold_vline(threshold, color)
+    threshold_vline(threshold, color, estimated)
 }
 
 # DA boxplot ------------------------------------------------------------------

@@ -37,10 +37,8 @@ load_dataset <- function(state, data, th = NULL) {
   # UMAP needs more rows than neighbours
   umap <- if (nrow(expr) > 20) buildUMAP(expr[, raw_markers(markers)]) else NULL
 
-  if (is.null(th)) {
-    progress$set(message = "Estimating thresholds...", value = 0.7)
-    th <- kmeansTH(expr[, markers])
-  }
+  progress$set(message = "Estimating thresholds...", value = 0.7)
+  th <- if (is.null(th)) kmeansTH(expr[, markers]) else add_estimates(th, expr, markers)
 
   state$markers <- markers
   state$cell_freq <- data$cell_freq
@@ -109,7 +107,9 @@ restore_workspace <- function(state, ws) {
   if (!is.null(ws$counts_table)) state$counts <- ws$counts_table
   if (!is.null(ws$metadata)) state$md <- ws$metadata
 
-  if (!is.null(ws$thresholds)) {
+  if (!is.null(ws$thresholds) && !is.null(ws$median_expr)) {
+    state$th <- add_estimates(drop_index_column(ws$thresholds), ws$median_expr, ws$lineage_marker)
+  } else if (!is.null(ws$thresholds)) {
     state$th <- drop_index_column(ws$thresholds)
   } else if (!is.null(ws$median_expr)) {
     state$th <- kmeansTH(ws$median_expr[, ws$lineage_marker])

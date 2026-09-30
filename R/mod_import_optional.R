@@ -40,7 +40,9 @@ mod_import_optional_server <- function(id, state) {
 
     # Marker thresholds ----
     observeEvent(input$fTH, {
-      state$th <- prepare_thresholds(read.csv(input$fTH$datapath))
+      th <- prepare_thresholds(read.csv(input$fTH$datapath))
+      if (!is.null(state$expr)) th <- add_estimates(th, state$expr, state$markers)
+      state$th <- th
       # re-calculate the tree after threshold upload
       if (!is.null(state$expr)) rebuild_annotation(state)
     })
