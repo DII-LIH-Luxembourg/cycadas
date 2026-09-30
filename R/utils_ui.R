@@ -112,3 +112,45 @@ marker_chips <- function(pos, neg) {
     lapply(neg, function(m) tags$span(class = "marker-chip neg", paste0(m, "\u2212")))
   )
 }
+
+# Zoom / fit / pan / export buttons for a tree widget --------------------------
+# Place inside a container together with visNetworkOutput(widget_id).
+tree_toolbar <- function(widget_id) {
+  btn <- function(action, icon_name, title) {
+    tags$button(type = "button", class = "btn btn-light btn-sm", title = title,
+                `aria-label` = title,
+                onclick = sprintf("cycadasTree.run('%s', '%s')", widget_id, action),
+                icon(icon_name))
+  }
+  tags$div(
+    class = "tree-toolbar",
+    tags$div(class = "btn-group",
+             btn("zoomOut", "magnifying-glass-minus", "Zoom out"),
+             btn("zoomIn", "magnifying-glass-plus", "Zoom in")),
+    tags$div(class = "btn-group",
+             btn("fit", "expand", "Fit whole tree"),
+             btn("reset", "rotate-left", "Reset view"),
+             btn("focus", "crosshairs", "Center on selected node")),
+    tags$div(class = "btn-group",
+             btn("left", "arrow-left", "Move left"),
+             btn("up", "arrow-up", "Move up"),
+             btn("down", "arrow-down", "Move down"),
+             btn("right", "arrow-right", "Move right")),
+    tags$div(class = "btn-group",
+             tags$button(type = "button", class = "btn btn-light btn-sm",
+                         title = "Download the whole tree as SVG (vector graphic)",
+                         onclick = sprintf("cycadasTree.exportTree('%s', 'svg')", widget_id),
+                         icon("download"), "SVG"),
+             tags$button(type = "button", class = "btn btn-light btn-sm",
+                         title = "Download the whole tree as PNG (3x resolution)",
+                         onclick = sprintf("cycadasTree.exportTree('%s', 'png')", widget_id),
+                         "PNG"))
+  )
+}
+
+# visNetworkOutput with the toolbar on top
+tree_output <- function(widget_id, height) {
+  tags$div(class = "tree-container",
+           tree_toolbar(widget_id),
+           visNetworkOutput(widget_id, width = "100%", height = height))
+}

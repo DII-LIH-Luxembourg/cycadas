@@ -232,24 +232,17 @@ tree_network <- function(graph, input_id, expr = NULL, selected = NULL, height =
     visHierarchicalLayout(direction = "LR", sortMethod = "directed", shakeTowards = "roots",
                           levelSeparation = 230, nodeSpacing = 42) %>%
     visPhysics(enabled = FALSE) %>%
-    visInteraction(hover = TRUE, tooltipDelay = 150) %>%
+    visInteraction(hover = TRUE, tooltipDelay = 150,
+                   keyboard = list(enabled = TRUE, bindToWindow = FALSE)) %>%
     visEvents(
       select = sprintf(
         "function(nodes) { Shiny.setInputValue('%s', nodes.nodes, {priority: 'event'}); }",
         input_id),
-      # keep labels readable: when fitting, zoom out no further than 0.65 (large
-      # trees, anchored at the root) and zoom in no further than 1 (small trees)
+      # first view: see cycadasTree.readable() in inst/app/www/cycadas.js
       afterDrawing = "function() {
         if (this.cycadasFitted) return;
         this.cycadasFitted = true;
-        var scale = this.getScale();
-        if (scale < 0.65) {
-          var root = this.getPositions([1])[1];
-          var width = this.body.container.clientWidth;
-          this.moveTo({scale: 0.65, position: {x: root.x + width / 2 / 0.65 - 90, y: root.y}});
-        } else if (scale > 1) {
-          this.moveTo({scale: 1});
-        }
+        if (window.cycadasTree) window.cycadasTree.readable(this);
       }"
     )
 }

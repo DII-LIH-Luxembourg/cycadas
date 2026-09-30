@@ -40,7 +40,7 @@ mod_annotation_ui <- function(id) {
                               class = "btn-outline-danger btn-sm"),
                  downloadButton(ns("exportAnnotationBtn"), "Export annotation",
                                 class = "btn-outline-secondary btn-sm")),
-      card_body(class = "p-1", visNetworkOutput(ns("tree"), height = "500px"))
+      card_body(class = "p-1", tree_output(ns("tree"), height = "500px"))
     ),
     layout_columns(
       col_widths = c(7, 5),
@@ -187,7 +187,8 @@ mod_annotation_server <- function(id, state) {
 
     observeEvent(current_node(), {
       visNetworkProxy(session$ns("tree")) %>%
-        visUpdateNodes(tree_selection_style(state$graph$nodes, state$expr, current_node()$id))
+        visUpdateNodes(tree_selection_style(state$graph$nodes, state$expr, current_node()$id)) %>%
+        visSelectNodes(id = current_node()$id, clickEvent = FALSE)
     })
 
     # Create node -------------------------------------------------------------

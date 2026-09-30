@@ -77,3 +77,13 @@
 .status-dot { display: inline-block; width: .55rem; height: .55rem; border-radius: 50%; margin-right: .5rem; }
 .status-dot.ok { background: #198754; }
 .status-dot.missing { background: #ced4da; }
+
+/* Tree toolbar ------------------------------------------------------------- */
+.tree-container { position: relative; }
+.tree-toolbar {
+  position: absolute; top: .5rem; right: .5rem; z-index: 5;
+  display: flex; gap: .35rem; flex-wrap: wrap; justify-content: flex-end;
+}
+.tree-toolbar .btn-group { box-shadow: 0 1px 2px rgba(0, 0, 0, .12); border-radius: .375rem; }
+.tree-toolbar .btn { border: 1px solid var(--bs-border-color); background: var(--bs-body-bg); padding: .2rem .5rem; }
+.tree-toolbar .btn:hover { background: var(--bs-tertiary-bg); }

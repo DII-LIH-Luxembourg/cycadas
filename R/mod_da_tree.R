@@ -13,7 +13,7 @@ mod_da_tree_ui <- function(id) {
            card_header("Annotation tree",
                        tags$span(class = "small text-body-secondary fw-normal ms-2",
                                  "Click a node to compare its proportion between conditions")),
-           card_body(class = "p-1", visNetworkOutput(ns("tree"), width = "100%", height = "640px"))),
+           card_body(class = "p-1", tree_output(ns("tree"), height = "640px"))),
       tagList(
         card(full_screen = TRUE, card_header(textOutput(ns("title"), inline = TRUE)),
              plotOutput(ns("boxplot"), height = "380px")),
