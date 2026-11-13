@@ -10,6 +10,33 @@
 # Bimodality cut-off as stated in Pfister et al., 2013
 BIMODALITY_CUTOFF <- 0.555
 
+# Threshold of one marker: the midpoint of two groups from 1-D k-means or a
+# two-component Gaussian mixture, whichever separates the values better
+# (silhouette). A marker with fewer than 2 distinct values gets 0.5; when the
+# mixture can't be fitted (e.g. all clusters but one at the same value), the
+# k-means midpoint is used.
+estimate_threshold <- function(x) {
+  if (length(unique(x)) < 2) return(0.5)
+
+  set.seed(42)
+  z <- Ckmeans.1d.dp(x, 2)
+  midpoint_kmeans <- mean(z$centers)
+  kmeans_avg_silhouette <- mean(silhouette(z$cluster, dist(x))[, 3])
+
+  gmm <- tryCatch({
+    fit <- Mclust(x, G = 2, verbose = FALSE)
+    if (is.null(fit) || length(unique(fit$classification)) < 2) NULL
+    else list(midpoint = mean(fit$parameters$mean),
+              silhouette = mean(silhouette(fit$classification, dist(x))[, 3]))
+  }, error = function(e) NULL)
+
+  if (is.null(gmm) || !is.finite(gmm$midpoint) || kmeans_avg_silhouette >= gmm$silhouette) {
+    midpoint_kmeans
+  } else {
+    gmm$midpoint
+  }
+}
+
 # Estimate the threshold values -----------------------------------------------
 kmeansTH <- function(df, th_mode="km") {
   th <- data.frame(cell = colnames(df), threshold = 0.0, color = "blue", bi_mod = 0)
@@ -17,35 +44,13 @@ kmeansTH <- function(df, th_mode="km") {
   for (m in th$cell) {
     # check for bi-modal distribution, if not color = red to indicate
     bi_mod_value <- bimodality_coefficient(df[, m])
+    if (!is.finite(bi_mod_value)) bi_mod_value <- 0   # constant marker
     th[th$cell == m, "bi_mod"] <- round(bi_mod_value, 3)
     if (bi_mod_value < BIMODALITY_CUTOFF) {
       th[th$cell == m, "color"] <- "red"
     }
 
-    ######## K-Means
-    set.seed(42)
-
-    z <- Ckmeans.1d.dp(df[, m], 2)
-    midpoint_kmeans <- mean(z$centers)
-
-    kmeans_silhouette <- silhouette(z$cluster, dist(df[, m]))
-    kmeans_avg_silhouette <- mean(kmeans_silhouette[, 3])
-
-    ###########################################################################
-    # Perform GMM clustering ##################################################
-    gmm_result <- Mclust(df[, m], G = 2)
-
-    # Midpoint between the means of the Gaussian components
-    midpoint_gmm <- mean(gmm_result$parameters$mean)
-    gmm_silhouette <- silhouette(gmm_result$classification, dist(df[, m]))
-    gmm_avg_silhouette <- mean(gmm_silhouette[, 3])
-    ###########################################################################
-
-    if (kmeans_avg_silhouette >= gmm_avg_silhouette) {
-      th[th$cell == m, "threshold"] <- midpoint_kmeans
-    } else {
-      th[th$cell == m, "threshold"] <- midpoint_gmm
-    }
+    th[th$cell == m, "threshold"] <- estimate_threshold(df[, m])
   }
   th$estimated <- th$threshold
   rownames(th) <- th$cell

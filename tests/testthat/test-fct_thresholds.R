@@ -43,3 +43,13 @@ test_that("write_thresholds() output can be uploaded again", {
   expect_equal(back$estimated, th$estimated)
   expect_equal(back$color, th$color)
 })
+
+test_that("thresholds are estimated for markers with almost no spread", {
+  df <- data.frame(flat = c(rep(0, 99), 1), const = rep(0.3, 100),
+                   bimodal = c(rnorm(50, 0.2, 0.02), rnorm(50, 0.8, 0.02)))
+  th <- kmeansTH(df)
+  expect_true(all(is.finite(th$threshold)))
+  expect_equal(th["const", "threshold"], 0.5)
+  expect_true(th["flat", "threshold"] > 0 && th["flat", "threshold"] < 1)
+  expect_true(abs(th["bimodal", "threshold"] - 0.5) < 0.1)
+})
