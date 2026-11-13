@@ -1,3 +1,12 @@
+# Development
+
+## New features
+- `cycadas(dir)` opens the cluster data in a folder (`median_expr.csv`,
+  `cluster_freq.csv`, optionally `cluster_counts.csv` and `metadata.csv`) and
+  adds a **Save** button that writes `workspace.rds` and `labels.csv`
+  (cluster, label, path in the tree) into it; a saved workspace there is
+  reopened. Used by CytoSuite to run CyCadas on its clusterings.
+
 # Version 1.4.0
 
 ## Bug fixes

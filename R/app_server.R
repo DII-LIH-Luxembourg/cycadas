@@ -2,9 +2,12 @@
 # Creates the per-session state and starts one module per tab. Modules only
 # communicate through `state`.
 
-app_server <- function(input, output, session) {
+app_server <- function(input, output, session, dir = NULL) {
 
   state <- new_app_state()
+
+  # Folder session (cycadas(dir)): open the folder's data, save back into it
+  if (!is.null(dir)) mod_folder_server("folder", state, dir)
 
   mod_data_server("settings", state)
   mod_explore_server("umap_reactive", state)

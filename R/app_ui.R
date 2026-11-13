@@ -5,7 +5,7 @@ cycadas_theme <- function() {
   bs_theme(version = 5, preset = "shiny", primary = "#2c7be5")
 }
 
-app_ui <- function() {
+app_ui <- function(folder = FALSE) {
   page_navbar(
     id = "tabs",
     title = tags$img(src = "www/logo_navbar.png", alt = "CyCadas"),
@@ -24,6 +24,7 @@ app_ui <- function() {
       nav_panel("Interactive tree", value = "DA_tree", mod_da_tree_ui("DA_tree"))
     ),
     nav_spacer(),
-    nav_item(uiOutput("dataset_badge"))
+    nav_item(uiOutput("dataset_badge")),
+    if (folder) nav_item(mod_folder_ui("folder"))
   )
 }
