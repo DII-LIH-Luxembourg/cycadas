@@ -86,7 +86,12 @@ mod_folder_ui <- function(id) {
 
 mod_folder_server <- function(id, state, dir) {
   moduleServer(id, function(input, output, session) {
-    isolate(load_folder(state, dir))
+    # a failure here would end the session and leave an empty, greyed-out page
+    tryCatch(isolate(load_folder(state, dir)), error = function(e) {
+      showModal(modalDialog(title = "Could not open the data",
+                            tags$p(conditionMessage(e)), tags$p(class = "small text-body-secondary", dir),
+                            easyClose = TRUE))
+    })
 
     observeEvent(input$save, {
       ok <- tryCatch({ save_folder(state, dir); TRUE }, error = function(e) {
