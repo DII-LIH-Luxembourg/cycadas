@@ -98,6 +98,67 @@ delete_leaf_node <- function(graph_data, node_id) {
   return(graph_data)
 }
 
+# Annotation order ------------------------------------------------------------
+# rebuiltTree() handles the nodes in row order. A parent therefore has to come
+# before its children, and among siblings the earlier row takes the clusters
+# that match several siblings. The functions below change that order or the
+# parent of a node; the caller re-assigns the clusters with rebuiltTree().
+
+node_parent <- function(graph, node_id) {
+  graph$edges$to[match(node_id, graph$edges$from)]
+}
+
+# Children of a node in annotation order
+ordered_children <- function(graph, node_id) {
+  kids <- node_children(graph, node_id)
+  graph$nodes$id[graph$nodes$id %in% kids]
+}
+
+# Nodes and edges in depth-first order from the root, siblings in their
+# current row order
+sort_tree <- function(graph) {
+  visit <- function(id) c(id, unlist(lapply(ordered_children(graph, id), visit)))
+  ids <- visit(1)
+  graph$nodes <- graph$nodes[match(ids, graph$nodes$id), ]
+  graph$edges <- graph$edges[match(ids, graph$edges$from), ]
+  rownames(graph$edges) <- NULL
+  graph
+}
+
+# Swap a node with its previous (by = -1) or next (by = 1) sibling. Returns
+# the graph unchanged if there is no sibling in that direction.
+move_sibling <- function(graph, node_id, by) {
+  if (node_id == 1) return(graph)
+  sibs <- ordered_children(graph, node_parent(graph, node_id))
+  i <- match(node_id, sibs)
+  j <- i + by
+  if (is.na(i) || j < 1 || j > length(sibs)) return(graph)
+  sibs[c(i, j)] <- sibs[c(j, i)]
+  rows <- seq_len(nrow(graph$nodes))
+  rows[graph$nodes$id %in% sibs] <- match(sibs, graph$nodes$id)
+  graph$nodes <- graph$nodes[rows, ]
+  sort_tree(graph)
+}
+
+# Nodes that can become the parent of `node_id`: all except the node itself,
+# its descendants and its current parent
+possible_parents <- function(graph, node_id) {
+  excluded <- c(node_id, all_my_children(graph, node_id), node_parent(graph, node_id))
+  graph$nodes$id[!graph$nodes$id %in% excluded]
+}
+
+# Attach a node, with its subtree, to another parent. It becomes the last
+# child there. The node keeps its own markers; its lineage changes.
+move_node <- function(graph, node_id, new_parent_id) {
+  if (node_id == 1 || !new_parent_id %in% possible_parents(graph, node_id)) {
+    stop("Cannot move this node below the selected parent.")
+  }
+  graph$edges$to[graph$edges$from == node_id] <- new_parent_id
+  row <- match(node_id, graph$nodes$id)
+  graph$nodes <- graph$nodes[c(setdiff(seq_len(nrow(graph$nodes)), row), row), ]
+  sort_tree(graph)
+}
+
 # Build Graph from nodes and edges --------------------------------------------
 getGraphFromLoad <- function(df_nodes, df_edges) {
 
@@ -172,6 +233,16 @@ lineage_markers <- function(graph_data, node_id) {
     unique(m[!is.na(m) & nzchar(m)])
   }
   list(pos = collect("pm"), neg = collect("nm"))
+}
+
+# Markers required both positive and negative in the lineage of a node or of
+# one of its descendants. No cluster can match such a node.
+lineage_conflicts <- function(graph_data, node_id) {
+  ids <- c(node_id, all_my_children(graph_data, node_id))
+  unique(unlist(lapply(ids, function(id) {
+    m <- lineage_markers(graph_data, id)
+    intersect(m$pos, m$neg)
+  })))
 }
 
 # Node colors: grey if no cluster carries the label, blue otherwise -----------

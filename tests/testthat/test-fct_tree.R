@@ -102,3 +102,87 @@ test_that("tree_network() draws edges from parent to child without the root loop
   expect_equal(net$x$nodes$borderWidth, c(1, 3))
   expect_match(net$x$nodes$title[2], "30.00% of cells (2 clusters)", fixed = TRUE)
 })
+
+# Annotation order -------------------------------------------------------------
+
+# m1 = 9 matches both "A" (m1+) and "B" (m2-); the first sibling takes it
+order_fixture <- function() {
+  markers <- c("m1", "m2")
+  expr <- createExpressionDF(data.frame(m1 = c(9, 9, 1), m2 = c(1, 9, 1)),
+                             data.frame(clustering_prop = rep(1 / 3, 3)), markers)
+  th <- data.frame(cell = markers, threshold = c(0.5, 0.5))
+  g <- add_node(initTree(), "Unassigned", "A", list("m1"), list(""), "blue")
+  g <- add_node(g, "Unassigned", "B", list(""), list("m2"), "blue")
+  list(g = g, expr = expr, th = th, markers = markers)
+}
+
+test_that("move_sibling() changes which sibling takes shared clusters", {
+
+  f <- order_fixture()
+  expect_equal(rebuiltTree(f$g, f$expr, f$th, f$markers), c("A", "A", "B"))
+
+  g <- move_sibling(f$g, 3, -1)
+  expect_equal(ordered_children(g, 1), c(3, 2))
+  expect_equal(rebuiltTree(g, f$expr, f$th, f$markers), c("B", "A", "B"))
+})
+
+test_that("move_sibling() leaves the first and last sibling and the root in place", {
+
+  f <- order_fixture()
+  expect_identical(move_sibling(f$g, 2, -1), f$g)
+  expect_identical(move_sibling(f$g, 3, 1), f$g)
+  expect_identical(move_sibling(f$g, 1, 1), f$g)
+})
+
+test_that("move_sibling() keeps parents before their children", {
+
+  g <- initTree()
+  g <- add_node(g, "Unassigned", "A", list("m1"), list(""), "blue")
+  g <- add_node(g, "Unassigned", "B", list("m2"), list(""), "blue")
+  g <- add_node(g, "A", "A1", list("m3"), list(""), "blue")
+
+  g2 <- move_sibling(g, 2, 1)
+  expect_equal(g2$nodes$label, c("Unassigned", "B", "A", "A1"))
+  expect_equal(g2$edges$from, g2$nodes$id)
+  expect_equal(node_parent(g2, 4), 2)
+})
+
+test_that("move_node() moves a subtree below another parent", {
+
+  g <- initTree()
+  g <- add_node(g, "Unassigned", "A", list("m1"), list(""), "blue")
+  g <- add_node(g, "A", "A1", list("m2"), list(""), "blue")
+  g <- add_node(g, "A1", "A2", list("m3"), list(""), "blue")
+  g <- add_node(g, "Unassigned", "B", list("m4"), list(""), "blue")
+
+  expect_setequal(possible_parents(g, 3), c(1, 5))
+
+  g2 <- move_node(g, 3, 5)
+  expect_equal(node_parent(g2, 3), 5)
+  expect_equal(node_parent(g2, 4), 3)
+  expect_equal(g2$nodes$label, c("Unassigned", "A", "B", "A1", "A2"))
+  expect_equal(lineage_markers(g2, 4)$pos, c("m4", "m2", "m3"))
+
+  expect_length(lineage_conflicts(g2, 3), 0)
+  g3 <- add_node(g, "Unassigned", "C", list(""), list("m2"), "blue")
+  expect_equal(lineage_conflicts(move_node(g3, 3, 6), 3), "m2")
+
+  expect_error(move_node(g, 2, 4))
+  expect_error(move_node(g, 1, 2))
+})
+
+test_that("reordering the demo tree keeps every cluster assigned", {
+
+  markers <- colnames(df_expr_demoData)
+  expr <- createExpressionDF(df_expr_demoData, cluster_freq_demoData, markers)
+  th <- prepare_thresholds(marker_th_demo_data)
+  g <- demo_graph()
+
+  expect_equal(rebuiltTree(sort_tree(g), expr, th, markers), rebuiltTree(g, expr, th, markers))
+
+  leaf <- g$nodes$id[g$nodes$label == "CD4+ TCM"]
+  g2 <- move_sibling(g, leaf, -1)
+  cells <- rebuiltTree(g2, expr, th, markers)
+  expect_true(all(cells %in% g2$nodes$label))
+  expect_equal(nrow(g2$nodes), nrow(g$nodes))
+})

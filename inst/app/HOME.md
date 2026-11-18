@@ -71,6 +71,10 @@ To create a node:
 
 The **Composition** panel lists each phenotype's share of all cells and of its parent node; **CSV** exports it. The tree toolbar zooms, fits, pans, and saves the tree as SVG or PNG. **Export annotation** downloads a zip with the expression table and the tree as CSV files; the nodes and edges files can be loaded again under **Workspace** → **Optional files** → **Annotation tree**. **Delete node** removes the selected node if it has no children and returns its clusters to the parent.
 
+### Annotation order
+
+The order of the tree decides which phenotype a cluster gets. Nodes are applied from the root down, and when a cluster matches several siblings, the earlier sibling takes it. **Earlier** and **Later** move the selected node among its siblings. **Change parent** moves the selected node and its subpopulations below another node; each node keeps its own markers, so its lineage changes. After each change all clusters are re-assigned, and a message gives the number of clusters that changed phenotype. If the new lineage requires a marker to be both positive and negative, a warning names the marker; such a node can no longer match any cluster.
+
 For CATALYST data, the sidebar also selects the meta-cluster level. **Merge annotation** adds the annotation to the `SingleCellExperiment` and **Export object** downloads it.
 
 ### Differential abundance

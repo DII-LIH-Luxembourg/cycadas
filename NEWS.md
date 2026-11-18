@@ -1,3 +1,11 @@
+# Development
+
+## New features
+- Annotation order (#25): **Earlier** / **Later** change the order of a node
+  among its siblings, which decides the sibling that takes clusters matching
+  several siblings. **Change parent** moves a node with its subtree below
+  another node. All clusters are re-assigned after each change.
+
 # Version 1.5.0
 
 ## New features

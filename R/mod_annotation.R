@@ -36,6 +36,15 @@ mod_annotation_ui <- function(id) {
     card(
       full_screen = TRUE,
       card_title("Annotation tree",
+                 tags$div(
+                   class = "btn-group",
+                   title = "Siblings take clusters from their parent in this order",
+                   actionButton(ns("moveUpBtn"), "Earlier", icon = icon("arrow-up"),
+                                class = "btn-outline-secondary btn-sm"),
+                   actionButton(ns("moveDownBtn"), "Later", icon = icon("arrow-down"),
+                                class = "btn-outline-secondary btn-sm")),
+                 actionButton(ns("moveNodeBtn"), "Change parent", icon = icon("code-branch"),
+                              class = "btn-outline-secondary btn-sm"),
                  actionButton(ns("deleteNodeBtn"), "Delete node", icon = icon("trash"),
                               class = "btn-outline-danger btn-sm"),
                  downloadButton(ns("exportAnnotationBtn"), "Export annotation",
@@ -254,6 +263,73 @@ mod_annotation_server <- function(id, state) {
       updateTextInput(session, "newNode", value = "")
       showNotification(sprintf("Created '%s' with %d clusters.", name, nrow(selection)),
                        type = "message")
+    })
+
+    # Annotation order --------------------------------------------------------
+    # Apply a changed tree and re-assign all clusters
+    apply_tree_change <- function(graph, message) {
+      before <- state$expr$cell
+      state$graph <- graph
+      rebuild_annotation(state)
+      showNotification(sprintf("%s %d clusters changed phenotype.", message,
+                               sum(before != state$expr$cell)),
+                       type = "message")
+    }
+
+    move_in_order <- function(by) {
+      req(state$graph, state$expr)
+      node <- current_node()
+      if (node$id == 1) return(show_error("Cannot move node", "The root node cannot be moved."))
+      graph <- move_sibling(state$graph, node$id, by)
+      if (identical(graph$nodes$id, state$graph$nodes$id)) {
+        return(show_error("Cannot move node", sprintf(
+          "'%s' is already the %s child of its parent.", node$label, if (by < 0) "first" else "last")))
+      }
+      apply_tree_change(graph, sprintf("Moved '%s' %s.", node$label,
+                                       if (by < 0) "earlier" else "later"))
+    }
+
+    observeEvent(input$moveUpBtn, move_in_order(-1))
+    observeEvent(input$moveDownBtn, move_in_order(1))
+
+    observeEvent(input$moveNodeBtn, {
+      req(state$graph, state$expr)
+      node <- current_node()
+      choices <- possible_parents(state$graph, node$id)
+      if (node$id == 1 || length(choices) == 0) {
+        return(show_error("Cannot move node", sprintf("'%s' cannot be moved to another parent.", node$label)))
+      }
+      labels <- state$graph$nodes$label[match(choices, state$graph$nodes$id)]
+      showModal(modalDialog(
+        title = sprintf("Change the parent of '%s'", node$label),
+        tags$p(sprintf(paste(
+          "'%s' and its subpopulations move below the new parent and keep their own markers.",
+          "All clusters are re-assigned. The node becomes the last child of the new parent."),
+          node$label)),
+        pickerInput(session$ns("newParent"), "New parent", choices = setNames(choices, labels),
+                    options = picker_options()),
+        easyClose = TRUE,
+        footer = tagList(modalButton("Cancel"),
+                         actionButton(session$ns("confirmMove"), "Move", class = "btn-primary"))
+      ))
+    })
+
+    observeEvent(input$confirmMove, {
+      removeModal()
+      node <- current_node()
+      new_parent <- as.numeric(input$newParent)
+      req(new_parent %in% possible_parents(state$graph, node$id))
+      graph <- move_node(state$graph, node$id, new_parent)
+      apply_tree_change(graph, sprintf("Moved '%s' below '%s'.", node$label,
+                                       graph$nodes$label[graph$nodes$id == new_parent]))
+      conflicts <- lineage_conflicts(graph, node$id)
+      if (length(conflicts) > 0) {
+        showNotification(sprintf(paste(
+          "The new lineage requires %s to be both positive and negative.",
+          "'%s' or one of its subpopulations can no longer match any cluster."),
+          paste(conflicts, collapse = ", "), node$label),
+          type = "warning", duration = 15)
+      }
     })
 
     # Delete node -------------------------------------------------------------
