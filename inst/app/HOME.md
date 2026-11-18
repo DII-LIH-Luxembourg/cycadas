@@ -4,174 +4,81 @@
 
 #### Efficient and reproducible annotation of cytometry data
 
-**Aims**:
+CyCadas annotates the clusters of a cytometry clustering (FlowSOM, GigaSOM, CATALYST, RemoteSOM) and tests the abundance of the annotated cell types between conditions.
 
-• facilitating the process of cluster annotation while reducing user bias,
+Code examples for exporting the input tables from GigaSOM, FlowSOM and CATALYST workflows are in the [README on GitHub](https://github.com/DII-LIH-Luxembourg/cycadas#preparing-input-data).
 
-• saving time required to perform the annotation in comparison to manual methods,
+## Using the app
 
-• improving reproducibility.
+The navigation bar holds the tabs **Home**, **Workspace**, **Explore**, **Thresholds**, **Annotation** and **Differential abundance**. The badge on the right shows the number of clusters, markers and phenotypes in the session.
 
-**Key features**:
+### Demo dataset
 
-• defining the threshold of positive/negative marker expression,
+**Workspace** → **Demo data** loads 1,600 clusters and 27 markers. **Load unannotated** loads the cluster expression only, to build an annotation from scratch. **Load annotated** also loads thresholds, an annotation tree with 35 phenotypes, sample metadata and cluster counts.
 
-• interactive inspection of cluster phenotypes,
+*The demo dataset was generated from publicly available mass cytometry data of patients with idiopathic Parkinson's disease and healthy controls (Capelle, C.M. et al., Nat Commun, 2023), clustered with GigaSOM into 1,600 clusters.*
 
-• automatic merging of populations,
+### Workspace
 
-• differential abundance analysis.
+![Workspace tab](./www/workspace.png)
 
-## **Workspace:**
+**Import cluster data** reads one of:
 
-The **Workspace** section manages all data imports required to start or resume an annotation process.\
+- **GigaSOM / FlowSOM**: a median marker expression table (cluster × marker) and a cluster frequency table, both CSV
+- **CATALYST**: a `SingleCellExperiment` saved as `.rds`
+- **RemoteSOM**: the JSON output of RemoteSOM
 
-The required files depend on the **source of input data**.
+**Optional files** adds marker thresholds, an annotation tree (nodes and edges CSV), sample metadata and cluster counts. Differential abundance testing requires metadata and counts.
 
--   **GigaSOM / FlowSOM** clustering data
+**Save workspace** writes the data, thresholds, annotation tree, metadata, counts and UMAP coordinates to one `.rds` file. **Load workspace** restores a saved session. **Clear** empties the session. **Loaded data** lists each table and its dimensions.
 
-    To start a new annotation process, the following files are required
+### Explore
 
-    -   **Median marker expression table** (cluster × marker)
+![Explore tab](./www/explore.png)
 
-    -   **Cluster frequency table** (cluster counts per sample or condition)
-
-    **Optional** files (highlighted as *orange boxes* in the UI):
-
-    -   Marker threshold - holding custom defined threshold values per marker
-
-    -   Annotation tree - from a previous annotation process
-
-    -   Metadata - for statistical analysis
-
-    -   Cluster count table - for statistical analysis
-
-Code examples for generating these files from GigaSOM or FlowSOM workflows are available on GitHub.
-
--   **Catalyst data**
-
-    CyCadas can also be initialized using output from **CATALYST**.
-
--   **RemosteSOM data**
-
-    CyCadas natively supports JSON outputs from RemoteSOM.
-
-### Saving CyCadas Workspace:
-
-During the annotation process, all data and user-defined settings can be **saved to a CyCadas workspace file (`.rds`)**.
-
-This includes:
-
--   Thresholds
-
--   Annotation tree
-
--   Metadata
-
--   Marker expression data
-
--   UMAP coordinates (if computed)
-
--   Counts tables
-
--   RemoteSOM and Catalyst data (if loaded)
-
-The saved workspace can be reloaded at any time to continue the annotation exactly where it was left off.
-
-### Demo dataset:
-
-To enable tool exploration, we provide the demo dataset that can be loaded (**Load** tab → **Demo Data**) either as cluster expression data only (**Load Cluster Expression Demo Data**, allowing the user to create the annotation) or as annotated data (**Load Annotated Demo Data** which include the annotation tree).
-
-*This demo dataset is generated from the publicly available mass cytometry data of patients with idiopathic Parkinson’s disease and healthy controls (Capelle, C.M. et al., Nat Commun, 2023) that were clustered with GigaSOM to generate 1600 clusters.*
-
-### Input data
-
-All the data tables loaded into CyCadas are uploaded in the **Load** tab → **Required**. The tool requires output of the clustering algorithm in the form of 2 data tables:
-
-• marker expression (mean or median expression of each marker in each cluster),
-
-• cluster frequency (proportion of each cluster within the dataset).
-
-Coding examples enabling the extraction of these files from the clustering algorithm workflow are available on Github.
-
-Additionally, if performing differential abundance analysis is desired, 2 additional tables can be uploaded (**Load** → **Optional**):
-
-• metadata table,
-
-• count table (of every cluster in each sample).
-
-If the analysis is being continued, the threshold values and annotation tree can be exported from CyCadas (see: **Data export** below) and uploaded into the software.
-
-### Explore Data:
-
-In this Section the User can explore UMAP Marker expression of the selected marker across all the clusters.
-
-![](./www/umap_marker_expression.png)
-
-Below the User can select a Area of the UMAP (left)and preview the marker expression in a Heatmap (right)
-
-![](./www/umap_interactive.png)
+The left UMAP shows each cluster coloured by the expression of the selected marker. Drag a rectangle on the right UMAP to select clusters. The heatmap and the table below show the marker expression of the selected clusters.
 
 ### Thresholds
 
-In the **Thresholds** tab, the estimation of threshold value defining negative and positive marker expression of each marker is based on 1-dimensional k-means clustering. The bimodality for every marker is assessed and the bimodal coefficient values are reported. The blue threshold line indicates that data meets the bimodal distribution criteria, otherwise it is colored red. The threshold value can be manually adjusted by clicking on the scatterplot.
+The marker table lists, for each marker, the threshold in use, the estimated threshold and the bimodality coefficient. The estimate is the midpoint of a two-group 1-D k-means split or of a two-component Gaussian mixture (Mclust), whichever gives the higher mean silhouette. A bimodality coefficient below 0.555 is shown in orange.
 
-*Expression of CD8a with blue threshold line indicating the bimodal distribution:*
+Select a marker to plot its cluster expression. Click the scatter plot to move the threshold; the clusters are re-assigned to phenotypes at once. Thresholds changed by hand are shown in bold, and the estimate stays visible as a grey line. **Reset to estimate** restores one marker, **Reset all** restores every marker. **CSV** exports the table.
 
-![](./www/thresholds_bimodal_cd8.png)
+*CD8a, bimodal, threshold moved from the estimate of 0.590 to 0.609:*
 
-*Expression of TCRgd with red threshold line indicating that this marker expression does not follow the bimodal distribution:*
+![Thresholds tab, bimodal marker](./www/thresholds_bimodal.png)
 
-![](./www/thresholds_notbimodal_tcrgd.png)
+*CD196_CCR6, bimodality coefficient 0.527, labelled "not bimodal":*
+
+![Thresholds tab, marker that is not bimodal](./www/thresholds_not_bimodal.png)
 
 ### Annotation
 
-The **Annotation** tab allows performing the annotation in a tree-based hierarchical process - initially, the main cell types are defined, followed by the identification of their subtypes (with the level of detail defined by the user).
+Annotation builds a tree of phenotypes. All clusters start in the root node "Unassigned". A new node takes from its parent the clusters that match a set of positive and negative markers. Further nodes split it into subtypes, to the level of detail the user chooses.
 
-All the clusters are initially defined as "unassigned". Then, upon the selection of positive and negative markers defining the population, clusters characterized by given expression pattern are re-assigned from the parent node to the child node.
+*Building the annotation tree:*
 
-*Scheme depicting the process of building the annotation tree:*
+![Scheme of building the annotation tree](./www/annotation_building_tree.png)
 
-![](./www/annotation_building_tree.png)
+![Annotation tab](./www/annotation.png)
 
-*Cropped fragment of the completed annotation tree:*
+To create a node:
 
-![](./www/annotation_tree.png)
+1. Choose the **Parent node** in the sidebar, or click a node in the tree. The markers fixed by its ancestors are shown under the node name.
+2. Set markers to **+** (above threshold) or **−** (below threshold). Markers marked with an orange dot are not bimodal.
+3. Check the matching clusters: the counter gives their number and their share of all cells, and the heatmap and UMAP below the tree show them.
+4. Enter a **Phenotype name** and click **Create node**.
 
-Upon selection of the node, heatmap displaying the expression of all the markers in all the clusters belonging to this node is shown.
+The **Composition** panel lists each phenotype's share of all cells and of its parent node; **CSV** exports it. The tree toolbar zooms, fits, pans, and saves the tree as SVG or PNG. **Export annotation** downloads a zip with the expression table and the tree as CSV files; the nodes and edges files can be loaded again under **Workspace** → **Optional files** → **Annotation tree**. **Delete node** removes the selected node if it has no children and returns its clusters to the parent.
 
-*Heatmap depicting phenotype of clusters annotated as CD8+ TEM cells:*
+For CATALYST data, the sidebar also selects the meta-cluster level. **Merge annotation** adds the annotation to the `SingleCellExperiment` and **Export object** downloads it.
 
-![](./www/annotation_heatmap.png)
+### Differential abundance
 
-### Differential abundance analysis
+**Results table** runs pairwise Wilcoxon tests of the proportion of each phenotype between the conditions in the metadata. The sidebar sets the p-value adjustment (holm, hochberg, hommel, bonferroni, BH, BY, fdr or none) and exports the test results and the proportion table (percentage of each phenotype in each sample) as CSV.
 
-In the **Differential Abundance** tab, a pairwise Wilcoxon test on all the nodes is performed upon selecting the desired multiple testing correction method:
+![Differential abundance results table](./www/da_results.png)
 
-![](./www/differential_abundance.png)
+**Interactive tree** plots the proportion of a phenotype per condition when its node is clicked, with the pairwise tests below.
 
-**DA Interactive Tree** allows exploration of abundance of all the defined subpopulations across the conditions by selecting the node on the annotation tree.
-
-*Upon clicking on the desired node...*
-
-![](./www/DA_interactive_tree_tree.png)
-
-*... proportion of the selected celltype across the condition is plotted.*
-
-![](./www/DA_interactive_tree_plot.png)
-
-### Data export
-
-Differential abundance analysis results, as well as proportion table (% of defined cell populations across all the samples) can be exported in the **Differential Abundance** tab.
-
-![](./www/differential_abundance_export.png)
-
-Files enabling the continuation of the analysis - modified threshold values, as well as annotation tree structure, can be exported from the **Thresholds** and **Annotation** tabs, respectively, and re-loaded (**Load** tab) to continue the analysis.
-
-*Exporting annotation tree:*
-
-![](./www/annotation_export.png)
-
-*Exporting threshold values:*
-
-![](./www/thresholds_export.png)
+![Differential abundance interactive tree](./www/da_tree.png)

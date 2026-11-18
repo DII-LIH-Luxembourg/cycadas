@@ -1,47 +1,55 @@
-![Alt text](./logo4_small2.png)
+![CyCadas logo](./logo4_small2.png)
 
 ## Cytometry Cluster Annotation and Differential Abundance Suite
 
-#### Efficient and reproducible cytometry data
+#### Efficient and reproducible annotation of cytometry data
 
-[![DOI](https://img.shields.io/badge/DOI-10.1234/cycadas-blue)](https://doi.org/10.1093/bioinformatics/btae595)
+[![DOI](https://img.shields.io/badge/DOI-10.1093/bioinformatics/btae595-blue)](https://doi.org/10.1093/bioinformatics/btae595)
 
-Aims:
-
-• facilitating the process of cluster annotation while reducing user bias • improving reproducibility
+CyCadas is a Shiny app for annotating the clusters of a cytometry clustering (FlowSOM, GigaSOM, CATALYST, RemoteSOM) and testing the abundance of the annotated cell types between conditions.
 
 Key features:
 
-• defining the threshold of positive/negative marker expression
+- estimation of the positive/negative threshold of each marker, with manual adjustment
+- interactive inspection of cluster phenotypes on a UMAP and in heatmaps
+- annotation as a hierarchical tree of phenotypes defined by marker thresholds
+- automatic merging of the clusters of each phenotype
+- differential abundance testing between conditions
 
-• interactive inspection of cluster phenotypes
+The current version is 1.5.0. Changes are listed in [NEWS.md](./NEWS.md). Version 1.4.0, with the previous interface, is kept on the [`legacy`](https://github.com/DII-LIH-Luxembourg/cycadas/tree/legacy) branch.
 
-• automatic merging of populations
-
-• differential abundance analysis
-
-## Installation Instructions
+## Installation
 
 ``` r
-library(devtools)
+install.packages("devtools")
 
-# Install all required packages
+# Install CyCadas and all required packages
 devtools::install_github("DII-LIH-Luxembourg/cycadas", dependencies = TRUE)
 
 library(cycadas)
-# start the cycadas shiny app
+# start the CyCadas Shiny app
 cycadas()
 ```
 
-### Demo dataset
+To run a local checkout, for example a development branch, start R in the repository folder:
 
-To enable tool exploration, we provide the demo dataset that can be loaded (**Load** tab → **Demo Data**) either as cluster expression data only (**Load Cluster Expression Demo Data**, allowing the user to create the annotation) or as annotated data (**Load Annotated Demo Data** which include the annotation tree).
+``` r
+devtools::install_deps(dependencies = TRUE)
+devtools::load_all()
+cycadas()
+```
 
-*This demo dataset is generated from the publicly available mass cytometry data of patients with idiopathic Parkinson's disease and healthy controls (Capelle, C.M. et al., Nat Commun, 2023) that were clustered with GigaSOM to generate 1600 clusters.*
+On Debian or Ubuntu, `devtools` and its dependencies need these system libraries:
 
-### Loading SingleCellExperiment Data (CATALYST)
+``` bash
+sudo apt install build-essential pkg-config libcurl4-openssl-dev libssl-dev libxml2-dev \
+  libfontconfig1-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev \
+  libpng-dev libtiff5-dev libjpeg-dev libwebp-dev libgit2-dev
+```
 
-This is optional. If you wish to load data clustered with CATALYST or other Tools using the Single Cell Format, please install:
+### Loading SingleCellExperiment data (CATALYST)
+
+Only needed for data clustered with CATALYST or other tools that produce a `SingleCellExperiment`:
 
 ``` r
 if (!require("BiocManager", quietly = TRUE))
@@ -51,41 +59,130 @@ BiocManager::install("CATALYST")
 BiocManager::install("SingleCellExperiment")
 ```
 
-## 🐳 Run with Docker (Recommended)
+## Run with Docker
 
-To avoid issues with R package dependencies and system libraries, you can run **Cycadas** in a Docker container.
+The Docker image includes R and all dependencies.
 
-### Prerequisites
+Prerequisite: [Docker Desktop](https://www.docker.com/products/docker-desktop) installed and running.
 
--   [Docker Desktop](https://www.docker.com/products/docker-desktop) installed and running.
+1. Pull the image:
 
-### 1. Pull the image (Bash):
+   ``` bash
+   docker pull ghcr.io/dii-lih-luxembourg/cycadas:latest
+   ```
 
-If you haven't already, clone the repository and enter the directory:
+2. Run the application:
+
+   ``` bash
+   docker run --rm -p 3838:3838 ghcr.io/dii-lih-luxembourg/cycadas:latest
+   ```
+
+3. Open <http://localhost:3838> in a browser. If the terminal shows `0.0.0.0`, use `localhost` in the browser.
+
+Press `Ctrl + C` in the terminal to stop the application.
+
+To build the image from a local checkout:
 
 ``` bash
-docker pull ghcr.io/dii-lih-luxembourg/cycadas:latest
+docker build -t cycadas .
+docker run --rm -p 3838:3838 cycadas
 ```
 
-### 2. Run the application (Bash):
+## Folder sessions
 
-``` bash
-docker run --rm -p 3838:3838 ghcr.io/dii-lih-luxembourg/cycadas:latest
+`cycadas(dir)` opens the cluster data in a folder and adds a **Save** button to the navigation bar.
+
+| File | Role |
+|------------------------------------|------------------------------------|
+| `median_expr.csv` | input: one row per cluster, one column per marker |
+| `cluster_freq.csv` | input: column `clustering_prop`, one row per cluster |
+| `cluster_counts.csv` | optional input: one row per cluster, one column per sample |
+| `metadata.csv` | optional input: `sample_id`, `condition`, ...; read only together with the counts |
+| `workspace.rds` | written by **Save**; if present, CyCadas opens it and ignores the input files |
+| `labels.csv` | written by **Save**: cluster, label, and path of the label in the tree |
+
+``` r
+cycadas("path/to/folder")
 ```
 
-### 3. Access the App
+## Using the app
 
-[**http://localhost:3838**](http://localhost:3838){.uri}
+The navigation bar holds the tabs **Home**, **Workspace**, **Explore**, **Thresholds**, **Annotation** and **Differential abundance**. The badge on the right shows the number of clusters, markers and phenotypes in the session.
 
-*\> **Tip:** If your terminal shows `0.0.0.0`, do not type that in your browser. Always use `localhost`.*
+### Demo dataset
 
-------------------------------------------------------------------------
+**Workspace** → **Demo data** loads 1,600 clusters and 27 markers. **Load unannotated** loads the cluster expression only, to build an annotation from scratch. **Load annotated** also loads thresholds, an annotation tree with 35 phenotypes, sample metadata and cluster counts.
 
-### Stopping the App
+*The demo dataset was generated from publicly available mass cytometry data of patients with idiopathic Parkinson's disease and healthy controls (Capelle, C.M. et al., Nat Commun, 2023), clustered with GigaSOM into 1,600 clusters.*
 
-To stop the application, simply press `Ctrl + C` in your terminal window.
+### Workspace
 
-### Data input, Single Cell Format
+![Workspace tab](./inst/app/www/workspace.png)
+
+**Import cluster data** reads one of:
+
+- **GigaSOM / FlowSOM**: a median marker expression table (cluster × marker) and a cluster frequency table, both CSV
+- **CATALYST**: a `SingleCellExperiment` saved as `.rds`
+- **RemoteSOM**: the JSON output of RemoteSOM
+
+**Optional files** adds marker thresholds, an annotation tree (nodes and edges CSV), sample metadata and cluster counts. Differential abundance testing requires metadata and counts.
+
+**Save workspace** writes the data, thresholds, annotation tree, metadata, counts and UMAP coordinates to one `.rds` file. **Load workspace** restores a saved session. **Clear** empties the session. **Loaded data** lists each table and its dimensions.
+
+### Explore
+
+![Explore tab](./inst/app/www/explore.png)
+
+The left UMAP shows each cluster coloured by the expression of the selected marker. Drag a rectangle on the right UMAP to select clusters. The heatmap and the table below show the marker expression of the selected clusters.
+
+### Thresholds
+
+The marker table lists, for each marker, the threshold in use, the estimated threshold and the bimodality coefficient. The estimate is the midpoint of a two-group 1-D k-means split or of a two-component Gaussian mixture (Mclust), whichever gives the higher mean silhouette. A bimodality coefficient below 0.555 is shown in orange.
+
+Select a marker to plot its cluster expression. Click the scatter plot to move the threshold; the clusters are re-assigned to phenotypes at once. Thresholds changed by hand are shown in bold, and the estimate stays visible as a grey line. **Reset to estimate** restores one marker, **Reset all** restores every marker. **CSV** exports the table.
+
+*CD8a, bimodal, threshold moved from the estimate of 0.590 to 0.609:*
+
+![Thresholds tab, bimodal marker](./inst/app/www/thresholds_bimodal.png)
+
+*CD196_CCR6, bimodality coefficient 0.527, labelled "not bimodal":*
+
+![Thresholds tab, marker that is not bimodal](./inst/app/www/thresholds_not_bimodal.png)
+
+### Annotation
+
+Annotation builds a tree of phenotypes. All clusters start in the root node "Unassigned". A new node takes from its parent the clusters that match a set of positive and negative markers. Further nodes split it into subtypes, to the level of detail the user chooses.
+
+*Building the annotation tree:*
+
+![Scheme of building the annotation tree](./inst/app/www/annotation_building_tree.png)
+
+![Annotation tab](./inst/app/www/annotation.png)
+
+To create a node:
+
+1. Choose the **Parent node** in the sidebar, or click a node in the tree. The markers fixed by its ancestors are shown under the node name.
+2. Set markers to **+** (above threshold) or **−** (below threshold). Markers marked with an orange dot are not bimodal.
+3. Check the matching clusters: the counter gives their number and their share of all cells, and the heatmap and UMAP below the tree show them.
+4. Enter a **Phenotype name** and click **Create node**.
+
+The **Composition** panel lists each phenotype's share of all cells and of its parent node; **CSV** exports it. The tree toolbar zooms, fits, pans, and saves the tree as SVG or PNG. **Export annotation** downloads a zip with the expression table and the tree as CSV files; the nodes and edges files can be loaded again under **Workspace** → **Optional files** → **Annotation tree**. **Delete node** removes the selected node if it has no children and returns its clusters to the parent.
+
+For CATALYST data, the sidebar also selects the meta-cluster level. **Merge annotation** adds the annotation to the `SingleCellExperiment` and **Export object** downloads it.
+
+### Differential abundance
+
+**Results table** runs pairwise Wilcoxon tests of the proportion of each phenotype between the conditions in the metadata. The sidebar sets the p-value adjustment (holm, hochberg, hommel, bonferroni, BH, BY, fdr or none) and exports the test results and the proportion table (percentage of each phenotype in each sample) as CSV.
+
+![Differential abundance results table](./inst/app/www/da_results.png)
+
+**Interactive tree** plots the proportion of a phenotype per condition when its node is clicked, with the pairwise tests below.
+
+![Differential abundance interactive tree](./inst/app/www/da_tree.png)
+
+## Preparing input data
+
+### Single Cell Format (CATALYST)
 
 ``` r
 
@@ -188,78 +285,3 @@ rename!(et, lineage_markers)
 CSV.write("median_expr.csv", et)
 ```
 
-Detailed workflow for each method can be found in the data section.
-
-### Data exploration
-
-The **UMAP interactive** tab allows the preview of marker expression in the clusters selected by the user on the UMAP:
-
-![](./inst/app/www/umap_interactive.png)
-
-In the **UMAP Marker expression** tab, user can investigate the expression level of the selected marker across all the clusters.
-
-![](./inst/app/www/umap_marker_expression.png)
-
-### Thresholds
-
-In the **Thresholds** tab, the estimation of threshold value defining negative and positive marker expression of each marker is based on 1-dimensional k-means clustering and Mclust. A silhouette score chooses the best estimation of each marker. The bimodality for every marker is assessed and the bimodal coefficient values are reported. The blue threshold line indicates that data meets the bimodal distribution criteria, otherwise it is colored red. The threshold value can be manually adjusted by clicking on the scatterplot.
-
-*Expression of CD8a with blue threshold line indicating the bimodal distribution:*
-
-![](./inst/app/www/thresholds_bimodal_cd8.png)
-
-*Expression of TCRgd with red threshold line indicating that this marker expression does not follow the bimodal distribution:*
-
-![](./inst/app/www/thresholds_notbimodal_tcrgd.png)
-
-### Annotation
-
-The **Annotation** tab allows performing the annotation in a tree-based hierarchical process - initially, the main cell types are defined, followed by the identification of their subtypes (with the level of detail defined by the user).
-
-All the clusters are initially defined as "unassigned". Then, upon the selection of positive and negative markers defining the population, clusters characterized by given expression pattern are re-assigned from the parent node to the child node.
-
-*Scheme depicting the process of building the annotation tree:*
-
-![](./inst/app/www/annotation_building_tree.png)
-
-*Cropped fragment of the completed annotation tree:*
-
-![](./inst/app/www/annotation_tree.png)
-
-Upon selection of the node, heatmap displaying the expression of all the markers in all the clusters belonging to this node is shown.
-
-*Heatmap depicting phenotype of clusters annotated as CD8+ TEM cells:*
-
-![](./inst/app/www/annotation_heatmap.png)
-
-### Differential abundance analysis
-
-In the **Differential Abundance** tab, a pairwise Wilcoxon test on all the nodes is performed upon selecting the desired multiple testing correction method:
-
-![](./inst/app/www/differential_abundance.png)
-
-**DA Interactive Tree** allows exploration of abundance of all the defined subpopulations across the conditions by selecting the node on the annotation tree.
-
-*Upon clicking on the desired node...*
-
-![](./inst/app/www/DA_interactive_tree_tree.png)
-
-*... proportion of the selected celltype across the condition is plotted.*
-
-![](./inst/app/www/DA_interactive_tree_plot.png)
-
-### Data export
-
-Differential abundance analysis results, as well as proportion table (% of defined cell populations across all the samples) can be exported in the **Differential Abundance** tab.
-
-![](./inst/app/www/differential_abundance_export.png)
-
-Files enabling the continuation of the analysis - modified threshold values, as well as annotation tree structure, can be exported from the **Thresholds** and **Annotation** tabs, respectively, and re-loaded (**Load** tab) to continue the analysis.
-
-*Exporting annotation tree:*
-
-![](./inst/app/www/annotation_export.png)
-
-*Exporting threshold values:*
-
-![](./inst/app/www/thresholds_export.png)
