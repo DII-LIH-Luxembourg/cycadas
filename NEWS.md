@@ -1,4 +1,4 @@
-# Development
+# Version 1.5.0
 
 ## New features
 - `cycadas(dir)` opens the cluster data in a folder (`median_expr.csv`,
