@@ -81,6 +81,8 @@ Prerequisite: [Docker Desktop](https://www.docker.com/products/docker-desktop) i
 
 Press `Ctrl + C` in the terminal to stop the application.
 
+`latest` is the most recent release. Each release is also available under its version number, for example `ghcr.io/dii-lih-luxembourg/cycadas:1.5.0`. The image is built by the GitHub Actions workflow `.github/workflows/docker.yml` when a version tag is pushed.
+
 To build the image from a local checkout:
 
 ``` bash
